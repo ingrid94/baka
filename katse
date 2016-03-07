@@ -58,10 +58,31 @@ def callback(event):
         elif(resp[0] == 2):
             fst.create_polygon(make_block(0, 0), fill='red', tag='red')
 
+drag_data = {"x": 0, "y": 0, "item": None}
+
+
+def onTokenButtonPress(event):
+    drag_data["item"] = fst.find_closest(event.x, event.y)[0]
+    drag_data["x"] = event.x
+    drag_data["y"] = event.y
+
+
+def onTokenButtonRelease(event):
+    drag_data["item"] = None
+    drag_data["x"] = 0
+    drag_data["y"] = 0
+
+
+def onTokenMotion(event):
+    delta_x = event.x - drag_data["x"]
+    delta_y = event.y - drag_data["y"]
+    fst.move(drag_data["item"], delta_x, delta_y)
+    drag_data["x"] = event.x
+    drag_data["y"] = event.y
+
 
 secnd.bind("<Button-1>", callback)
-
+fst.bind("<ButtonPress-1>", onTokenButtonPress)
+fst.bind("<ButtonRelease-1>", onTokenButtonRelease)
+fst.bind("<B1-Motion>", onTokenMotion)
 mainloop()
-
-
-

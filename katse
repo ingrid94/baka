@@ -5,13 +5,13 @@ master2 = Tk()
 window = Tk()
 
 
-#kuna see on ajutine häkk, siis ei hakanud korralikuks tegema
+# kuna see on ajutine häkk, siis ei hakanud korralikuks tegema
 def close_windows():
     master.destroy()
     master2.destroy()
     window.destroy()
 
-#ühe klikiga kinni panemiseks, lõpuks pole seda vaja, aga praegu on mugav
+# ühe klikiga kinni panemiseks, lõpuks pole seda vaja, aga praegu on mugav
 frame = Frame(window)
 frame.pack()
 quit = Button(frame)
@@ -24,7 +24,7 @@ fst = Canvas(master, height=500, width=500, bg='white')
 fst.pack()
 master.geometry("500x500+0+100")
 
-#teine canvas
+# teine canvas
 secnd = Canvas(master2, width=500, height=500, bg='white')
 secnd.pack()
 master2.geometry("500x500+800+100")
@@ -47,14 +47,16 @@ secnd.create_polygon(make_block(50, 200), fill='red', tag='red')
 
 all_blocks[1] = secnd.gettags(1)
 all_blocks[2] = secnd.gettags(2)
-print(all_blocks)
 
 
 def callback(event):
     secnd.focus_set()
     resp = event.widget.find_overlapping(event.x, event.y, event.x, event.y)
-    if(len(resp)!=0):
-        print(resp)
+    if(len(resp) != 0):
+        if(resp[0] == 1):
+            fst.create_polygon(make_block(0, 0), fill='blue', tag=('blue', 'first'))
+        elif(resp[0] == 2):
+            fst.create_polygon(make_block(0, 0), fill='red', tag='red')
 
 
 secnd.bind("<Button-1>", callback)

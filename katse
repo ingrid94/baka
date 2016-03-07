@@ -4,6 +4,7 @@ master = Tk()
 master2 = Tk()
 window = Tk()
 
+
 #kuna see on ajutine häkk, siis ei hakanud korralikuks tegema
 def close_windows():
     master.destroy()
@@ -28,6 +29,7 @@ secnd = Canvas(master2, width=500, height=500, bg='white')
 secnd.pack()
 master2.geometry("500x500+800+100")
 
+
 def make_block(x,y):
     points = [x, y, x+50, y,
           x+50, y+10, x+80, y+10,
@@ -40,16 +42,19 @@ def make_block(x,y):
 
 all_blocks = {}
 
-secnd.create_polygon(make_block(50, 100), fill='blue', tag='blue')
+secnd.create_polygon(make_block(50, 100), fill='blue', tag=('blue', 'first'))
 secnd.create_polygon(make_block(50, 200), fill='red', tag='red')
 
-all_blocks['block1'] = secnd.gettags(1)
-all_blocks['block2'] = secnd.gettags(2)
+all_blocks[1] = secnd.gettags(1)
+all_blocks[2] = secnd.gettags(2)
 print(all_blocks)
+
 
 def callback(event):
     secnd.focus_set()
-    print("clicked at", event.x, event.y)
+    resp = event.widget.find_overlapping(event.x, event.y, event.x, event.y)
+    if(len(resp)!=0):
+        print(resp)
 
 
 secnd.bind("<Button-1>", callback)

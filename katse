@@ -1,0 +1,60 @@
+from tkinter import *
+
+master = Tk()
+master2 = Tk()
+window = Tk()
+
+#kuna see on ajutine häkk, siis ei hakanud korralikuks tegema
+def close_windows():
+    master.destroy()
+    master2.destroy()
+    window.destroy()
+
+#ühe klikiga kinni panemiseks, lõpuks pole seda vaja, aga praegu on mugav
+frame = Frame(window)
+frame.pack()
+quit = Button(frame)
+quit['text'] ="Good-bye."
+quit['command'] = close_windows
+quit.pack()
+
+# esimene canvas
+fst = Canvas(master, height=500, width=500, bg='white')
+fst.pack()
+master.geometry("500x500+0+100")
+
+#teine canvas
+secnd = Canvas(master2, width=500, height=500, bg='white')
+secnd.pack()
+master2.geometry("500x500+800+100")
+
+def make_block(x,y):
+    points = [x, y, x+50, y,
+          x+50, y+10, x+80, y+10,
+          x+80, y, x+200, y,
+          x+200, y+40, x+80, y+40,
+          x+80, y+50, x+50, y+50,
+          x+50, y+40, x, y+40,
+          x, y]
+    return points
+
+all_blocks = {}
+
+secnd.create_polygon(make_block(50, 100), fill='blue', tag='blue')
+secnd.create_polygon(make_block(50, 200), fill='red', tag='red')
+
+all_blocks['block1'] = secnd.gettags(1)
+all_blocks['block2'] = secnd.gettags(2)
+print(all_blocks)
+
+def callback(event):
+    secnd.focus_set()
+    print("clicked at", event.x, event.y)
+
+
+secnd.bind("<Button-1>", callback)
+
+mainloop()
+
+
+

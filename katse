@@ -20,7 +20,28 @@ class VariableBlock(Block):
     def __init__(self, name, coords):
         super().__init__(coords)
         self.name = name
+        self.color = 'blue'
 
+    def getCoords(self):
+        return self.coords
+
+    def move(self, x, y):
+        for i in range(0,len(self.coords),2):
+            self.coords[i] += x
+            self.coords[i+1] += y
+
+    def render(self, canvas):
+        canvas.create_polygon(self.coords, fill=self.color)
+
+    def clicked(self,x,y):
+        '''
+        if...
+        return True
+        return False
+        :param x:
+        :param y:
+        :return:
+        '''
 
 class BlockCanvas:
     def __init__(self, root):
@@ -52,9 +73,10 @@ class BlockCanvas:
         return points
 
     def blocks(self):
+        blocks =[]
         # all_blocks = {}  # oli mõeldud tagida jaoks, vb pole vaja
-        self.canvas.create_polygon(self.make_simpleBlock(50, 100), fill='blue', tag=('blue', 'first'))
-        self.canvas.create_polygon(self.make_simpleBlock(50, 200), fill='red', tag='red')
+        self.canvas.create_polygon(self.make_simpleBlock(50, 100), fill='blue')
+        self.canvas.create_polygon(self.make_simpleBlock(50, 200), fill='red')
         self.canvas.create_polygon(self.make_loopBlock(50, 300), fill='green')
 
     def bind(self, function):
@@ -63,7 +85,7 @@ class BlockCanvas:
 
 class MoveBlockCanvas(BlockCanvas):
 
-    drag_data = {"x": 0, "y": 0, "item": None}
+    #drag_data = {"x": 0, "y": 0, "item": None}
 
     def __init__(self, root):
         super().__init__(root)
@@ -79,6 +101,7 @@ class MoveBlockCanvas(BlockCanvas):
         # resp = fst.find_overlapping(event.x, event.y, event.x, event.y)
         # print(resp)
         active = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
+        #object = findobjectclickedon(event.x,event.y)
         if(len(active)!=0):
             peale = active[-1]
             self.drag_data["item"] = active[-1]
@@ -91,6 +114,13 @@ class MoveBlockCanvas(BlockCanvas):
         self.drag_data["x"] = 0
         self.drag_data["y"] = 0
 
+    def findobjectclickedon(self,x,y):
+        '''
+        for i in objects:
+            if i.clicked(x,y):
+                return i
+        :return:
+        '''
 
     def onTokenMotion(self, event):
         delta_x = event.x - self.drag_data["x"]
@@ -100,6 +130,13 @@ class MoveBlockCanvas(BlockCanvas):
             self.drag_data["x"] = event.x
             self.drag_data["y"] = event.y
 
+    def update(self):
+        '''
+        for i in objects:
+            i.render()
+
+        :return:
+        '''
     def binding(self):
         self.canvas.bind("<ButtonPress-1>", self.onTokenButtonPress)
         self.canvas.bind("<ButtonRelease-1>", self.onTokenButtonRelease)
@@ -135,5 +172,11 @@ def main():
     t2.top.geometry("+520+100")
     Contoller(t1, t2)
     root.mainloop()
-
+    '''
+    while 1:
+        t2.update()
+        tk.update_idletasks()
+        tk.update()
+        time.sleep(0.01)
+    '''
 main()

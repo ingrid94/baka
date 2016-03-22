@@ -1,97 +1,139 @@
 from tkinter import *
 
-master = Tk()
-master2 = Tk()
-window = Tk()
+
+class Block:
+    def __init__(self, coords):
+        self.coords = coords
 
 
-# kuna see on ajutine häkk, siis ei hakanud korralikuks tegema
-def close_windows():
-    master.destroy()
-    master2.destroy()
-    window.destroy()
-
-# ühe klikiga kinni panemiseks, lõpuks pole seda vaja, aga praegu on mugav
-frame = Frame(window)
-frame.pack()
-quit = Button(frame)
-quit['text'] ="Good-bye."
-quit['command'] = close_windows
-quit.pack()
-
-# esimene canvas
-fst = Canvas(master, height=500, width=500, bg='white')
-fst.pack()
-master.geometry("500x500+0+100")
-
-# teine canvas
-secnd = Canvas(master2, width=500, height=500, bg='white')
-secnd.pack()
-master2.geometry("500x500+800+100")
+class IfBlock(Block):
+    #ülemine ühendus, alumine ühendus, tingimus
+    connected = [None, None, None]
 
 
-def make_block(x,y):
-    points = [x, y, x+50, y,
-          x+50, y+10, x+80, y+10,
-          x+80, y, x+200, y,
-          x+200, y+40, x+80, y+40,
-          x+80, y+50, x+50, y+50,
-          x+50, y+40, x, y+40,
-          x, y]
-    return points
+class VariableBlock(Block):
+    # ülemine, alumine
+    connected = [None, None]
+    # muutuja väärtus
+    value = None
 
-all_blocks = {}
-
-secnd.create_polygon(make_block(50, 100), fill='blue', tag=('blue', 'first'))
-secnd.create_polygon(make_block(50, 200), fill='red', tag='red')
-
-all_blocks[1] = secnd.gettags(1)
-all_blocks[2] = secnd.gettags(2)
+    def __init__(self, name, coords):
+        super().__init__(coords)
+        self.name = name
 
 
-def callback(event):
-    secnd.focus_set()
-    resp = event.widget.find_overlapping(event.x, event.y, event.x, event.y)
-    if(len(resp) != 0):
-        if(resp[0] == 1):
-            fst.create_polygon(make_block(0, 0), fill='blue', tag=('blue', 'first'))
-        elif(resp[0] == 2):
-            fst.create_polygon(make_block(0, 0), fill='red', tag='red')
+class BlockCanvas:
+    def __init__(self, root):
+        self.top = Toplevel(root)
+        self.canvas = Canvas(self.top, width=500, height=500, bg="white")
+        self.canvas.pack()
 
-drag_data = {"x": 0, "y": 0, "item": None}
+    def getFocusSet(self):
+        return self.canvas.focus_set()
 
+    def make_simpleBlock(self, x, y):
+        points = [x, y, x+20, y,
+            x+20, y+10, x+50, y+10,
+            x+50, y, x+180, y,
+            x+180, y+35, x+50, y+35,
+            x+50, y+45, x+20, y+45,
+            x+20, y+35, x, y+35,
+            x, y]
+        return points
 
-def onTokenButtonPress(event):
-    # id'd on erinevad. Jei!
-    # fst.focus_set()
-    # resp = fst.find_overlapping(event.x, event.y, event.x, event.y)
-    # print(resp)
-    active = fst.find_overlapping(event.x, event.y, event.x, event.y)
-    if(len(active)!=0):
-        peale = active[-1]
-        drag_data["item"] = active[-1]
-        fst.tag_raise(peale)
-        drag_data["x"] = event.x
-        drag_data["y"] = event.y
+    def make_loopBlock(self, x, y):
+        points = [x, y, x+200, y,            # ülemine väline äär, parem väline külg
+              x+200, y+100, x, y+100,    # alumine väline äär, vasak väline äär
+              x, y, x+10, y+20,          # liigub keskmist tegema
+              x+30, y+20, x+30, y+30,    # sisemise ülemise nublu algus
+              x+60, y+30, x+60, y+20,    # sisimine ülemine nublu
+              x+180, y+20, x+180, y+90,  # ülemine sisemine äär lõpuni, parem sisemine külg
+              x+10, y+90, x+10, y+20]    # alumine sisemine külg, vasak sisemine külg
+        return points
 
+    def blocks(self):
+        # all_blocks = {}  # oli mõeldud tagida jaoks, vb pole vaja
+        self.canvas.create_polygon(self.make_simpleBlock(50, 100), fill='blue', tag=('blue', 'first'))
+        self.canvas.create_polygon(self.make_simpleBlock(50, 200), fill='red', tag='red')
+        self.canvas.create_polygon(self.make_loopBlock(50, 300), fill='green')
 
-def onTokenButtonRelease(event):
-    drag_data["item"] = None
-    drag_data["x"] = 0
-    drag_data["y"] = 0
-
-
-def onTokenMotion(event):
-    delta_x = event.x - drag_data["x"]
-    delta_y = event.y - drag_data["y"]
-    if(drag_data["item"]!= None):
-        fst.move(drag_data["item"], delta_x, delta_y)
-        drag_data["x"] = event.x
-        drag_data["y"] = event.y
+    def bind(self, function):
+        self.canvas.bind("<ButtonPress-1>", function)
 
 
-secnd.bind("<Button-1>", callback)
-fst.bind("<ButtonPress-1>", onTokenButtonPress)
-fst.bind("<ButtonRelease-1>", onTokenButtonRelease)
-fst.bind("<B1-Motion>", onTokenMotion)
-mainloop()
+class MoveBlockCanvas(BlockCanvas):
+
+    drag_data = {"x": 0, "y": 0, "item": None}
+
+    def __init__(self, root):
+        super().__init__(root)
+        self.drag_data = {"x": 0, "y": 0, "item": None}
+        self.binding()
+
+    def create_polygon(self, args, **kw):
+        self.canvas.create_polygon(args, kw)
+
+    def onTokenButtonPress(self, event):
+        # id'd on erinevad. Jei!
+        # fst.focus_set()
+        # resp = fst.find_overlapping(event.x, event.y, event.x, event.y)
+        # print(resp)
+        active = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
+        if(len(active)!=0):
+            peale = active[-1]
+            self.drag_data["item"] = active[-1]
+            self.canvas.tag_raise(peale)
+            self.drag_data["x"] = event.x
+            self.drag_data["y"] = event.y
+
+    def onTokenButtonRelease(self, event):
+        self.drag_data["item"] = None
+        self.drag_data["x"] = 0
+        self.drag_data["y"] = 0
+
+
+    def onTokenMotion(self, event):
+        delta_x = event.x - self.drag_data["x"]
+        delta_y = event.y - self.drag_data["y"]
+        if(self.drag_data["item"]!= None):
+            self.canvas.move(self.drag_data["item"], delta_x, delta_y)
+            self.drag_data["x"] = event.x
+            self.drag_data["y"] = event.y
+
+    def binding(self):
+        self.canvas.bind("<ButtonPress-1>", self.onTokenButtonPress)
+        self.canvas.bind("<ButtonRelease-1>", self.onTokenButtonRelease)
+        self.canvas.bind("<B1-Motion>", self.onTokenMotion)
+
+class Contoller():
+
+    def __init__(self, t1, t2):
+        self.stableCanvas = t1
+        self.moveCanvas = t2
+        self.stableCanvas.bind(self.create_blocks)
+
+    def create_blocks(self, event):
+        self.stableCanvas.getFocusSet()
+        resp = event.widget.find_overlapping(event.x, event.y, event.x, event.y)
+        if(len(resp) != 0):
+            if(resp[0] == 1):
+                self.moveCanvas.create_polygon(self.moveCanvas.make_simpleBlock(0, 0), fill='blue', tag=('blue', 'first'))
+            elif(resp[0] == 2):
+                self.moveCanvas.create_polygon(self.stableCanvas.make_simpleBlock(0, 0), fill='red', tag='red')
+            elif(resp[0] == 3):
+                self.moveCanvas.create_polygon(self.stableCanvas.make_loopBlock(0, 0), fill='green')
+
+
+def main():
+    root = Tk()
+    root.geometry("+1+1")
+    Button(command=root.quit, text="Quit").pack()
+    t1 = BlockCanvas(root)
+    t1.top.geometry("+10+100")
+    BlockCanvas.blocks(t1)
+    t2 = MoveBlockCanvas(root)
+    t2.top.geometry("+520+100")
+    Contoller(t1, t2)
+    root.mainloop()
+
+main()

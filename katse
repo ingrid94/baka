@@ -7,11 +7,11 @@ class Block:
 
 
 class IfBlock(Block):
-    #ülemine ühendus, alumine ühendus, tingimus
+    # ülemine ühendus, alumine ühendus, tingimus
     connected = [None, None, None]
 
 
-class VariableBlock(Block):
+class AssignBlock(Block):
     # ülemine, alumine
     connected = [None, None]
     # muutuja väärtus
@@ -20,28 +20,7 @@ class VariableBlock(Block):
     def __init__(self, name, coords):
         super().__init__(coords)
         self.name = name
-        self.color = 'blue'
 
-    def getCoords(self):
-        return self.coords
-
-    def move(self, x, y):
-        for i in range(0,len(self.coords),2):
-            self.coords[i] += x
-            self.coords[i+1] += y
-
-    def render(self, canvas):
-        canvas.create_polygon(self.coords, fill=self.color)
-
-    def clicked(self,x,y):
-        '''
-        if...
-        return True
-        return False
-        :param x:
-        :param y:
-        :return:
-        '''
 
 class BlockCanvas:
     def __init__(self, root):
@@ -52,7 +31,8 @@ class BlockCanvas:
     def getFocusSet(self):
         return self.canvas.focus_set()
 
-    def make_simpleBlock(self, x, y):
+    @staticmethod
+    def make_simpleBlock(x, y):
         points = [x, y, x+20, y,
             x+20, y+10, x+50, y+10,
             x+50, y, x+180, y,
@@ -62,30 +42,31 @@ class BlockCanvas:
             x, y]
         return points
 
-    def make_loopBlock(self, x, y):
-        points = [x, y, x+200, y,            # ülemine väline äär, parem väline külg
-              x+200, y+100, x, y+100,    # alumine väline äär, vasak väline äär
-              x, y, x+10, y+20,          # liigub keskmist tegema
-              x+30, y+20, x+30, y+30,    # sisemise ülemise nublu algus
-              x+60, y+30, x+60, y+20,    # sisimine ülemine nublu
-              x+180, y+20, x+180, y+90,  # ülemine sisemine äär lõpuni, parem sisemine külg
-              x+10, y+90, x+10, y+20]    # alumine sisemine külg, vasak sisemine külg
+    @staticmethod
+    def make_cBlock(x, y):
+        points = [x, y, x+180, y,
+                  x+180, y+30, x+70, y+30,
+                  x+70, y+40, x+40, y+40,
+                  x+40, y+30, x+20, y+30,
+                  x+20, y+70, x+40, y+70,
+                  x+40, y+80, x+70, y+80,
+                  x+70, y+70, x+120, y+70,
+                  x+120, y+90, x, y+90,
+                  x, y]
         return points
 
     def blocks(self):
-        blocks =[]
-        # all_blocks = {}  # oli mõeldud tagida jaoks, vb pole vaja
+        # blocks = []
+        # all_blocks = {}  # oli mõeldud tagide jaoks, vb pole vaja
         self.canvas.create_polygon(self.make_simpleBlock(50, 100), fill='blue')
         self.canvas.create_polygon(self.make_simpleBlock(50, 200), fill='red')
-        self.canvas.create_polygon(self.make_loopBlock(50, 300), fill='green')
+        self.canvas.create_polygon(self.make_cBlock(50, 300), fill='green')
 
     def bind(self, function):
         self.canvas.bind("<ButtonPress-1>", function)
 
 
 class MoveBlockCanvas(BlockCanvas):
-
-    #drag_data = {"x": 0, "y": 0, "item": None}
 
     def __init__(self, root):
         super().__init__(root)
@@ -101,8 +82,7 @@ class MoveBlockCanvas(BlockCanvas):
         # resp = fst.find_overlapping(event.x, event.y, event.x, event.y)
         # print(resp)
         active = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
-        #object = findobjectclickedon(event.x,event.y)
-        if(len(active)!=0):
+        if len(active) != 0:
             peale = active[-1]
             self.drag_data["item"] = active[-1]
             self.canvas.tag_raise(peale)
@@ -114,35 +94,21 @@ class MoveBlockCanvas(BlockCanvas):
         self.drag_data["x"] = 0
         self.drag_data["y"] = 0
 
-    def findobjectclickedon(self,x,y):
-        '''
-        for i in objects:
-            if i.clicked(x,y):
-                return i
-        :return:
-        '''
-
     def onTokenMotion(self, event):
         delta_x = event.x - self.drag_data["x"]
         delta_y = event.y - self.drag_data["y"]
-        if(self.drag_data["item"]!= None):
+        if self.drag_data["item"] is not None:
             self.canvas.move(self.drag_data["item"], delta_x, delta_y)
             self.drag_data["x"] = event.x
             self.drag_data["y"] = event.y
 
-    def update(self):
-        '''
-        for i in objects:
-            i.render()
-
-        :return:
-        '''
     def binding(self):
         self.canvas.bind("<ButtonPress-1>", self.onTokenButtonPress)
         self.canvas.bind("<ButtonRelease-1>", self.onTokenButtonRelease)
         self.canvas.bind("<B1-Motion>", self.onTokenMotion)
 
-class Contoller():
+
+class Controller:
 
     def __init__(self, t1, t2):
         self.stableCanvas = t1
@@ -152,13 +118,13 @@ class Contoller():
     def create_blocks(self, event):
         self.stableCanvas.getFocusSet()
         resp = event.widget.find_overlapping(event.x, event.y, event.x, event.y)
-        if(len(resp) != 0):
-            if(resp[0] == 1):
+        if len(resp) != 0:
+            if resp[0] == 1:
                 self.moveCanvas.create_polygon(self.moveCanvas.make_simpleBlock(0, 0), fill='blue', tag=('blue', 'first'))
-            elif(resp[0] == 2):
+            elif resp[0] == 2:
                 self.moveCanvas.create_polygon(self.stableCanvas.make_simpleBlock(0, 0), fill='red', tag='red')
-            elif(resp[0] == 3):
-                self.moveCanvas.create_polygon(self.stableCanvas.make_loopBlock(0, 0), fill='green')
+            elif resp[0] == 3:
+                self.moveCanvas.create_polygon(self.stableCanvas.make_cBlock(0, 0), fill='green')
 
 
 def main():
@@ -170,13 +136,7 @@ def main():
     BlockCanvas.blocks(t1)
     t2 = MoveBlockCanvas(root)
     t2.top.geometry("+520+100")
-    Contoller(t1, t2)
+    Controller(t1, t2)
     root.mainloop()
-    '''
-    while 1:
-        t2.update()
-        tk.update_idletasks()
-        tk.update()
-        time.sleep(0.01)
-    '''
+
 main()

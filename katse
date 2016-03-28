@@ -22,6 +22,16 @@ class AssignBlock(Block):
         self.name = name
 
 
+class BoolOpBlock(Block):
+    # mis bloki sees on
+    connected = [None]
+    left = None
+    right = None
+
+    def __init__(self, coords):
+        super().__init__(coords)
+
+
 class BlockCanvas:
     def __init__(self, root):
         self.top = Toplevel(root)
@@ -32,18 +42,18 @@ class BlockCanvas:
         return self.canvas.focus_set()
 
     @staticmethod
-    def make_simpleBlock(x, y):
+    def simpleBlock_coords(x, y):
         points = [x, y, x+20, y,
-            x+20, y+10, x+50, y+10,
-            x+50, y, x+180, y,
-            x+180, y+35, x+50, y+35,
-            x+50, y+45, x+20, y+45,
-            x+20, y+35, x, y+35,
-            x, y]
+                  x+20, y+10, x+50, y+10,
+                  x+50, y, x+180, y,
+                  x+180, y+35, x+50, y+35,
+                  x+50, y+45, x+20, y+45,
+                  x+20, y+35, x, y+35,
+                  x, y]
         return points
 
     @staticmethod
-    def make_cBlock(x, y):
+    def cBlock_coords(x, y):
         points = [x, y, x+180, y,
                   x+180, y+30, x+70, y+30,
                   x+70, y+40, x+40, y+40,
@@ -55,12 +65,18 @@ class BlockCanvas:
                   x, y]
         return points
 
-    def blocks(self):
-        # blocks = []
-        # all_blocks = {}  # oli mõeldud tagide jaoks, vb pole vaja
-        self.canvas.create_polygon(self.make_simpleBlock(50, 100), fill='blue')
-        self.canvas.create_polygon(self.make_simpleBlock(50, 200), fill='red')
-        self.canvas.create_polygon(self.make_cBlock(50, 300), fill='green')
+    @staticmethod
+    def booleanBlock_coords(x, y):
+        points = [x, y+10, x+10, y,
+                  x+140, y, x+150, y+10,
+                  x+140, y+20, x+10, y+20,
+                  x, y+10]
+        return points
+
+    def create_blocks_fst(self):
+        self.canvas.create_polygon(self.simpleBlock_coords(50, 100), fill='blue')
+        self.canvas.create_polygon(self.booleanBlock_coords(50, 200), fill='red')
+        self.canvas.create_polygon(self.cBlock_coords(50, 300), fill='green')
 
     def bind(self, function):
         self.canvas.bind("<ButtonPress-1>", function)
@@ -77,14 +93,10 @@ class MoveBlockCanvas(BlockCanvas):
         self.canvas.create_polygon(args, kw)
 
     def onTokenButtonPress(self, event):
-        # id'd on erinevad. Jei!
-        # fst.focus_set()
-        # resp = fst.find_overlapping(event.x, event.y, event.x, event.y)
-        # print(resp)
         active = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
         if len(active) != 0:
             peale = active[-1]
-            self.drag_data["item"] = active[-1]
+            self.drag_data["item"] = peale
             self.canvas.tag_raise(peale)
             self.drag_data["x"] = event.x
             self.drag_data["y"] = event.y
@@ -120,11 +132,20 @@ class Controller:
         resp = event.widget.find_overlapping(event.x, event.y, event.x, event.y)
         if len(resp) != 0:
             if resp[0] == 1:
-                self.moveCanvas.create_polygon(self.moveCanvas.make_simpleBlock(0, 0), fill='blue', tag=('blue', 'first'))
+                cords = self.stableCanvas.simpleBlock_coords(0, 0)
+                self.moveCanvas.create_polygon(cords, fill='blue')
+                assignBlock = AssignBlock
+                assignBlock.coords = cords
             elif resp[0] == 2:
-                self.moveCanvas.create_polygon(self.stableCanvas.make_simpleBlock(0, 0), fill='red', tag='red')
+                cords = self.stableCanvas.booleanBlock_coords(0, 0)
+                self.moveCanvas.create_polygon(cords, fill='red')
+                boolOpBlock = BoolOpBlock
+                boolOpBlock.coords = cords
             elif resp[0] == 3:
-                self.moveCanvas.create_polygon(self.stableCanvas.make_cBlock(0, 0), fill='green')
+                cords = self.stableCanvas.cBlock_coords(0, 0)
+                self.moveCanvas.create_polygon(cords, fill='green')
+                ifBlock = IfBlock
+                ifBlock.coords = cords
 
 
 def main():
@@ -133,7 +154,7 @@ def main():
     Button(command=root.quit, text="Quit").pack()
     t1 = BlockCanvas(root)
     t1.top.geometry("+10+100")
-    BlockCanvas.blocks(t1)
+    BlockCanvas.create_blocks_fst(t1)
     t2 = MoveBlockCanvas(root)
     t2.top.geometry("+520+100")
     Controller(t1, t2)

@@ -1,9 +1,12 @@
 from tkinter import *
 
+from numpy.ctypeslib import types
+
 
 class Block:
-    def __init__(self, coords):
+    def __init__(self, coords, obj_id):
         self.coords = coords
+        self.id = obj_id
 
 
 class IfBlock(Block):
@@ -113,6 +116,13 @@ class MoveBlockCanvas(BlockCanvas):
             self.canvas.move(self.drag_data["item"], delta_x, delta_y)
             self.drag_data["x"] = event.x
             self.drag_data["y"] = event.y
+            class_type = Controller.movable_blocks[self.drag_data["item"]]
+            if class_type is AssignBlock:
+                class_type.coords = BlockCanvas.simpleBlock_coords(event.x, event.y)
+            elif class_type is BoolOpBlock:
+                class_type.coords = BlockCanvas.booleanBlock_coords(event.x, event.y)
+            elif class_type is IfBlock:
+                class_type.coords = BlockCanvas.cBlock_coords(event.x, event.y)
 
     def binding(self):
         self.canvas.bind("<ButtonPress-1>", self.onTokenButtonPress)
@@ -122,10 +132,15 @@ class MoveBlockCanvas(BlockCanvas):
 
 class Controller:
 
+    obj_id = 1
+    movable_blocks = {}
+
     def __init__(self, t1, t2):
         self.stableCanvas = t1
         self.moveCanvas = t2
         self.stableCanvas.bind(self.create_blocks)
+        self.obj_id = Controller.obj_id
+        self.movable_blocks = Controller.movable_blocks
 
     def create_blocks(self, event):
         self.stableCanvas.getFocusSet()
@@ -136,16 +151,25 @@ class Controller:
                 self.moveCanvas.create_polygon(cords, fill='blue')
                 assignBlock = AssignBlock
                 assignBlock.coords = cords
+                assignBlock.obj_id = self.obj_id
+                self.movable_blocks[self.obj_id] = assignBlock
+                self.obj_id += 1
             elif resp[0] == 2:
                 cords = self.stableCanvas.booleanBlock_coords(0, 0)
                 self.moveCanvas.create_polygon(cords, fill='red')
                 boolOpBlock = BoolOpBlock
                 boolOpBlock.coords = cords
+                boolOpBlock.obj_id = self.obj_id
+                self.movable_blocks[self.obj_id] = boolOpBlock
+                self.obj_id += 1
             elif resp[0] == 3:
                 cords = self.stableCanvas.cBlock_coords(0, 0)
                 self.moveCanvas.create_polygon(cords, fill='green')
                 ifBlock = IfBlock
                 ifBlock.coords = cords
+                ifBlock.obj_id = self.obj_id
+                self.movable_blocks[self.obj_id] = ifBlock
+                self.obj_id += 1
 
 
 def main():

@@ -2,6 +2,7 @@ from tkinter import *
 
 
 class Block:
+
     def __init__(self, coords, obj_id, color):
         self.coords = coords
         self.id = obj_id
@@ -9,8 +10,15 @@ class Block:
 
 
 class IfBlock(Block):
-    # ülemine ühendus, alumine ühendus, tingimus
-    connected = [None, None, None]
+    # ülemine ühendus, alumine ühendus, kõige alumine ühendus, tingimus
+    connected = [None, None, None, None]
+
+    def __init__(self, name, coords, obj_id, color, upper_magnet, lower_magnet, lower_lower_magnet):
+        super().__init__(coords, obj_id, color)
+        self.name = name
+        self.upper_magnet = upper_magnet
+        self.lower_magnet = lower_magnet
+        self.lower_lower_magnet = lower_lower_magnet
 
 
 class AssignBlock(Block):
@@ -19,17 +27,20 @@ class AssignBlock(Block):
     # muutuja väärtus
     value = None
 
-    def __init__(self, name, coords, obj_id, color):
+    def __init__(self, name, coords, obj_id, color, upper_magnet, lower_magnet):
         super().__init__(coords, obj_id, color)
         self.name = name
+        self.upper_magnet = upper_magnet
+        self.lower_magnet = lower_magnet
 
 
 class BoolOpBlock(Block):
     # mis bloki sees on
     connected = [None]
 
-    def __init__(self, coords, obj_id, color):
+    def __init__(self, coords, obj_id, color, magnet):
         super().__init__(coords, obj_id, color)
+        self.magnet = magnet
 
 
 class BlockCanvas:
@@ -61,18 +72,18 @@ class BlockCanvas:
                   x+40, y+5, x+45, y,
                   x+175, y, x+180, y+5,
                   x+180, y+25, x+175, y+30,
-                  x+65, y+30, x+60, y+35,
-                  x+45, y+35, x+40, y+30,
-                  x+25, y+30, x+20, y+35,
-                  x+20, y+65, x+25, y+70,
-                  x+40, y+70, x+45, y+75,
-                  x+45, y+75, x+60, y+75,
-                  x+65, y+70, x+115, y+70,
+                  x+55, y+30, x+50, y+35,
+                  x+35, y+35, x+30, y+30,
+                  x+15, y+30, x+10, y+35,
+                  x+10, y+65, x+15, y+70,
+                  x+30, y+70, x+35, y+75,
+                  x+35, y+75, x+50, y+75,
+                  x+55, y+70, x+115, y+70,
                   x+120, y+75, x+120, y+85,
                   x+115, y+90, x+45, y+90,
                   x+40, y+95, x+25, y+95,
                   x+20, y+90, x+5, y+90,
-                  x, y+85, x, y]
+                  x, y+85, x, y+5]
         return points
 
     @staticmethod
@@ -112,6 +123,14 @@ class MoveBlockCanvas(BlockCanvas):
             self.drag_data["y"] = event.y
 
     def onTokenButtonRelease(self, event):
+        #if self.drag_data["item"] is not None:
+            #c = Controller.movable_blocks[self.drag_data["item"]]
+            # print(Controller.movable_blocks)
+            # print(c.coords)
+            # print(self.canvas.find_closest(c.coords[0], c.coords[1], halo=30, start=c.obj_id))
+            # for k, v in Controller.movable_blocks.items():
+                # if c.upper_magnet == v.lower_magnet:
+                    # print("Jei")
         self.drag_data["item"] = None
         self.drag_data["x"] = 0
         self.drag_data["y"] = 0
@@ -120,16 +139,14 @@ class MoveBlockCanvas(BlockCanvas):
         delta_x = event.x - self.drag_data["x"]
         delta_y = event.y - self.drag_data["y"]
         if self.drag_data["item"] is not None:
+            class_type = Controller.movable_blocks[self.drag_data["item"]]
+            old_coords = class_type.coords
+            class_type.coords = [old_coords[0]+delta_x, old_coords[1]+delta_y]
+            print(class_type.coords)
+            print(self.drag_data)
             self.canvas.move(self.drag_data["item"], delta_x, delta_y)
             self.drag_data["x"] = event.x
             self.drag_data["y"] = event.y
-            class_type = Controller.movable_blocks[self.drag_data["item"]]
-            if class_type is AssignBlock:
-                class_type.coords = BlockCanvas.commandBlock_coords(event.x, event.y)
-            elif class_type is BoolOpBlock:
-                class_type.coords = BlockCanvas.functionBlock_coords(event.x, event.y)
-            elif class_type is IfBlock:
-                class_type.coords = BlockCanvas.controlBlock_coords(event.x, event.y)
 
     def binding(self):
         self.canvas.bind("<ButtonPress-1>", self.onTokenButtonPress)
@@ -141,6 +158,8 @@ class Controller:
 
     obj_id = 1
     movable_blocks = {}
+    upper_magnets = {}
+    lower_magnets = {}
 
     def __init__(self, t1, t2):
         self.stableCanvas = t1
@@ -148,6 +167,8 @@ class Controller:
         self.stableCanvas.bind(self.create_blocks)
         self.obj_id = Controller.obj_id
         self.movable_blocks = Controller.movable_blocks
+        self.upper_magnets = Controller.upper_magnets
+        self.lower_magnets = Controller.lower_magnets
 
     def create_blocks(self, event):
         self.stableCanvas.getFocusSet()
@@ -157,27 +178,39 @@ class Controller:
                 cords = self.stableCanvas.commandBlock_coords(0, 0)
                 self.moveCanvas.create_polygon(cords, fill='violet red')
                 assignBlock = AssignBlock
-                assignBlock.coords = cords
+                assignBlock.coords = [0, 0]
                 assignBlock.obj_id = self.obj_id
                 assignBlock.color = 'violet red'
+                assignBlock.upper_magnet = [37.5, 2.5]
+                assignBlock.lower_magnet = [37.5, 42.5]
+                self.upper_magnets[self.obj_id] = assignBlock.upper_magnet
+                self.lower_magnets[self.obj_id] = assignBlock.lower_magnet
                 self.movable_blocks[self.obj_id] = assignBlock
                 self.obj_id += 1
             elif resp[0] == 2:
                 cords = self.stableCanvas.functionBlock_coords(0, 0)
                 self.moveCanvas.create_polygon(cords, fill='dodger blue')
                 boolOpBlock = BoolOpBlock
-                boolOpBlock.coords = cords
+                boolOpBlock.coords = [0, 0]
                 boolOpBlock.obj_id = self.obj_id
                 boolOpBlock.color = 'dodger blue'
+                boolOpBlock.magnet = [75, 10]
+                # need to add magnet
                 self.movable_blocks[self.obj_id] = boolOpBlock
                 self.obj_id += 1
             elif resp[0] == 3:
                 cords = self.stableCanvas.controlBlock_coords(0, 0)
                 self.moveCanvas.create_polygon(cords, fill='orange')
                 ifBlock = IfBlock
-                ifBlock.coords = cords
+                ifBlock.coords = [0, 0]
                 ifBlock.obj_id = self.obj_id
                 ifBlock.color = 'orange'
+                ifBlock.upper_magnet = [37.5, 2.5]
+                ifBlock.lower_magnet = [42.5, 32.5]
+                ifBlock.lower_lower_magnet = [37.5, 92.5]
+                self.upper_magnets[self.obj_id] = ifBlock.upper_magnet
+                self.lower_magnets[self.obj_id] = ifBlock.lower_magnet
+                # self.lower_magnets[self.obj_id] = ifBlock.lower_lower_magnet -- id oleks sama mis eelmisel real!
                 self.movable_blocks[self.obj_id] = ifBlock
                 self.obj_id += 1
 

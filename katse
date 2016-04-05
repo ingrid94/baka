@@ -10,43 +10,33 @@ class Block:
 
 
 class IfBlock(Block):
-    # ülemine ühendus, alumine ühendus, kõige alumine ühendus, tingimus
-    connected = [None, None, None, None]
 
-    def __init__(self, name, coords, obj_id, color, upper_magnet, lower_magnet, lower_lower_magnet):
+    def __init__(self, coords, obj_id, color):
         super().__init__(coords, obj_id, color)
-        self.name = name
-        self.upper_magnet = upper_magnet
-        self.lower_magnet = lower_magnet
-        self.lower_lower_magnet = lower_lower_magnet
+        # ülemine ühendus, alumine ühendus, kõige alumine ühendus, tingimus
+        self.connected = [None, None, None, None]
 
 
 class AssignBlock(Block):
-    # ülemine, alumine
-    connected = [None, None]
-    # muutuja väärtus
-    value = None
 
-    def __init__(self, name, coords, obj_id, color, upper_magnet, lower_magnet):
+    def __init__(self, coords, obj_id, color):
         super().__init__(coords, obj_id, color)
-        self.name = name
-        self.upper_magnet = upper_magnet
-        self.lower_magnet = lower_magnet
+        # ülemine, alumine
+        self.connected = [None, None]
 
 
 class BoolOpBlock(Block):
-    # mis bloki sees on
-    connected = [None]
 
-    def __init__(self, coords, obj_id, color, magnet):
+    def __init__(self, coords, obj_id, color):
         super().__init__(coords, obj_id, color)
-        self.magnet = magnet
+        # mis bloki sees on
+        self.connected = [None]
 
 
 class BlockCanvas:
     def __init__(self, root):
         self.top = Toplevel(root)
-        self.canvas = Canvas(self.top, width=500, height=500, bg="white")
+        self.canvas = Canvas(self.top, width=500, height=500, bg="white", highlightthickness=0)
         self.canvas.pack()
 
     def getFocusSet(self):
@@ -111,7 +101,7 @@ class MoveBlockCanvas(BlockCanvas):
         self.binding()
 
     def create_polygon(self, args, **kw):
-        self.canvas.create_polygon(args, kw)
+        return self.canvas.create_polygon(args, kw)
 
     def onTokenButtonPress(self, event):
         active = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
@@ -156,19 +146,13 @@ class MoveBlockCanvas(BlockCanvas):
 
 class Controller:
 
-    obj_id = 1
     movable_blocks = {}
-    upper_magnets = {}
-    lower_magnets = {}
 
     def __init__(self, t1, t2):
         self.stableCanvas = t1
         self.moveCanvas = t2
         self.stableCanvas.bind(self.create_blocks)
-        self.obj_id = Controller.obj_id
         self.movable_blocks = Controller.movable_blocks
-        self.upper_magnets = Controller.upper_magnets
-        self.lower_magnets = Controller.lower_magnets
 
     def create_blocks(self, event):
         self.stableCanvas.getFocusSet()
@@ -176,43 +160,19 @@ class Controller:
         if len(resp) != 0:
             if resp[0] == 1:
                 cords = self.stableCanvas.commandBlock_coords(0, 0)
-                self.moveCanvas.create_polygon(cords, fill='violet red')
-                assignBlock = AssignBlock
-                assignBlock.coords = [0, 0]
-                assignBlock.obj_id = self.obj_id
-                assignBlock.color = 'violet red'
-                assignBlock.upper_magnet = [37.5, 2.5]
-                assignBlock.lower_magnet = [37.5, 42.5]
-                self.upper_magnets[self.obj_id] = assignBlock.upper_magnet
-                self.lower_magnets[self.obj_id] = assignBlock.lower_magnet
-                self.movable_blocks[self.obj_id] = assignBlock
-                self.obj_id += 1
+                obj_id = self.moveCanvas.create_polygon(cords, fill='violet red')
+                assignBlock = AssignBlock([0, 0], obj_id, 'violet red')
+                self.movable_blocks[obj_id] = assignBlock
             elif resp[0] == 2:
                 cords = self.stableCanvas.functionBlock_coords(0, 0)
-                self.moveCanvas.create_polygon(cords, fill='dodger blue')
-                boolOpBlock = BoolOpBlock
-                boolOpBlock.coords = [0, 0]
-                boolOpBlock.obj_id = self.obj_id
-                boolOpBlock.color = 'dodger blue'
-                boolOpBlock.magnet = [75, 10]
-                # need to add magnet
-                self.movable_blocks[self.obj_id] = boolOpBlock
-                self.obj_id += 1
+                obj_id = self.moveCanvas.create_polygon(cords, fill='dodger blue')
+                boolOpBlock = BoolOpBlock([0, 0], obj_id, 'dodger blue')
+                self.movable_blocks[obj_id] = boolOpBlock
             elif resp[0] == 3:
                 cords = self.stableCanvas.controlBlock_coords(0, 0)
-                self.moveCanvas.create_polygon(cords, fill='orange')
-                ifBlock = IfBlock
-                ifBlock.coords = [0, 0]
-                ifBlock.obj_id = self.obj_id
-                ifBlock.color = 'orange'
-                ifBlock.upper_magnet = [37.5, 2.5]
-                ifBlock.lower_magnet = [42.5, 32.5]
-                ifBlock.lower_lower_magnet = [37.5, 92.5]
-                self.upper_magnets[self.obj_id] = ifBlock.upper_magnet
-                self.lower_magnets[self.obj_id] = ifBlock.lower_magnet
-                # self.lower_magnets[self.obj_id] = ifBlock.lower_lower_magnet -- id oleks sama mis eelmisel real!
-                self.movable_blocks[self.obj_id] = ifBlock
-                self.obj_id += 1
+                obj_id = self.moveCanvas.create_polygon(cords, fill='orange')
+                ifBlock = IfBlock([0,0], obj_id, 'orange')
+                self.movable_blocks[obj_id] = ifBlock
 
 
 def main():

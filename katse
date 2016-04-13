@@ -16,6 +16,11 @@ class IfBlock(Block):
         # ülemine ühendus, alumine ühendus, kõige alumine ühendus, tingimus
         self.connected = [None, None, None, None]
 
+    def renewMagnets(self):
+        upper_magnet = [self.coords[0]+40, self.coords[1]+5]
+        lower_magnet = [self.coords[0]+50, self.coords[1]+35]
+        return [upper_magnet, lower_magnet]
+
 
 class AssignBlock(Block):
 
@@ -23,6 +28,11 @@ class AssignBlock(Block):
         super().__init__(coords, obj_id, color)
         # ülemine, alumine
         self.connected = [None, None]
+
+    def renewMagnets(self):
+        upper_magnet = [self.coords[0]+40, self.coords[1]+5]
+        lower_magnet = [self.coords[0]+40, self.coords[1]+40]
+        return [upper_magnet, lower_magnet]
 
 
 class BoolOpBlock(Block):
@@ -33,7 +43,7 @@ class BoolOpBlock(Block):
         self.connected = [None]
 
 
-class BlockCanvas:
+class ChooseBlocksCanvas:
     def __init__(self, root):
         self.top = Toplevel(root)
         self.canvas = Canvas(self.top, width=500, height=500, bg="white", highlightthickness=0)
@@ -52,7 +62,7 @@ class BlockCanvas:
                   x+45, y+35, x+40, y+40,
                   x+25, y+40, x+20, y+35,
                   x+5, y+35, x, y+30,
-                  x, y]
+                  x, y+5]
         return points
 
     @staticmethod
@@ -65,15 +75,13 @@ class BlockCanvas:
                   x+55, y+30, x+50, y+35,
                   x+35, y+35, x+30, y+30,
                   x+15, y+30, x+10, y+35,
-                  x+10, y+65, x+15, y+70,
-                  x+30, y+70, x+35, y+75,
-                  x+35, y+75, x+50, y+75,
-                  x+55, y+70, x+115, y+70,
-                  x+120, y+75, x+120, y+85,
-                  x+115, y+90, x+45, y+90,
-                  x+40, y+95, x+25, y+95,
-                  x+20, y+90, x+5, y+90,
-                  x, y+85, x, y+5]
+                  x+10, y+63, x+15, y+68,
+                  x+115, y+68, x+120, y+73,
+                  x+120, y+83,
+                  x+115, y+88, x+45, y+88,
+                  x+40, y+93, x+25, y+93,
+                  x+20, y+88, x+5, y+88,
+                  x, y+83, x, y+5]
         return points
 
     @staticmethod
@@ -93,7 +101,7 @@ class BlockCanvas:
         self.canvas.bind("<ButtonPress-1>", function)
 
 
-class MoveBlockCanvas(BlockCanvas):
+class MoveBlocksCanvas(ChooseBlocksCanvas):
 
     def __init__(self, root):
         super().__init__(root)
@@ -113,14 +121,20 @@ class MoveBlockCanvas(BlockCanvas):
             self.drag_data["y"] = event.y
 
     def onTokenButtonRelease(self, event):
-        #if self.drag_data["item"] is not None:
-            #c = Controller.movable_blocks[self.drag_data["item"]]
-            # print(Controller.movable_blocks)
-            # print(c.coords)
-            # print(self.canvas.find_closest(c.coords[0], c.coords[1], halo=30, start=c.obj_id))
-            # for k, v in Controller.movable_blocks.items():
-                # if c.upper_magnet == v.lower_magnet:
-                    # print("Jei")
+        if self.drag_data["item"] is not None:
+            class_instance = Controller.movable_blocks[self.drag_data["item"]]
+            magnet_x = class_instance.renewMagnets()[0][0]
+            magnet_y = class_instance.renewMagnets()[0][1]
+            # praegu leiab teise objekti, oleks vaja, et leiaks lower_magneteid
+            closest_object = self.canvas.find_closest(magnet_x, magnet_y, halo=30, start=self.drag_data["item"])
+            if closest_object[0] != self.drag_data["item"]:
+                stable_instance = Controller.movable_blocks[closest_object[0]]
+                stable_magnet = stable_instance.renewMagnets()
+                delta_x = stable_magnet[1][0]-magnet_x
+                delta_y = stable_magnet[1][1]-magnet_y
+                self.canvas.move(self.drag_data["item"], delta_x, delta_y)
+                old_coords = class_instance.coords
+                class_instance.coords = [old_coords[0]+delta_x, old_coords[1]+delta_y]
         self.drag_data["item"] = None
         self.drag_data["x"] = 0
         self.drag_data["y"] = 0
@@ -129,11 +143,9 @@ class MoveBlockCanvas(BlockCanvas):
         delta_x = event.x - self.drag_data["x"]
         delta_y = event.y - self.drag_data["y"]
         if self.drag_data["item"] is not None:
-            class_type = Controller.movable_blocks[self.drag_data["item"]]
-            old_coords = class_type.coords
-            class_type.coords = [old_coords[0]+delta_x, old_coords[1]+delta_y]
-            print(class_type.coords)
-            print(self.drag_data)
+            class_instance = Controller.movable_blocks[self.drag_data["item"]]
+            old_coords = class_instance.coords
+            class_instance.coords = [old_coords[0]+delta_x, old_coords[1]+delta_y]
             self.canvas.move(self.drag_data["item"], delta_x, delta_y)
             self.drag_data["x"] = event.x
             self.drag_data["y"] = event.y
@@ -152,7 +164,6 @@ class Controller:
         self.stableCanvas = t1
         self.moveCanvas = t2
         self.stableCanvas.bind(self.create_blocks)
-        self.movable_blocks = Controller.movable_blocks
 
     def create_blocks(self, event):
         self.stableCanvas.getFocusSet()
@@ -179,10 +190,10 @@ def main():
     root = Tk()
     root.geometry("+1+1")
     Button(command=root.quit, text="Quit").pack()
-    t1 = BlockCanvas(root)
+    t1 = ChooseBlocksCanvas(root)
     t1.top.geometry("+10+100")
-    BlockCanvas.create_blocks_fst(t1)
-    t2 = MoveBlockCanvas(root)
+    ChooseBlocksCanvas.create_blocks_fst(t1)
+    t2 = MoveBlocksCanvas(root)
     t2.top.geometry("+520+100")
     Controller(t1, t2)
     root.mainloop()

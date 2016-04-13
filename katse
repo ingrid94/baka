@@ -38,6 +38,9 @@ class BoolOpBlock(Block):
         # mis bloki sees on
         self.connected = [None]
 
+    def renewMagnets(self):
+        magnet = [self.coords[0], self.coords[1] + 5]
+        return magnet
 
 class ChooseBlocksCanvas:
     def __init__(self, root):
@@ -89,9 +92,9 @@ class ChooseBlocksCanvas:
         return points
 
     def create_blocks_fst(self):
-        self.canvas.create_polygon(self.commandBlock_coords(50, 100), fill='violet red')
-        self.canvas.create_polygon(self.functionBlock_coords(50, 200), fill='dodger blue')
-        self.canvas.create_polygon(self.controlBlock_coords(50, 300), fill='orange')
+        self.canvas.create_polygon(self.commandBlock_coords(50, 100), fill='violet red', outline='purple')
+        self.canvas.create_polygon(self.functionBlock_coords(50, 200), fill='dodger blue', outline='steel blue')
+        self.canvas.create_polygon(self.controlBlock_coords(50, 300), fill='orange', outline='chocolate')
 
     def bind(self, function):
         self.canvas.bind("<ButtonPress-1>", function)
@@ -184,6 +187,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         if line_key is not None:
             del Controller.movable_blocks[line_key]
 
+
 class Controller:
     movable_blocks = {}
 
@@ -198,17 +202,17 @@ class Controller:
         if len(resp) != 0:
             if resp[0] == 1:
                 cords = self.stableCanvas.commandBlock_coords(0, 0)
-                obj_id = self.moveCanvas.create_polygon(cords, fill='violet red')
+                obj_id = self.moveCanvas.create_polygon(cords, fill='violet red', outline='purple')
                 assignBlock = AssignBlock([0, 0], obj_id, 'violet red')
                 self.movable_blocks[obj_id] = assignBlock
             elif resp[0] == 2:
                 cords = self.stableCanvas.functionBlock_coords(0, 0)
-                obj_id = self.moveCanvas.create_polygon(cords, fill='dodger blue')
+                obj_id = self.moveCanvas.create_polygon(cords, fill='dodger blue', outline='steel blue')
                 boolOpBlock = BoolOpBlock([0, 0], obj_id, 'dodger blue')
                 self.movable_blocks[obj_id] = boolOpBlock
             elif resp[0] == 3:
                 cords = self.stableCanvas.controlBlock_coords(0, 0)
-                obj_id = self.moveCanvas.create_polygon(cords, fill='orange')
+                obj_id = self.moveCanvas.create_polygon(cords, fill='orange', outline='chocolate')
                 ifBlock = IfBlock([0, 0], obj_id, 'orange')
                 self.movable_blocks[obj_id] = ifBlock
 

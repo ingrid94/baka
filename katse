@@ -101,10 +101,33 @@ class ChooseBlocksCanvas:
 
 
 class MoveBlocksCanvas(ChooseBlocksCanvas):
-    def __init__(self, root):
+    def __init__(self, root, t1):
         super().__init__(root)
         self.drag_data = {"x": 0, "y": 0, "item": None}
         self.binding()
+        self.stableCanvas = t1
+        self.stableCanvas.bind(self.create_blocks)
+        self.movable_blocks = {}
+
+    def create_blocks(self, event):
+        self.stableCanvas.getFocusSet()
+        resp = event.widget.find_overlapping(event.x, event.y, event.x, event.y)
+        if len(resp) != 0:
+            if resp[0] == 1:
+                cords = self.stableCanvas.commandBlock_coords(0, 0)
+                obj_id = self.create_polygon(cords, fill='violet red', outline='purple')
+                assignBlock = AssignBlock([0, 0], obj_id, 'violet red')
+                self.movable_blocks[obj_id] = assignBlock
+            elif resp[0] == 2:
+                cords = self.stableCanvas.functionBlock_coords(0, 0)
+                obj_id = self.create_polygon(cords, fill='dodger blue', outline='steel blue')
+                boolOpBlock = BoolOpBlock([0, 0], obj_id, 'dodger blue')
+                self.movable_blocks[obj_id] = boolOpBlock
+            elif resp[0] == 3:
+                cords = self.stableCanvas.controlBlock_coords(0, 0)
+                obj_id = self.create_polygon(cords, fill='orange', outline='chocolate')
+                ifBlock = IfBlock([0, 0], obj_id, 'orange')
+                self.movable_blocks[obj_id] = ifBlock
 
     def create_polygon(self, args, **kw):
         return self.canvas.create_polygon(args, kw)
@@ -120,17 +143,17 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
 
     def onTokenButtonRelease(self, event):
         if self.drag_data["item"] is not None:
-            class_instance = Controller.movable_blocks[self.drag_data["item"]]
+            class_instance = self.movable_blocks[self.drag_data["item"]]
             magnet_x = class_instance.renewMagnets()[0][0]
             magnet_y = class_instance.renewMagnets()[0][1]
             # praegu leiab teise objekti, oleks vaja, et leiaks lower_magneteid
             closest_object = self.canvas.find_closest(magnet_x, magnet_y, halo=30, start=self.drag_data["item"])
             # kustutab lahti laskmisel klotsilt märke
-            if "line" in Controller.movable_blocks.values():
+            if "line" in self.movable_blocks.values():
                 self.line_delete()
             # lahti laskmisel paneb klotsi õigesse kohta
             if closest_object[0] != self.drag_data["item"]:
-                stable_instance = Controller.movable_blocks[closest_object[0]]
+                stable_instance = self.movable_blocks[closest_object[0]]
                 stable_magnet = stable_instance.renewMagnets()
                 delta_x = stable_magnet[1][0] - magnet_x
                 delta_y = stable_magnet[1][1] - magnet_y
@@ -146,7 +169,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         delta_y = event.y - self.drag_data["y"]
         if self.drag_data["item"] is not None:
             # muudab klotsi koordinaate ja liigutab seda
-            class_instance = Controller.movable_blocks[self.drag_data["item"]]
+            class_instance = self.movable_blocks[self.drag_data["item"]]
             old_coords = class_instance.coords
             class_instance.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y]
             self.canvas.move(self.drag_data["item"], delta_x, delta_y)
@@ -157,9 +180,9 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             magnet_x = class_instance.renewMagnets()[0][0]
             magnet_y = class_instance.renewMagnets()[0][1]
             # praegu leiab teise objekti, oleks vaja, et leiaks lower_magneteid
-            closest_object = self.canvas.find_closest(magnet_x, magnet_y, halo=30, start=self.drag_data["item"])
-            if closest_object[0] != self.drag_data["item"] and Controller.movable_blocks[closest_object[0]] != "line":
-                stable_instance = Controller.movable_blocks[closest_object[0]]
+            closest_object = self.canvas.find_closest(magnet_x, magnet_y, halo=20, start=self.drag_data["item"])
+            if closest_object[0] != self.drag_data["item"] and self.movable_blocks[closest_object[0]] != "line":
+                stable_instance = self.movable_blocks[closest_object[0]]
                 stable_coords = stable_instance.renewMagnets()
                 line_x = stable_coords[1][0]
                 line_y = stable_coords[1][1]
@@ -167,9 +190,9 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 line_id = self.canvas.create_line(line_x - 20, line_y - 5, line_x - 15, line_y,
                                                   line_x, line_y, line_x + 5, line_y - 5,
                                                   fill="green", width=3)
-                Controller.movable_blocks[line_id] = "line"
+                self.movable_blocks[line_id] = "line"
             # kustutab märke klotsi juurest
-            elif closest_object[0] == self.drag_data["item"] and "line" in Controller.movable_blocks.values():
+            elif closest_object[0] == self.drag_data["item"] and "line" in self.movable_blocks.values():
                 self.line_delete()
 
     def binding(self):
@@ -180,41 +203,12 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
     # highlighti kustutamiseks meetod
     def line_delete(self):
         line_key = None
-        for key in Controller.movable_blocks:
-            if Controller.movable_blocks[key] == "line":
+        for key in self.movable_blocks:
+            if self.movable_blocks[key] == "line":
                 self.canvas.delete(key)
                 line_key = key
         if line_key is not None:
-            del Controller.movable_blocks[line_key]
-
-
-class Controller:
-    movable_blocks = {}
-
-    def __init__(self, t1, t2):
-        self.stableCanvas = t1
-        self.moveCanvas = t2
-        self.stableCanvas.bind(self.create_blocks)
-
-    def create_blocks(self, event):
-        self.stableCanvas.getFocusSet()
-        resp = event.widget.find_overlapping(event.x, event.y, event.x, event.y)
-        if len(resp) != 0:
-            if resp[0] == 1:
-                cords = self.stableCanvas.commandBlock_coords(0, 0)
-                obj_id = self.moveCanvas.create_polygon(cords, fill='violet red', outline='purple')
-                assignBlock = AssignBlock([0, 0], obj_id, 'violet red')
-                self.movable_blocks[obj_id] = assignBlock
-            elif resp[0] == 2:
-                cords = self.stableCanvas.functionBlock_coords(0, 0)
-                obj_id = self.moveCanvas.create_polygon(cords, fill='dodger blue', outline='steel blue')
-                boolOpBlock = BoolOpBlock([0, 0], obj_id, 'dodger blue')
-                self.movable_blocks[obj_id] = boolOpBlock
-            elif resp[0] == 3:
-                cords = self.stableCanvas.controlBlock_coords(0, 0)
-                obj_id = self.moveCanvas.create_polygon(cords, fill='orange', outline='chocolate')
-                ifBlock = IfBlock([0, 0], obj_id, 'orange')
-                self.movable_blocks[obj_id] = ifBlock
+            del self.movable_blocks[line_key]
 
 
 def main():
@@ -224,10 +218,8 @@ def main():
     t1 = ChooseBlocksCanvas(root)
     t1.top.geometry("+10+100")
     ChooseBlocksCanvas.create_blocks_fst(t1)
-    t2 = MoveBlocksCanvas(root)
+    t2 = MoveBlocksCanvas(root, t1)
     t2.top.geometry("+520+100")
-    Controller(t1, t2)
     root.mainloop()
-
 
 main()

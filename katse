@@ -2,17 +2,24 @@ from tkinter import *
 
 
 class Block:
-    def __init__(self, coords, obj_id, color):
+    def __init__(self, coords, canvas, poly_cords):
         self.coords = coords
-        self.id = obj_id
-        self.color = color
+        self.canvas = canvas
+        self.poly_cords = poly_cords
 
 
 class IfBlock(Block):
-    def __init__(self, coords, obj_id, color):
-        super().__init__(coords, obj_id, color)
+    def __init__(self, coords, canvas, poly_cords):
+        super().__init__(coords, canvas, poly_cords)
         # ülemine ühendus, alumine ühendus, kõige alumine ühendus, tingimus
         self.connected = [None, None, None, None]
+        self.color = 'orange'
+        self.outline = 'chocolate'
+        self.obj_id = None
+
+    def create_polygon(self):
+        self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
+        return self.obj_id
 
     def renewMagnets(self):
         upper_magnet = [self.coords[0] + 40, self.coords[1] + 5]
@@ -21,10 +28,17 @@ class IfBlock(Block):
 
 
 class AssignBlock(Block):
-    def __init__(self, coords, obj_id, color):
-        super().__init__(coords, obj_id, color)
+    def __init__(self, coords, canvas, poly_cords):
+        super().__init__(coords, canvas, poly_cords)
         # ülemine, alumine
         self.connected = [None, None]
+        self.color = 'violet red'
+        self.outline = 'purple'
+        self.obj_id = None
+
+    def create_polygon(self):
+        self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
+        return self.obj_id
 
     def renewMagnets(self):
         upper_magnet = [self.coords[0] + 40, self.coords[1] + 5]
@@ -33,14 +47,22 @@ class AssignBlock(Block):
 
 
 class BoolOpBlock(Block):
-    def __init__(self, coords, obj_id, color):
-        super().__init__(coords, obj_id, color)
+    def __init__(self, coords, canvas, poly_cords):
+        super().__init__(coords, canvas, poly_cords)
         # mis bloki sees on
         self.connected = [None]
+        self.color = 'dodger blue'
+        self.outline = 'steel blue'
+        self.obj_id = None
+
+    def create_polygon(self):
+        self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
+        return self.obj_id
 
     def renewMagnets(self):
         magnet = [self.coords[0], self.coords[1] + 5]
         return magnet
+
 
 class ChooseBlocksCanvas:
     def __init__(self, root):
@@ -115,18 +137,21 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         if len(resp) != 0:
             if resp[0] == 1:
                 cords = self.stableCanvas.commandBlock_coords(0, 0)
-                obj_id = self.create_polygon(cords, fill='violet red', outline='purple')
-                assignBlock = AssignBlock([0, 0], obj_id, 'violet red')
+                # obj_id = self.create_polygon(cords, fill='violet red', outline='purple')
+                assignBlock = AssignBlock([0, 0], self.canvas, cords)
+                obj_id = assignBlock.create_polygon()
                 self.movable_blocks[obj_id] = assignBlock
             elif resp[0] == 2:
                 cords = self.stableCanvas.functionBlock_coords(0, 0)
-                obj_id = self.create_polygon(cords, fill='dodger blue', outline='steel blue')
-                boolOpBlock = BoolOpBlock([0, 0], obj_id, 'dodger blue')
+                # obj_id = self.create_polygon(cords, fill='dodger blue', outline='steel blue')
+                boolOpBlock = BoolOpBlock([0, 0], self.canvas, cords)
+                obj_id = boolOpBlock.create_polygon()
                 self.movable_blocks[obj_id] = boolOpBlock
             elif resp[0] == 3:
                 cords = self.stableCanvas.controlBlock_coords(0, 0)
-                obj_id = self.create_polygon(cords, fill='orange', outline='chocolate')
-                ifBlock = IfBlock([0, 0], obj_id, 'orange')
+                # obj_id = self.create_polygon(cords, fill='orange', outline='chocolate')
+                ifBlock = IfBlock([0, 0], self.canvas, cords)
+                obj_id = ifBlock.create_polygon()
                 self.movable_blocks[obj_id] = ifBlock
 
     def create_polygon(self, args, **kw):

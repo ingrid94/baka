@@ -8,7 +8,7 @@ class Block:
         self.poly_cords = poly_cords
 
 
-class IfBlock(Block):
+class ControlBlock(Block):
     def __init__(self, coords, canvas, poly_cords):
         super().__init__(coords, canvas, poly_cords)
         # ülemine ühendus, alumine ühendus, kõige alumine ühendus, tingimus
@@ -26,8 +26,33 @@ class IfBlock(Block):
         lower_magnet = [self.coords[0] + 50, self.coords[1] + 35]
         return [upper_magnet, lower_magnet]
 
+    def change_coords(self, delta_x, delta_y):
+        old_coords = self.coords
+        self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y, old_coords[2]]
+        self.canvas.move(self.obj_id, delta_x, delta_y)
 
-class AssignBlock(Block):
+    def move_magnets(self, movable_blocks):
+    # magnetide liigutamine ja kontrollimine liikumise pealt ning nende märkimine
+        magnet_x = self.renewMagnets()[0][0]
+        magnet_y = self.renewMagnets()[0][1]
+        # leiab lähima objekti
+        closest_object = self.canvas.find_closest(magnet_x, magnet_y, halo=20, start=self.obj_id)
+        if closest_object[0] != self.obj_id and movable_blocks[closest_object[0]] != "line":
+            stable_instance = movable_blocks[closest_object[0]]
+            stable_coords = stable_instance.renewMagnets()
+            line_x = stable_coords[1][0]
+            line_y = stable_coords[1][1]
+            # joonistab klotsile märke
+            line_id = self.canvas.create_line(line_x - 20, line_y - 5, line_x - 15, line_y,
+                                                  line_x, line_y, line_x + 5, line_y - 5,
+                                                  fill="green", width=3)
+            movable_blocks[line_id] = "line"
+        # kustutab märke klotsi juurest
+        elif closest_object[0] == self.obj_id and "line" in movable_blocks.values():
+            self.canvas.line_delete()
+
+
+class CommandBlock(Block):
     def __init__(self, coords, canvas, poly_cords):
         super().__init__(coords, canvas, poly_cords)
         # ülemine, alumine
@@ -45,8 +70,32 @@ class AssignBlock(Block):
         lower_magnet = [self.coords[0] + 40, self.coords[1] + 40]
         return [upper_magnet, lower_magnet]
 
+    def change_coords(self, delta_x, delta_y):
+        old_coords = self.coords
+        self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y]
+        self.canvas.move(self.obj_id, delta_x, delta_y)
 
-class BoolOpBlock(Block):
+    def move_magnets(self, movable_blocks):
+    # magnetide liigutamine ja kontrollimine liikumise pealt ning nende märkimine
+        magnet_x = self.renewMagnets()[0][0]
+        magnet_y = self.renewMagnets()[0][1]
+        # leiab lähima objekti
+        closest_object = self.canvas.find_closest(magnet_x, magnet_y, halo=20, start=self.obj_id)
+        if closest_object[0] != self.obj_id and movable_blocks[closest_object[0]] != "line":
+            stable_instance = movable_blocks[closest_object[0]]
+            stable_coords = stable_instance.renewMagnets()
+            line_x = stable_coords[1][0]
+            line_y = stable_coords[1][1]
+            # joonistab klotsile märke
+            line_id = self.canvas.create_line(line_x - 20, line_y - 5, line_x - 15, line_y,
+                                                  line_x, line_y, line_x + 5, line_y - 5,
+                                                  fill="green", width=3)
+            movable_blocks[line_id] = "line"
+        # kustutab märke klotsi juurest
+        elif closest_object[0] == self.obj_id and "line" in movable_blocks.values():
+            self.canvas.line_delete()
+
+class FunctionBlock(Block):
     def __init__(self, coords, canvas, poly_cords):
         super().__init__(coords, canvas, poly_cords)
         # mis bloki sees on
@@ -62,6 +111,31 @@ class BoolOpBlock(Block):
     def renewMagnets(self):
         magnet = [self.coords[0], self.coords[1] + 5]
         return magnet
+
+    def change_coords(self, delta_x, delta_y):
+        old_coords = self.coords
+        self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y]
+        self.canvas.move(self.obj_id, delta_x, delta_y)
+
+    def move_magnets(self, movable_blocks):
+    # magnetide liigutamine ja kontrollimine liikumise pealt ning nende märkimine
+        magnet_x = self.renewMagnets()[0][0]
+        magnet_y = self.renewMagnets()[0][1]
+        # leiab lähima objekti
+        closest_object = self.canvas.find_closest(magnet_x, magnet_y, halo=20, start=self.obj_id)
+        if closest_object[0] != self.obj_id and movable_blocks[closest_object[0]] != "line":
+            stable_instance = movable_blocks[closest_object[0]]
+            stable_coords = stable_instance.renewMagnets()
+            line_x = stable_coords[1][0]
+            line_y = stable_coords[1][1]
+            # joonistab klotsile märke
+            line_id = self.canvas.create_line(line_x - 20, line_y - 5, line_x - 15, line_y,
+                                                  line_x, line_y, line_x + 5, line_y - 5,
+                                                  fill="green", width=3)
+            movable_blocks[line_id] = "line"
+        # kustutab märke klotsi juurest
+        elif closest_object[0] == self.obj_id and "line" in movable_blocks.values():
+            self.canvas.line_delete()
 
 
 class ChooseBlocksCanvas:
@@ -87,7 +161,7 @@ class ChooseBlocksCanvas:
         return points
 
     @staticmethod
-    def controlBlock_coords(x, y):
+    def controlBlock_coords(x, y, z):
         points = [x, y + 5, x + 5, y,
                   x + 20, y, x + 25, y + 5,
                   x + 40, y + 5, x + 45, y,
@@ -96,13 +170,13 @@ class ChooseBlocksCanvas:
                   x + 55, y + 30, x + 50, y + 35,
                   x + 35, y + 35, x + 30, y + 30,
                   x + 15, y + 30, x + 10, y + 35,
-                  x + 10, y + 63, x + 15, y + 68,
-                  x + 115, y + 68, x + 120, y + 73,
-                  x + 120, y + 83,
-                  x + 115, y + 88, x + 45, y + 88,
-                  x + 40, y + 93, x + 25, y + 93,
-                  x + 20, y + 88, x + 5, y + 88,
-                  x, y + 83, x, y + 5]
+                  x + 10, y + 63 + z, x + 15, y + 68 + z,
+                  x + 115, y + 68 + z, x + 120, y + 73 + z,
+                  x + 120, y + 83 + z,
+                  x + 115, y + 88 + z, x + 45, y + 88 + z,
+                  x + 40, y + 93 + z, x + 25, y + 93 + z,
+                  x + 20, y + 88 + z, x + 5, y + 88 + z,
+                  x, y + 83 + z, x, y + 5]
         return points
 
     @staticmethod
@@ -116,7 +190,7 @@ class ChooseBlocksCanvas:
     def create_blocks_fst(self):
         self.canvas.create_polygon(self.commandBlock_coords(50, 100), fill='violet red', outline='purple')
         self.canvas.create_polygon(self.functionBlock_coords(50, 200), fill='dodger blue', outline='steel blue')
-        self.canvas.create_polygon(self.controlBlock_coords(50, 300), fill='orange', outline='chocolate')
+        self.canvas.create_polygon(self.controlBlock_coords(50, 300, 0), fill='orange', outline='chocolate')
 
     def bind(self, function):
         self.canvas.bind("<ButtonPress-1>", function)
@@ -137,25 +211,23 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         if len(resp) != 0:
             if resp[0] == 1:
                 cords = self.stableCanvas.commandBlock_coords(0, 0)
-                # obj_id = self.create_polygon(cords, fill='violet red', outline='purple')
-                assignBlock = AssignBlock([0, 0], self.canvas, cords)
+                assignBlock = CommandBlock([0, 0], self.canvas, cords)
                 obj_id = assignBlock.create_polygon()
                 self.movable_blocks[obj_id] = assignBlock
             elif resp[0] == 2:
                 cords = self.stableCanvas.functionBlock_coords(0, 0)
-                # obj_id = self.create_polygon(cords, fill='dodger blue', outline='steel blue')
-                boolOpBlock = BoolOpBlock([0, 0], self.canvas, cords)
+                boolOpBlock = FunctionBlock([0, 0], self.canvas, cords)
                 obj_id = boolOpBlock.create_polygon()
                 self.movable_blocks[obj_id] = boolOpBlock
             elif resp[0] == 3:
-                cords = self.stableCanvas.controlBlock_coords(0, 0)
-                # obj_id = self.create_polygon(cords, fill='orange', outline='chocolate')
-                ifBlock = IfBlock([0, 0], self.canvas, cords)
+                cords = self.stableCanvas.controlBlock_coords(0, 0, 0)
+                ifBlock = ControlBlock([0, 0, 0], self.canvas, cords)
                 obj_id = ifBlock.create_polygon()
                 self.movable_blocks[obj_id] = ifBlock
 
     def create_polygon(self, args, **kw):
         return self.canvas.create_polygon(args, kw)
+
 
     def onTokenButtonPress(self, event):
         active = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
@@ -171,7 +243,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             class_instance = self.movable_blocks[self.drag_data["item"]]
             magnet_x = class_instance.renewMagnets()[0][0]
             magnet_y = class_instance.renewMagnets()[0][1]
-            # praegu leiab teise objekti, oleks vaja, et leiaks lower_magneteid
+            # leiab lähima objekti magnetile
             closest_object = self.canvas.find_closest(magnet_x, magnet_y, halo=30, start=self.drag_data["item"])
             # kustutab lahti laskmisel klotsilt märke
             if "line" in self.movable_blocks.values():
@@ -184,7 +256,21 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 delta_y = stable_magnet[1][1] - magnet_y
                 self.canvas.move(self.drag_data["item"], delta_x, delta_y)
                 old_coords = class_instance.coords
-                class_instance.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y]
+                if len(class_instance.coords) == 3:
+                    class_instance.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y, old_coords[2]]
+                else:
+                    class_instance.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y]
+                stable_instance.connected[1] = class_instance
+                class_instance.connected[0] = stable_instance
+                if isinstance(stable_instance, ControlBlock):
+                    stable_coords = stable_instance.coords
+                    cords = self.stableCanvas.controlBlock_coords(stable_coords[0], stable_coords[1], stable_coords[2]+35)
+                    stable_instance.poly_cords = cords
+                    stable_instance.coords[2] = 35
+                    self.canvas.delete(stable_instance.obj_id)
+                    stable_instance.create_polygon()
+                    self.movable_blocks[stable_instance.obj_id] = stable_instance
+
         self.drag_data["item"] = None
         self.drag_data["x"] = 0
         self.drag_data["y"] = 0
@@ -195,30 +281,11 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         if self.drag_data["item"] is not None:
             # muudab klotsi koordinaate ja liigutab seda
             class_instance = self.movable_blocks[self.drag_data["item"]]
-            old_coords = class_instance.coords
-            class_instance.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y]
-            self.canvas.move(self.drag_data["item"], delta_x, delta_y)
+            class_instance.change_coords(delta_x, delta_y)
             self.drag_data["x"] = event.x
             self.drag_data["y"] = event.y
+            class_instance.move_magnets(self.movable_blocks)
 
-            # magnetide liigutamine ja kontrollimine liikumise pealt ning nende märkimine
-            magnet_x = class_instance.renewMagnets()[0][0]
-            magnet_y = class_instance.renewMagnets()[0][1]
-            # praegu leiab teise objekti, oleks vaja, et leiaks lower_magneteid
-            closest_object = self.canvas.find_closest(magnet_x, magnet_y, halo=20, start=self.drag_data["item"])
-            if closest_object[0] != self.drag_data["item"] and self.movable_blocks[closest_object[0]] != "line":
-                stable_instance = self.movable_blocks[closest_object[0]]
-                stable_coords = stable_instance.renewMagnets()
-                line_x = stable_coords[1][0]
-                line_y = stable_coords[1][1]
-                # joonistab klotsile märke
-                line_id = self.canvas.create_line(line_x - 20, line_y - 5, line_x - 15, line_y,
-                                                  line_x, line_y, line_x + 5, line_y - 5,
-                                                  fill="green", width=3)
-                self.movable_blocks[line_id] = "line"
-            # kustutab märke klotsi juurest
-            elif closest_object[0] == self.drag_data["item"] and "line" in self.movable_blocks.values():
-                self.line_delete()
 
     def binding(self):
         self.canvas.bind("<ButtonPress-1>", self.onTokenButtonPress)

@@ -68,7 +68,6 @@ class ControlBlock(Block):
         old_coords = self.coords
         self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y, old_coords[2], old_coords[3]]
         self.canvas.move(self.obj_id, delta_x, delta_y)
-        self.lower_block()
         self.renew_magnets()
 
     def move_connected(self, delta_x, delta_y):
@@ -89,6 +88,7 @@ class ControlBlock(Block):
             self.move_connected(delta_x, delta_y)
             stable_instance.connected[1] = self
             self.connected[0] = stable_instance
+            self.check_control_block(movable_blocks)
 
     def disconnect_magnet(self):
         self.connected[0].connected[1] = None
@@ -96,7 +96,9 @@ class ControlBlock(Block):
 
     def get_length(self):
         blo_len = self.coords[2] + self.coords[3]
-        if self.connected[1] is not None:
+        if self.connected[0] is not None:
+            return blo_len
+        elif self.connected[1] is not None:
             blo_len += self.connected[1].get_length()
         return blo_len
 
@@ -109,10 +111,12 @@ class ControlBlock(Block):
         self.obj_id = self.create_polygon()
         movable_blocks[self.obj_id] = self
 
-    def lower_block(self):
-        self.canvas.tag_lower(self.obj_id)
-        if self.connected[1] is not None:
-            self.connected[1].lower_block()
+    def check_control_block(self, movable_blocks):
+        if self.connected[0].connected[0] is not None:
+            self.connected[0].check_control_block(movable_blocks)
+        if isinstance(self.connected[0], ControlBlock):
+            self.connected[0].redraw(movable_blocks)
+        self.canvas.tag_raise(self.obj_id)
 
 
 class CommandBlock(Block):
@@ -136,7 +140,6 @@ class CommandBlock(Block):
         old_coords = self.coords
         self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y, old_coords[2]]
         self.canvas.move(self.obj_id, delta_x, delta_y)
-        self.lower_block()
         self.renew_magnets()
 
     def move_connected(self, delta_x, delta_y):
@@ -175,10 +178,6 @@ class CommandBlock(Block):
         if isinstance(self.connected[0], ControlBlock):
             self.connected[0].redraw(movable_blocks)
         self.canvas.tag_raise(self.obj_id)
-
-    def lower_block(self):
-        if self.connected[1] is not None:
-            self.connected[1].lower_block()
 
 
 class FunctionBlock(Block):
@@ -260,13 +259,13 @@ class ChooseBlocksCanvas:
                   x + 55, y + z, x + 50, y + z+5,
                   x + 35, y + z+5, x + 30, y + z,
                   x + 15, y + z, x + 10, y + z+5,
-                  x + 10, y + w+28, x + 15, y + w+33,
-                  x + 115, y + w+33, x + 120, y + w+38,
-                  x + 120, y + w+48,
-                  x + 115, y + w+53, x + 45, y + w+53,
-                  x + 40, y + w+58, x + 25, y + w+58,
-                  x + 20, y + w+53, x + 5, y + w+53,
-                  x, y + w+48, x, y + 5]
+                  x + 10, y + w+35, x + 15, y + w+40,
+                  x + 85, y + w+40, x + 90, y + w+45,
+                  x + 90, y + w+50,
+                  x + 85, y + w+55, x + 45, y + w+55,
+                  x + 40, y + w+60, x + 25, y + w+60,
+                  x + 20, y + w+55, x + 5, y + w+55,
+                  x, y + w+50, x, y + 5]
         return points
 
     @staticmethod

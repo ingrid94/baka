@@ -11,31 +11,31 @@ class Block:
     def get_closest(self, movable_blocks):
         magnet_x = movable_blocks[self.obj_id].renew_magnets()[0][0]
         magnet_y = movable_blocks[self.obj_id].renew_magnets()[0][1]
-        # leiab lähima objekti magnetile
+        # finds closest object to magnet
         closest_object = self.canvas.find_closest(magnet_x, magnet_y, halo=20, start=self.obj_id)
-        # kui sõnestikus on "line", siis kustutab selle
+        # if there is "line" in dictionary then deletes it
         if "line" in movable_blocks.values():
             self.line_delete(movable_blocks)
         return closest_object
 
     def check_magnets_during_move(self, movable_blocks):
-        # magnetide liigutamine ja kontrollimine liikumise pealt ning nende märkimine
+        # moves magnets also checks other blocks and marks them
         closest_object = self.get_closest(movable_blocks)
         if closest_object[0] != self.obj_id and movable_blocks[closest_object[0]] != "line":
             stable_instance = movable_blocks[closest_object[0]]
             stable_coords = stable_instance.renew_magnets()
             line_x = stable_coords[1][0]
             line_y = stable_coords[1][1]
-            # joonistab klotsile märke "line"
+            # draws "line" mark to the block
             line_id = self.canvas.create_line(line_x - 20, line_y - 5, line_x - 15, line_y,
                                               line_x, line_y, line_x + 5, line_y - 5,
                                               fill="green", width=3)
             movable_blocks[line_id] = "line"
-        # kustutab märke klotsi juurest
+        # deletes "line" mark
         elif closest_object[0] == self.obj_id and "line" in movable_blocks.values():
             self.line_delete(movable_blocks)
 
-    # highlighti kustutamiseks meetod
+    # deletes "line" mark
     def line_delete(self, movable_blocks):
         line_key = None
         for key in movable_blocks:
@@ -49,7 +49,7 @@ class Block:
 class ControlBlock(Block):
     def __init__(self, coords, canvas, stable_canvas, poly_cords):
         super().__init__(coords, canvas, poly_cords)
-        # ülemine ühendus, alumine ühendus, kõige alumine ühendus, tingimus
+        # upper connection, main lower connection,  the most lower connection, main inside connection
         self.connected = [None, None, None, None]
         self.color = 'orange'
         self.outline = 'chocolate'
@@ -76,7 +76,7 @@ class ControlBlock(Block):
             self.connected[1].move_connected(delta_x, delta_y)
 
     def move_to_magnet(self, movable_blocks):
-        # lahti laskmisel paneb klotsi õigesse kohta
+        # when mouse press is let go, puts the block in right place
         magnet_x = self.renew_magnets()[0][0]
         magnet_y = self.renew_magnets()[0][1]
         closest_object = self.get_closest(movable_blocks)
@@ -95,17 +95,20 @@ class ControlBlock(Block):
         self.connected[0] = None
 
     def get_length(self):
-        blo_len = self.coords[2] + self.coords[3]
+        blo_len = self.coords[2] + self.coords[3] + 25
         if self.connected[0] is not None:
             return blo_len
-        elif self.connected[1] is not None:
+        elif not isinstance(self.connected[1], ControlBlock):
             blo_len += self.connected[1].get_length()
+        if not isinstance(self.connected[0], ControlBlock):
+            self.connected[0].get_length()
         return blo_len
 
     def redraw(self, movable_blocks):
         blo_len = self.connected[1].get_length()
         self.coords[3] = blo_len
-        self.poly_cords = self.stableCanvas.control_block_coords(self.coords[0], self.coords[1], self.coords[2], blo_len)
+        self.poly_cords = self.stableCanvas.control_block_coords(self.coords[0], self.coords[1],
+                                                                 self.coords[2], blo_len)
         del movable_blocks[self.obj_id]
         self.canvas.delete(self.obj_id)
         self.obj_id = self.create_polygon()
@@ -116,13 +119,12 @@ class ControlBlock(Block):
             self.connected[0].check_control_block(movable_blocks)
         if isinstance(self.connected[0], ControlBlock):
             self.connected[0].redraw(movable_blocks)
-        self.canvas.tag_raise(self.obj_id)
 
 
 class CommandBlock(Block):
     def __init__(self, coords, canvas, poly_cords):
         super().__init__(coords, canvas, poly_cords)
-        # ülemine, alumine
+        # upper connection, lower connection
         self.connected = [None, None]
         self.color = 'violet red'
         self.outline = 'purple'
@@ -148,7 +150,7 @@ class CommandBlock(Block):
             self.connected[1].move_connected(delta_x, delta_y)
 
     def move_to_magnet(self, movable_blocks):
-        # lahti laskmisel paneb klotsi õigesse kohta
+        # when mouse press is let go, puts the block in right place
         magnet_x = self.renew_magnets()[0][0]
         magnet_y = self.renew_magnets()[0][1]
         closest_object = self.get_closest(movable_blocks)
@@ -177,13 +179,13 @@ class CommandBlock(Block):
             self.connected[0].check_control_block(movable_blocks)
         if isinstance(self.connected[0], ControlBlock):
             self.connected[0].redraw(movable_blocks)
-        self.canvas.tag_raise(self.obj_id)
+        # self.canvas.tag_raise(self.obj_id)
 
 
 class FunctionBlock(Block):
     def __init__(self, coords, canvas, poly_cords):
         super().__init__(coords, canvas, poly_cords)
-        # mis bloki sees on
+        # inside the block
         self.connected = [None]
         self.color = 'dodger blue'
         self.outline = 'steel blue'
@@ -209,7 +211,7 @@ class FunctionBlock(Block):
             self.connected[1].move_connected(delta_x, delta_y)
 
     def move_to_magnet(self, movable_blocks):
-        # lahti laskmisel paneb klotsi õigesse kohta
+        # when mouse press is let go, puts the block in right place
         magnet_x = self.renew_magnets()[0][0]
         magnet_y = self.renew_magnets()[0][1]
         closest_object = self.get_closest(movable_blocks)
@@ -249,7 +251,8 @@ class ChooseBlocksCanvas:
         return points
 
     @staticmethod
-    # x,y on ülemise vasaku nurga koordinaadid, z on tingimusbloki kõrgus, w on vahe+alumise riba kõrgus
+    # x,y are upper left side corner coordinates, z if hight of main block,
+    # w is length of commands (when condition true) and lower block part to connect with other blocks
     def control_block_coords(x, y, z, w):
         points = [x, y + 5, x + 5, y,
                   x + 20, y, x + 25, y + 5,
@@ -325,7 +328,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             self.canvas.tag_raise(peale)
             self.drag_data["x"] = event.x
             self.drag_data["y"] = event.y
-            # kui liigutamist alustada ja ülemine pole None, siis lahti ühendada
+            # when block is moved and upper isn't None, then disconnect
+            # to disconnect blocks which are connected
             if self.movable_blocks[peale].connected[0] is not None:
                 self.movable_blocks[peale].disconnect_magnet()
 
@@ -343,7 +347,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         delta_y = event.y - self.drag_data["y"]
         if self.drag_data["item"] is not None:
             class_instance = self.movable_blocks[self.drag_data["item"]]
-            # muudab koordinaate ja liigutab klotsi
+            # changes coordinates and moves blocks
             class_instance.move_connected(delta_x, delta_y)
             self.drag_data["x"] = event.x
             self.drag_data["y"] = event.y

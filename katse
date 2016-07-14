@@ -113,12 +113,22 @@ class ControlBlock(Block):
         self.canvas.delete(self.obj_id)
         self.obj_id = self.create_polygon()
         movable_blocks[self.obj_id] = self
+        if self.connected[0] is not None:
+            self.check_control_block(movable_blocks)
 
     def check_control_block(self, movable_blocks):
         if self.connected[0].connected[0] is not None:
             self.connected[0].check_control_block(movable_blocks)
         if isinstance(self.connected[0], ControlBlock):
             self.connected[0].redraw(movable_blocks)
+
+
+class ControlBlockLower(Block):
+    def __init__(self, coords, canvas, poly_cords):
+        super().__init__(coords, canvas, poly_cords)
+        # to which controlBlock it is, lower connection
+        self.connected = [None, None]
+        self.color = 'orange'
 
 
 class CommandBlock(Block):

@@ -226,19 +226,23 @@ class CommandBlock(Block):
         # self.canvas.tag_raise(self.obj_id)
 
 
-class FunctionBlock(Block):
-    def __init__(self, coords, canvas, poly_cords):
-        super().__init__(coords, canvas, poly_cords)
+class InsideBlock:
+    def __init__(self, coords, canvas, poly_cords, color, outline):
         # inside the block
-        self.connected = [None]
-        self.color = 'dodger blue'
-        self.outline = 'steel blue'
+        self.coords = coords
+        self.canvas = canvas
+        self.poly_cords = poly_cords
+        self.connected = []
+        self.connected_to_bigger_block = None
+        self.color = color
+        self.outline = outline
+        self.obj_id = None
 
     def create_polygon(self):
         self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
         return self.obj_id
 
-    def renew_magnets(self):
+    def renew_magnet(self):
         magnet = [self.coords[0], self.coords[1] + 5]
         return magnet
 
@@ -246,30 +250,45 @@ class FunctionBlock(Block):
         old_coords = self.coords
         self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y]
         self.canvas.move(self.obj_id, delta_x, delta_y)
-        self.move_connected(delta_x, delta_y)
-        self.renew_magnets()
-
-    def move_connected(self, delta_x, delta_y):
-        self.change_coords(delta_x, delta_y)
-        if self.connected[1] is not None:
-            self.connected[1].move_connected(delta_x, delta_y)
+        self.renew_magnet()
 
     def move_to_magnet(self, movable_blocks):
         # when mouse press is let go, puts the block in right place
-        magnet_x = self.renew_magnets()[0][0]
-        magnet_y = self.renew_magnets()[0][1]
-        closest_object = self.get_closest(movable_blocks)
-        if closest_object[0] != self.obj_id:
-            stable_instance = movable_blocks[closest_object[0]]
-            stable_magnet = stable_instance.renew_magnets()
-            delta_x = stable_magnet[1][0] - magnet_x
-            delta_y = stable_magnet[1][1] - magnet_y
-            self.move_connected(delta_x, delta_y)
-            stable_instance.connected[1] = self
-            self.connected[0] = stable_instance
+        magnet_x = self.renew_magnet()[0]
+        magnet_y = self.renew_magnet()[1]
+    #    closest_object = self.get_closest(movable_blocks)
+    #    if closest_object[0] != self.obj_id:
+    #        stable_instance = movable_blocks[closest_object[0]]
+    #        stable_magnet = stable_instance.renew_magnets()
+    #        delta_x = stable_magnet[1][0] - magnet_x
+    #        delta_y = stable_magnet[1][1] - magnet_y
+    #        self.move_connected(delta_x, delta_y)
+    #        stable_instance.connected[1] = self
+    #        self.connected[0] = stable_instance
 
     def disconnect_magnet(self):
-        self.connected[0] = None
+        self.connected_to_bigger_block = None
+
+
+class FunctionBlock(InsideBlock):
+    def __init__(self, coords, canvas, poly_cords, color, outline):
+        super().__init__(coords, canvas, poly_cords, color, outline)
+        # upper connection, lower connection
+        self.connected = []
+
+    def move_connected(self, delta_x, delta_y):
+        self.change_coords(delta_x, delta_y)
+        if self.connected:
+            for i in self.connected:
+                i.move_connected(delta_x, delta_y)
+
+
+class TypeBlock(InsideBlock):
+    def __init__(self, coords, canvas, poly_cords, color, outline):
+        super().__init__(coords, canvas, poly_cords, color, outline)
+
+    def move_connected(self, delta_x, delta_y):
+        self.change_coords(delta_x, delta_y)
 
 
 class ChooseBlocksCanvas:
@@ -325,11 +344,21 @@ class ChooseBlocksCanvas:
                   x, y + 10]
         return points
 
+    @staticmethod
+    def type_block_coords(x, y, w, h):
+        points = [x, y,
+                  x+w, y,
+                  x+w, y+h,
+                  x, y+h,
+                  x, y]
+        return points
+
     def create_blocks_fst(self):
         self.canvas.create_polygon(self.command_block_coords(50, 100, 35), fill='violet red', outline='purple')
         self.canvas.create_polygon(self.function_block_coords(50, 200), fill='dodger blue', outline='steel blue')
         self.canvas.create_polygon(self.control_block_coords(50, 300, 30, 35)[0], fill='orange', outline='chocolate')
         self.canvas.create_polygon(self.control_block_coords(50, 300, 30, 35)[1], fill='orange', outline='chocolate')
+        self.canvas.create_polygon(self.type_block_coords(50, 420, 65, 15), fill='Green Yellow')
 
     def bind(self, function):
         self.canvas.bind("<ButtonPress-1>", function)
@@ -355,7 +384,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[obj_id] = assign_block
             elif resp[0] == 2:
                 cords = self.stableCanvas.function_block_coords(0, 0)
-                bool_op_block = FunctionBlock([0, 0], self.canvas, cords)
+                bool_op_block = FunctionBlock([0, 0], self.canvas, cords, 'dodger blue', 'steel blue')
                 obj_id = bool_op_block.create_polygon()
                 self.movable_blocks[obj_id] = bool_op_block
             elif resp[0] == 3 or resp[0] == 4:
@@ -370,6 +399,11 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[obj_id_lower] = if_block_lower
                 if_block.connected[2] = if_block_lower
                 if_block_lower.connected[0] = if_block
+            elif resp[0] == 5:
+                cords = self.stableCanvas.type_block_coords(0, 0, 65, 15)
+                type_block = TypeBlock([0, 0, 65, 15], self.canvas, cords, 'Green Yellow', 'brown')
+                obj_id = type_block.create_polygon()
+                self.movable_blocks[obj_id] = type_block
 
     def create_polygon(self, args, **kw):
         return self.canvas.create_polygon(args, kw)

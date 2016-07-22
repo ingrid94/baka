@@ -72,6 +72,7 @@ class ControlBlock(Block):
 
     def move_connected(self, delta_x, delta_y):
         self.change_coords(delta_x, delta_y)
+        self.connected[2].move_connected(delta_x, delta_y)
         if self.connected[1] is not None:
             self.connected[1].move_connected(delta_x, delta_y)
 
@@ -106,13 +107,15 @@ class ControlBlock(Block):
 
     def redraw(self, movable_blocks):
         blo_len = self.connected[1].get_length()
+        old_length = self.coords[3]
         self.coords[3] = blo_len
         self.poly_cords = self.stableCanvas.control_block_coords(self.coords[0], self.coords[1],
-                                                                 self.coords[2], blo_len)
+                                                                 self.coords[2], blo_len)[0]
         del movable_blocks[self.obj_id]
         self.canvas.delete(self.obj_id)
         self.obj_id = self.create_polygon()
         movable_blocks[self.obj_id] = self
+        self.connected[2].move_connected(0, blo_len - old_length)
         if self.connected[0] is not None:
             self.check_control_block(movable_blocks)
 
@@ -126,9 +129,40 @@ class ControlBlock(Block):
 class ControlBlockLower(Block):
     def __init__(self, coords, canvas, poly_cords):
         super().__init__(coords, canvas, poly_cords)
-        # to which controlBlock it is, lower connection
+        # ControlBlock, lower connection
         self.connected = [None, None]
         self.color = 'orange'
+        self.outline = 'chocolate'
+
+    def create_polygon(self):
+        self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
+        return self.obj_id
+
+    def renew_magnets(self):
+        upper_magnet = [self.coords[0] + 40, self.coords[1] + 5]
+        lower_magnet = [self.coords[0] + 40, self.coords[1] + 25]
+        return [upper_magnet, lower_magnet]
+
+    def change_coords(self, delta_x, delta_y):
+        old_coords = self.coords
+        self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y, old_coords[2], old_coords[3]]
+        self.canvas.move(self.obj_id, delta_x, delta_y)
+        self.renew_magnets()
+
+    def move_connected(self, delta_x, delta_y):
+        self.change_coords(delta_x, delta_y)
+        if self.connected[1] is not None:
+            self.connected[1].move_connected(delta_x, delta_y)
+
+    def check_control_block(self, movable_blocks):
+        if self.connected[0].connected[0] is not None:
+            self.connected[0].check_control_block(movable_blocks)
+
+    def get_length(self):
+        blo_len = self.coords[3]
+        if self.connected[1] is not None:
+            blo_len += self.connected[1].get_length()
+        return blo_len
 
 
 class CommandBlock(Block):
@@ -261,7 +295,7 @@ class ChooseBlocksCanvas:
         return points
 
     @staticmethod
-    # x,y are upper left side corner coordinates, z if hight of main block,
+    # x,y are upper left side corner coordinates, z is hight of main block,
     # w is length of commands (when condition true) and lower block part to connect with other blocks
     def control_block_coords(x, y, z, w):
         points = [x, y + 5, x + 5, y,
@@ -272,14 +306,16 @@ class ChooseBlocksCanvas:
                   x + 55, y + z, x + 50, y + z+5,
                   x + 35, y + z+5, x + 30, y + z,
                   x + 15, y + z, x + 10, y + z+5,
-                  x + 10, y + w+35, x + 15, y + w+40,
+                  x + 10, y + w+35,
+                  x, y + w+35, x, y + 5]
+        points_lower = [x + 10, y + w+35, x + 15, y + w+40,
                   x + 85, y + w+40, x + 90, y + w+45,
                   x + 90, y + w+50,
                   x + 85, y + w+55, x + 45, y + w+55,
                   x + 40, y + w+60, x + 25, y + w+60,
                   x + 20, y + w+55, x + 5, y + w+55,
-                  x, y + w+50, x, y + 5]
-        return points
+                  x, y + w+50, x, y + w+35]
+        return [points, points_lower]
 
     @staticmethod
     def function_block_coords(x, y):
@@ -292,7 +328,8 @@ class ChooseBlocksCanvas:
     def create_blocks_fst(self):
         self.canvas.create_polygon(self.command_block_coords(50, 100, 35), fill='violet red', outline='purple')
         self.canvas.create_polygon(self.function_block_coords(50, 200), fill='dodger blue', outline='steel blue')
-        self.canvas.create_polygon(self.control_block_coords(50, 300, 30, 35), fill='orange', outline='chocolate')
+        self.canvas.create_polygon(self.control_block_coords(50, 300, 30, 35)[0], fill='orange', outline='chocolate')
+        self.canvas.create_polygon(self.control_block_coords(50, 300, 30, 35)[1], fill='orange', outline='chocolate')
 
     def bind(self, function):
         self.canvas.bind("<ButtonPress-1>", function)
@@ -321,11 +358,18 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 bool_op_block = FunctionBlock([0, 0], self.canvas, cords)
                 obj_id = bool_op_block.create_polygon()
                 self.movable_blocks[obj_id] = bool_op_block
-            elif resp[0] == 3:
-                cords = self.stableCanvas.control_block_coords(0, 0, 30, 35)
+            elif resp[0] == 3 or resp[0] == 4:
+                cords = self.stableCanvas.control_block_coords(0, 0, 30, 35)[0]
                 if_block = ControlBlock([0, 0, 30, 35], self.canvas, self.stableCanvas, cords)
                 obj_id = if_block.create_polygon()
                 self.movable_blocks[obj_id] = if_block
+                # lower part of controlBlock
+                cords = self.stableCanvas.control_block_coords(0, 0, 30, 35)[1]
+                if_block_lower = ControlBlockLower([0, 70, 30, 35], self.canvas, cords)
+                obj_id_lower = if_block_lower.create_polygon()
+                self.movable_blocks[obj_id_lower] = if_block_lower
+                if_block.connected[2] = if_block_lower
+                if_block_lower.connected[0] = if_block
 
     def create_polygon(self, args, **kw):
         return self.canvas.create_polygon(args, kw)
@@ -341,12 +385,14 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             # when block is moved and upper isn't None, then disconnect
             # to disconnect blocks which are connected
             if self.movable_blocks[peale].connected[0] is not None:
-                self.movable_blocks[peale].disconnect_magnet()
+                if not isinstance(self.movable_blocks[peale], ControlBlockLower):
+                    self.movable_blocks[peale].disconnect_magnet()
 
     def on_token_button_release(self, event):
         if self.drag_data["item"] is not None:
             class_instance = self.movable_blocks[self.drag_data["item"]]
-            class_instance.move_to_magnet(self.movable_blocks)
+            if not isinstance(class_instance, ControlBlockLower):
+                class_instance.move_to_magnet(self.movable_blocks)
 
         self.drag_data["item"] = None
         self.drag_data["x"] = 0

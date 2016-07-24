@@ -314,7 +314,7 @@ class ChooseBlocksCanvas:
         return points
 
     @staticmethod
-    # x,y are upper left side corner coordinates, z is hight of main block,
+    # x,y are upper left side corner coordinates, z is height of main block,
     # w is length of commands (when condition true) and lower block part to connect with other blocks
     def control_block_coords(x, y, z, w):
         points = [x, y + 5, x + 5, y,
@@ -337,11 +337,12 @@ class ChooseBlocksCanvas:
         return [points, points_lower]
 
     @staticmethod
-    def function_block_coords(x, y):
-        points = [x, y + 10, x + 10, y,
-                  x + 140, y, x + 150, y + 10,
-                  x + 140, y + 20, x + 10, y + 20,
-                  x, y + 10]
+    def inside_block_coords(x, y, w, h):
+        a = (h/2)
+        points = [x, y + a, x + a, y,
+                  x + w, y, x + w + a, y + a,
+                  x + w, y + h, x + a, y + h,
+                  x, y + a]
         return points
 
     @staticmethod
@@ -355,10 +356,17 @@ class ChooseBlocksCanvas:
 
     def create_blocks_fst(self):
         self.canvas.create_polygon(self.command_block_coords(50, 100, 35), fill='violet red', outline='purple')
-        self.canvas.create_polygon(self.function_block_coords(50, 200), fill='dodger blue', outline='steel blue')
+        self.canvas.create_polygon(self.inside_block_coords(50, 200, 130, 20), fill='dodger blue', outline='steel blue')
+        # self.canvas.create_polygon(self.inside_block_coords(50, 250, 65, 20), fill='limegreen', outline='green')
         self.canvas.create_polygon(self.control_block_coords(50, 300, 30, 35)[0], fill='orange', outline='chocolate')
         self.canvas.create_polygon(self.control_block_coords(50, 300, 30, 35)[1], fill='orange', outline='chocolate')
-        self.canvas.create_polygon(self.type_block_coords(50, 420, 65, 15), fill='Green Yellow')
+        self.canvas.create_polygon(self.type_block_coords(50, 420, 63, 15), fill='limegreen', outline='green')
+        self.canvas.create_text(57, 420, anchor=NW, text="variable")
+        self.canvas.create_polygon(self.type_block_coords(50, 445, 63, 15), fill='limegreen', outline='green')
+        self.canvas.create_text(57, 445, anchor=NW, text="number")
+        self.canvas.create_polygon(self.type_block_coords(50, 470, 63, 15), fill='limegreen', outline='green')
+        self.canvas.create_text(63, 470, anchor=NW, text="string")
+
 
     def bind(self, function):
         self.canvas.bind("<ButtonPress-1>", function)
@@ -383,8 +391,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 obj_id = assign_block.create_polygon()
                 self.movable_blocks[obj_id] = assign_block
             elif resp[0] == 2:
-                cords = self.stableCanvas.function_block_coords(0, 0)
-                bool_op_block = FunctionBlock([0, 0], self.canvas, cords, 'dodger blue', 'steel blue')
+                cords = self.stableCanvas.inside_block_coords(0, 0, 130, 20)
+                bool_op_block = FunctionBlock([0, 0, 130, 20], self.canvas, cords, 'dodger blue', 'steel blue')
                 obj_id = bool_op_block.create_polygon()
                 self.movable_blocks[obj_id] = bool_op_block
             elif resp[0] == 3 or resp[0] == 4:
@@ -400,8 +408,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 if_block.connected[2] = if_block_lower
                 if_block_lower.connected[0] = if_block
             elif resp[0] == 5:
-                cords = self.stableCanvas.type_block_coords(0, 0, 65, 15)
-                type_block = TypeBlock([0, 0, 65, 15], self.canvas, cords, 'Green Yellow', 'brown')
+                cords = self.stableCanvas.inside_block_coords(0, 0, 65, 20)
+                type_block = TypeBlock([0, 0, 65, 20], self.canvas, cords, 'limegreen', 'green')
                 obj_id = type_block.create_polygon()
                 self.movable_blocks[obj_id] = type_block
 

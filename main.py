@@ -300,6 +300,9 @@ class ChooseBlocksCanvas:
     def get_focus_set(self):
         return self.canvas.focus_set()
 
+    def gettags(self, int):
+        return self.canvas.gettags(int)
+
     @staticmethod
     def command_block_coords(x, y, z):
         points = [x, y + 5, x + 5, y,
@@ -355,18 +358,17 @@ class ChooseBlocksCanvas:
         return points
 
     def create_blocks_fst(self):
-        self.canvas.create_polygon(self.command_block_coords(50, 100, 35), fill='violet red', outline='purple')
-        self.canvas.create_polygon(self.inside_block_coords(50, 200, 130, 20), fill='dodger blue', outline='steel blue')
+        self.canvas.create_polygon(self.command_block_coords(50, 100, 35), fill='violet red', outline='purple', tags='command_block')
+        self.canvas.create_polygon(self.inside_block_coords(50, 200, 130, 20), fill='dodger blue', outline='steel blue',tags='inside_block')
         # self.canvas.create_polygon(self.inside_block_coords(50, 250, 65, 20), fill='limegreen', outline='green')
-        self.canvas.create_polygon(self.control_block_coords(50, 300, 30, 35)[0], fill='orange', outline='chocolate')
-        self.canvas.create_polygon(self.control_block_coords(50, 300, 30, 35)[1], fill='orange', outline='chocolate')
-        self.canvas.create_polygon(self.type_block_coords(50, 420, 63, 15), fill='limegreen', outline='green')
-        self.canvas.create_text(57, 420, anchor=NW, text="variable")
-        self.canvas.create_polygon(self.type_block_coords(50, 445, 63, 15), fill='limegreen', outline='green')
-        self.canvas.create_text(57, 445, anchor=NW, text="number")
-        self.canvas.create_polygon(self.type_block_coords(50, 470, 63, 15), fill='limegreen', outline='green')
-        self.canvas.create_text(63, 470, anchor=NW, text="string")
-
+        self.canvas.create_polygon(self.control_block_coords(50, 300, 30, 35)[0], fill='orange', outline='chocolate', tags='control_block')
+        self.canvas.create_polygon(self.control_block_coords(50, 300, 30, 35)[1], fill='orange', outline='chocolate', tags='control_block')
+        self.canvas.create_polygon(self.type_block_coords(50, 420, 63, 15), fill='limegreen', outline='green', tags='variable')
+        self.canvas.create_text(57, 420, anchor=NW, text="variable", tags='variable')
+        self.canvas.create_polygon(self.type_block_coords(50, 445, 63, 15), fill='limegreen', outline='green', tags='number')
+        self.canvas.create_text(57, 445, anchor=NW, text="number", tags='number')
+        self.canvas.create_polygon(self.type_block_coords(50, 470, 63, 15), fill='limegreen', outline='green', tags='string')
+        self.canvas.create_text(63, 470, anchor=NW, text="string", tags='string')
 
     def bind(self, function):
         self.canvas.bind("<ButtonPress-1>", function)
@@ -384,18 +386,19 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
     def create_blocks(self, event):
         self.stableCanvas.get_focus_set()
         resp = event.widget.find_overlapping(event.x, event.y, event.x, event.y)
+        tag = self.stableCanvas.gettags(resp[0])[0]
         if len(resp) != 0:
-            if resp[0] == 1:
+            if tag == 'command_block':
                 cords = self.stableCanvas.command_block_coords(0, 0, 35)
                 assign_block = CommandBlock([0, 0, 35], self.canvas, cords)
                 obj_id = assign_block.create_polygon()
                 self.movable_blocks[obj_id] = assign_block
-            elif resp[0] == 2:
+            elif tag == 'inside_block':
                 cords = self.stableCanvas.inside_block_coords(0, 0, 130, 20)
                 bool_op_block = FunctionBlock([0, 0, 130, 20], self.canvas, cords, 'dodger blue', 'steel blue')
                 obj_id = bool_op_block.create_polygon()
                 self.movable_blocks[obj_id] = bool_op_block
-            elif resp[0] == 3 or resp[0] == 4:
+            elif tag == 'control_block':
                 cords = self.stableCanvas.control_block_coords(0, 0, 30, 35)[0]
                 if_block = ControlBlock([0, 0, 30, 35], self.canvas, self.stableCanvas, cords)
                 obj_id = if_block.create_polygon()
@@ -407,8 +410,18 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[obj_id_lower] = if_block_lower
                 if_block.connected[2] = if_block_lower
                 if_block_lower.connected[0] = if_block
-            elif resp[0] == 5:
-                cords = self.stableCanvas.inside_block_coords(0, 0, 65, 20)
+            elif tag == 'number':
+                cords = self.stableCanvas.type_block_coords(0, 0, 65, 20)
+                type_block = TypeBlock([0, 0, 65, 20], self.canvas, cords, 'limegreen', 'green')
+                obj_id = type_block.create_polygon()
+                self.movable_blocks[obj_id] = type_block
+            elif tag == 'variable':
+                cords = self.stableCanvas.type_block_coords(0, 0, 65, 20)
+                type_block = TypeBlock([0, 0, 65, 20], self.canvas, cords, 'limegreen', 'green')
+                obj_id = type_block.create_polygon()
+                self.movable_blocks[obj_id] = type_block
+            elif tag == 'string':
+                cords = self.stableCanvas.type_block_coords(0, 0, 65, 20)
                 type_block = TypeBlock([0, 0, 65, 20], self.canvas, cords, 'limegreen', 'green')
                 obj_id = type_block.create_polygon()
                 self.movable_blocks[obj_id] = type_block

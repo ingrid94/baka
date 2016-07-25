@@ -96,7 +96,7 @@ class ControlBlock(Block):
         self.connected[0] = None
 
     def get_length(self):
-        blo_len = self.coords[2] + self.coords[3] + 25
+        blo_len = self.coords[2] + self.coords[3] + self.connected[2].get_length()
         if self.connected[0] is not None:
             return blo_len
         elif not isinstance(self.connected[1], ControlBlock):
@@ -159,7 +159,7 @@ class ControlBlockLower(Block):
             self.connected[0].check_control_block(movable_blocks)
 
     def get_length(self):
-        blo_len = self.coords[3]
+        blo_len = 25
         if self.connected[1] is not None:
             blo_len += self.connected[1].get_length()
         return blo_len
@@ -377,6 +377,7 @@ class ChooseBlocksCanvas:
 class MoveBlocksCanvas(ChooseBlocksCanvas):
     def __init__(self, root, t1):
         super().__init__(root)
+        self.root = root
         self.drag_data = {"x": 0, "y": 0, "item": None}
         self.binding()
         self.stableCanvas = t1
@@ -386,8 +387,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
     def create_blocks(self, event):
         self.stableCanvas.get_focus_set()
         resp = event.widget.find_overlapping(event.x, event.y, event.x, event.y)
-        tag = self.stableCanvas.gettags(resp[0])[0]
         if len(resp) != 0:
+            tag = self.stableCanvas.gettags(resp[0])[0]
             if tag == 'command_block':
                 cords = self.stableCanvas.command_block_coords(0, 0, 35)
                 assign_block = CommandBlock([0, 0, 35], self.canvas, cords)
@@ -415,16 +416,53 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 type_block = TypeBlock([0, 0, 65, 20], self.canvas, cords, 'limegreen', 'green')
                 obj_id = type_block.create_polygon()
                 self.movable_blocks[obj_id] = type_block
+                self.create_frame('number', obj_id)
             elif tag == 'variable':
                 cords = self.stableCanvas.type_block_coords(0, 0, 65, 20)
                 type_block = TypeBlock([0, 0, 65, 20], self.canvas, cords, 'limegreen', 'green')
                 obj_id = type_block.create_polygon()
                 self.movable_blocks[obj_id] = type_block
+                self.create_frame('variable', obj_id)
             elif tag == 'string':
                 cords = self.stableCanvas.type_block_coords(0, 0, 65, 20)
                 type_block = TypeBlock([0, 0, 65, 20], self.canvas, cords, 'limegreen', 'green')
                 obj_id = type_block.create_polygon()
                 self.movable_blocks[obj_id] = type_block
+                self.create_frame('string', obj_id)
+
+    def create_frame(self, inside_type, obj_id):
+
+        text = ""
+        if inside_type == 'variable':
+            text = "Variables must begin with a letter (a - z, A - B) or underscore (_). \n" \
+                   "Other characters can be letters, numbers or _"
+        elif inside_type == 'number':
+            text = "Numbers consist of digits (0-9). \n To get floating point number use point (.)"
+        elif inside_type == 'string':
+            text = "String literals are written in single or double quotes. "
+
+        frame = Frame(self.canvas)
+        can = self.canvas.create_window(250, 200, window=frame)
+
+        introduction = Label(frame, text=text)
+        introduction.pack(pady=10)
+
+        e = Entry(frame)
+        e.pack()
+
+        cancel = Button(frame, text="Cancel", command=lambda: self.delete_item(obj_id, can))
+        cancel.pack(side=LEFT, padx=30, pady=10)
+
+        confirm = Button(frame, text="Confirm")
+        confirm.pack(side=RIGHT, padx=30, pady=10, command=lambda: self.create_type(obj_id, can))
+
+    def delete_item(self, obj_id, frame):
+        self.canvas.delete(obj_id)
+        self.canvas.delete(frame)
+        del self.movable_blocks[obj_id]
+
+    def create_type(self, obj_id, can):
+        pass
 
     def create_polygon(self, args, **kw):
         return self.canvas.create_polygon(args, kw)

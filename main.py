@@ -472,7 +472,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
 
         text = ""
         if inside_type == 'variable':
-            text = "Variables must begin with a letter (a - z, A - B) or underscore (_). \n" \
+            text = "Variables must begin with a letter (a - z, A - Z) or underscore (_). \n" \
                    "Other characters can be letters, numbers or _"
         elif inside_type == 'number':
             text = "Numbers consist of digits (0-9). \n To get floating point number use point (.)"
@@ -502,7 +502,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         s = v.get()
         if inside_type == 'number':
             if s.replace('.', '', 1).isdigit():
-                self.create_type_block(s, frame,8)
+                self.create_type_block(s, frame, 8)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a number. Try again. ")
         elif inside_type == 'string':
@@ -511,6 +511,12 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.create_type_block(s, frame, 6)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a string. Try again. ")
+        elif inside_type == 'variable':
+            p = re.match(r'^[a-zA-Z_][\w0-9_]*$', s, re.S)
+            if p:
+                self.create_type_block(s, frame, 6.5)
+            else:
+                tkinter.messagebox.showerror("Error", "It's not a variable. Try again. ")
 
     def create_type_block(self, s, frame, times):
         w = len(s)*times+15

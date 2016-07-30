@@ -1,5 +1,6 @@
 from tkinter import *
 import tkinter.messagebox
+import re
 
 
 class Block:
@@ -501,16 +502,25 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         s = v.get()
         if inside_type == 'number':
             if s.replace('.', '', 1).isdigit():
-                w = len(s)*8+15
-                cords = self.stableCanvas.type_block_coords(0, 0, w, 20)
-                type_block = TypeBlock([0, 0, w, 20], self.canvas, cords, 'limegreen', 'green', s)
-                obj_id = type_block.create_polygon()
-                text_id = type_block.create_text()
-                self.movable_blocks[obj_id] = type_block
-                self.movable_blocks[text_id] = type_block
-                self.canvas.delete(frame)
+                self.create_type_block(s, frame,8)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a number. Try again. ")
+        elif inside_type == 'string':
+            p = re.match(r'^(\"|\')(.)*(\"|\')$', s, re.S)
+            if p:
+                self.create_type_block(s, frame, 6)
+            else:
+                tkinter.messagebox.showerror("Error", "It's not a string. Try again. ")
+
+    def create_type_block(self, s, frame, times):
+        w = len(s)*times+15
+        cords = self.stableCanvas.type_block_coords(0, 0, w, 20)
+        type_block = TypeBlock([0, 0, w, 20], self.canvas, cords, 'limegreen', 'green', s)
+        obj_id = type_block.create_polygon()
+        text_id = type_block.create_text()
+        self.movable_blocks[obj_id] = type_block
+        self.movable_blocks[text_id] = type_block
+        self.canvas.delete(frame)
 
     def create_polygon(self, args, **kw):
         return self.canvas.create_polygon(args, kw)

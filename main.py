@@ -23,7 +23,7 @@ class Block:
     def check_magnets_during_move(self, movable_blocks):
         # moves magnets also checks other blocks and marks them
         closest_object = self.get_closest(movable_blocks)
-        if closest_object[0] != self.obj_id and movable_blocks[closest_object[0]] != "line":
+        if closest_object[0] != self.obj_id and movable_blocks[closest_object[0]] != "line" and movable_blocks[closest_object[0]] != self:
             stable_instance = movable_blocks[closest_object[0]]
             stable_coords = stable_instance.renew_magnets()
             line_x = stable_coords[1][0]
@@ -168,16 +168,36 @@ class ControlBlockLower(Block):
 
 
 class CommandBlock(Block):
-    def __init__(self, coords, canvas, poly_cords):
+    def __init__(self, coords, canvas, poly_cords, color, outline):
         super().__init__(coords, canvas, poly_cords)
         # upper connection, lower connection
         self.connected = [None, None]
-        self.color = 'violet red'
-        self.outline = 'purple'
+        self.color = color
+        self.outline = outline
+        self.inside_magnet_id = None
+        self.inside_poly_coords = None
+        self.inside_coords = None
+        self.inside_magnet_color = None
+        self.text_id = None
+        self.text_coords = None
+        self.string_on_block = None
 
     def create_polygon(self):
         self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
         return self.obj_id
+
+    def create_inside_magnet(self, coords, color):
+        self.inside_magnet_color = color
+        self.inside_poly_coords = coords
+        self.inside_coords = (self.inside_poly_coords[0], self.inside_poly_coords[1])
+        self.inside_magnet_id = self.canvas.create_polygon(self.inside_poly_coords, fill=self.inside_magnet_color)
+        return self.inside_magnet_id
+
+    def create_text(self, text_coords, string_on_block):
+        self.text_coords = text_coords
+        self.string_on_block = string_on_block
+        self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.string_on_block)
+        return self.text_id
 
     def renew_magnets(self):
         upper_magnet = [self.coords[0] + 40, self.coords[1] + 5]
@@ -188,10 +208,27 @@ class CommandBlock(Block):
         old_coords = self.coords
         self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y, old_coords[2]]
         self.canvas.move(self.obj_id, delta_x, delta_y)
+        self.canvas.tag_raise(self.inside_magnet_id)
         self.renew_magnets()
+
+    def change_inside_coords(self, delta_x, delta_y):
+        old_coords = self.inside_coords
+        self.inside_coords = [old_coords[0]+delta_x, old_coords[1]+delta_y]
+        self.canvas.move(self.inside_magnet_id, delta_x, delta_y)
+        self.canvas.tag_raise(self.inside_magnet_id)
+
+    def move_text(self, delta_x, delta_y):
+        # moves text
+        old_text_coords = self.text_coords
+        self.text_coords = [old_text_coords[0] + delta_x, old_text_coords[1] + delta_y]
+        self.canvas.move(self.text_id, delta_x, delta_y)
+        # leaves the text on top always
+        self.canvas.tag_raise(self.text_id)
 
     def move_connected(self, delta_x, delta_y):
         self.change_coords(delta_x, delta_y)
+        self.change_inside_coords(delta_x, delta_y)
+        self.move_text(delta_x, delta_y)
         if self.connected[1] is not None:
             self.connected[1].move_connected(delta_x, delta_y)
 
@@ -200,7 +237,7 @@ class CommandBlock(Block):
         magnet_x = self.renew_magnets()[0][0]
         magnet_y = self.renew_magnets()[0][1]
         closest_object = self.get_closest(movable_blocks)
-        if closest_object[0] != self.obj_id:
+        if closest_object[0] != self.obj_id and movable_blocks[closest_object[0]] != self:
             stable_instance = movable_blocks[closest_object[0]]
             stable_magnet = stable_instance.renew_magnets()
             delta_x = stable_magnet[1][0] - magnet_x
@@ -273,7 +310,7 @@ class InsideBlock:
         self.connected_to_bigger_block = None
 
 
-class FunctionBlock(InsideBlock):
+class ActionBlock(InsideBlock):
     def __init__(self, coords, canvas, poly_cords, color, outline):
         super().__init__(coords, canvas, poly_cords, color, outline)
         # upper connection, lower connection
@@ -434,15 +471,6 @@ class ChooseBlocksCanvas:
                   x, y + a]
         return points
 
-    @staticmethod
-    def type_block_coords(x, y, w, h):
-        points = [x, y,
-                  x + w, y,
-                  x + w, y + h,
-                  x, y + h,
-                  x, y]
-        return points
-
     def create_blocks_fst(self):
         self.canvas.create_polygon(self.command_block_coords(50, 20, 30, 120), fill='violet red', outline='purple',
                                    tags='print_block')
@@ -508,12 +536,28 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             tag = self.stableCanvas.gettags(resp[0])[0]
             if tag == 'print_block':
                 cords = self.stableCanvas.command_block_coords(0, 0, 30, 120)
-                assign_block = CommandBlock([0, 0, 30, 120], self.canvas, cords)
+                inside_coords = self.stableCanvas.inside_block_coords(47, 10, 40, 15)
+                assign_block = CommandBlock([0, 0, 30, 120], self.canvas, cords, 'violet red', 'purple')
                 obj_id = assign_block.create_polygon()
+                inside_id = assign_block.create_inside_magnet(inside_coords, 'light pink')
+                text1_id = assign_block.create_text([10, 10], 'print(')
+                # self.canvas.create_text(150, 30, anchor=NW, text=')', tags='print_block')
                 self.movable_blocks[obj_id] = assign_block
+                self.movable_blocks[inside_id] = assign_block
+                self.movable_blocks[text1_id] = assign_block
+            elif tag == 'return_block':
+                cords = self.stableCanvas.command_block_coords(0, 0, 30, 120)
+                inside_coords = self.stableCanvas.inside_block_coords(53, 10, 40, 15)
+                assign_block = CommandBlock([0, 0, 30, 120], self.canvas, cords, 'violet red', 'purple')
+                obj_id = assign_block.create_polygon()
+                inside_id = assign_block.create_inside_magnet(inside_coords, 'light pink')
+                text1_id = assign_block.create_text([10, 10], 'return')
+                self.movable_blocks[obj_id] = assign_block
+                self.movable_blocks[inside_id] = assign_block
+                self.movable_blocks[text1_id] = assign_block
             elif tag == 'inside_block':
                 cords = self.stableCanvas.inside_block_coords(0, 0, 130, 20)
-                bool_op_block = FunctionBlock([0, 0, 130, 20], self.canvas, cords, 'dodger blue', 'steel blue')
+                bool_op_block = ActionBlock([0, 0, 130, 20], self.canvas, cords, 'dodger blue', 'steel blue')
                 obj_id = bool_op_block.create_polygon()
                 self.movable_blocks[obj_id] = bool_op_block
             elif tag == 'control_block':

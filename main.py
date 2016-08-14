@@ -359,9 +359,12 @@ class InsideBlock:
         closest_objects = list(closest_object)
         closest_objects.remove(self.obj_id)
         # since TypeBlock is only one where there can't be this connection
+        temp = []
         for el in closest_objects:
             if isinstance(movable_blocks[el], TypeBlock):
-                closest_objects.remove(el)
+                temp.append(el)
+        for el in temp:
+            closest_objects.remove(el)
         for el in self.default_items_id:
             if el in closest_objects:
                 closest_objects.remove(el)

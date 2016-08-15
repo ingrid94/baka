@@ -185,8 +185,8 @@ class ControlBlockLower(Block):
 class CommandBlock(Block):
     def __init__(self, coords, canvas, stableCanvas, poly_cords):
         super().__init__(coords, canvas, poly_cords)
-        # upper connection, lower connection
-        self.connected = [None, None]
+        # upper connection, lower connection, inside_poly connection
+        self.connected = [None, None, None]
         self.color = 'violet red'
         self.outline = 'purple'
         self.stableCanvas = stableCanvas
@@ -404,18 +404,22 @@ class InsideBlock:
         magnet_x = self.renew_magnets()[0]
         magnet_y = self.renew_magnets()[1]
 
-    #    closest_object = self.get_closest(movable_blocks)
-    #    if closest_object[0] != self.obj_id:
-    #        stable_instance = movable_blocks[closest_object[0]]
-    #        stable_magnet = stable_instance.renew_magnets()
-    #        delta_x = stable_magnet[1][0] - magnet_x
-    #        delta_y = stable_magnet[1][1] - magnet_y
-    #        self.move_connected(delta_x, delta_y)
-    #        stable_instance.connected[1] = self
-    #        self.connected[0] = stable_instance
+        closest_object = self.get_closest(movable_blocks)
+        if closest_object:
+            stable_instance = movable_blocks[closest_object[0]]
+            stable_magnet = [stable_instance.inside_poly_coords[0], stable_instance.inside_poly_coords[1]]
+            delta_x = stable_magnet[0] - magnet_x
+            delta_y = stable_magnet[1] - magnet_y
+            self.move_connected(delta_x, delta_y)
+            stable_instance.connected[2] = self
+            self.connected_to_bigger_block = stable_instance
 
     def disconnect_magnet(self):
         self.connected_to_bigger_block = None
+
+    def move_connected(self, delta_x, delta_y):
+        self.change_coords(delta_x, delta_y)
+
 
 
 class FunctionBlock(InsideBlock):

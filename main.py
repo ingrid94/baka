@@ -183,12 +183,13 @@ class ControlBlockLower(Block):
 
 
 class CommandBlock(Block):
-    def __init__(self, coords, canvas, poly_cords):
+    def __init__(self, coords, canvas, stableCanvas, poly_cords):
         super().__init__(coords, canvas, poly_cords)
         # upper connection, lower connection
         self.connected = [None, None]
         self.color = 'violet red'
         self.outline = 'purple'
+        self.stableCanvas = stableCanvas
 
     def create_polygon(self):
         self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
@@ -246,14 +247,14 @@ class CommandBlock(Block):
 
 
 class ReturnBlock(CommandBlock):
-    def __init__(self, coords, canvas, poly_cords, inside_poly_coords):
-        super().__init__(coords, canvas, poly_cords)
+    def __init__(self, coords, canvas, stableCanvas, poly_cords):
+        super().__init__(coords, canvas, stableCanvas, poly_cords)
         self.string = 'return'
         self.text_id = None
         self.poly_id = None
         self.text_coords = (self.coords[0]+7, self.coords[1]+10)
         self.inside_magnet_coords = None
-        self.inside_poly_coords = inside_poly_coords
+        self.inside_poly_coords = (self.coords[0]+50, self.coords[1]+10, 50, 15)
         self.inside_color = 'light pink'
 
     def create_text(self):
@@ -263,7 +264,8 @@ class ReturnBlock(CommandBlock):
         return self.text_id
 
     def create_inside_polygon(self):
-        self.poly_id = self.canvas.create_polygon(self.inside_poly_coords, fill=self.inside_color)
+        poly_coords = self.stableCanvas.inside_block_coords(self.inside_poly_coords[0], self.inside_poly_coords[1], self.inside_poly_coords[2], self.inside_poly_coords[3])
+        self.poly_id = self.canvas.create_polygon(poly_coords, fill=self.inside_color)
         self.default_items_id.append(self.poly_id)
         return self.poly_id
 
@@ -279,8 +281,8 @@ class ReturnBlock(CommandBlock):
 
 
 class PrintBlock(CommandBlock):
-    def __init__(self, coords, canvas, poly_cords, inside_poly_coords):
-        super().__init__(coords, canvas, poly_cords)
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, inside_poly_coords):
+        super().__init__(coords, canvas, stableCanvas, poly_cords)
         self.string = 'print('
         self.string2 = ')'
         self.text_id = None
@@ -305,7 +307,8 @@ class PrintBlock(CommandBlock):
         return self.text2_id
 
     def create_inside_polygon(self):
-        self.poly_id = self.canvas.create_polygon(self.inside_poly_coords, fill=self.inside_color)
+        poly_coords = self.stableCanvas.inside_block_coords(self.inside_poly_coords[0], self.inside_poly_coords[1], self.inside_poly_coords[2], self.inside_poly_coords[3])
+        self.poly_id = self.canvas.create_polygon(poly_coords, fill=self.inside_color)
         self.default_items_id.append(self.poly_id)
         return self.poly_id
 
@@ -324,7 +327,7 @@ class PrintBlock(CommandBlock):
 
 
 class InsideBlock:
-    def __init__(self, coords, canvas, poly_cords, color, outline):
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline):
         # inside the block
         self.default_items_id = []
         self.coords = coords
@@ -336,6 +339,7 @@ class InsideBlock:
         self.outline = outline
         self.obj_id = None
         self.default_items_on_block = None
+        self.stableCanvas = stableCanvas
 
     def create_polygon(self):
         self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
@@ -380,8 +384,9 @@ class InsideBlock:
             stable_instance = movable_blocks[closest_object[0]]
             # gets poly_coords
             stable_coords = stable_instance.inside_poly_coords
+            line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1], stable_coords[2], stable_coords[3])
             # draws "line" mark to the block
-            line_id = self.canvas.create_line(stable_coords, fill="green", width=3)
+            line_id = self.canvas.create_line(line_coords, fill="green", width=3)
             movable_blocks[line_id] = "line"
 
     # deletes "line" mark
@@ -414,10 +419,11 @@ class InsideBlock:
 
 
 class FunctionBlock(InsideBlock):
-    def __init__(self, coords, canvas, poly_cords, color, outline):
-        super().__init__(coords, canvas, poly_cords, color, outline)
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline)
         # upper connection, lower connection
         self.connected = []
+        self.stableCanvas = stableCanvas
 
     def move_connected(self, delta_x, delta_y):
         self.change_coords(delta_x, delta_y)
@@ -428,12 +434,11 @@ class FunctionBlock(InsideBlock):
 
 class TypeBlock(InsideBlock):
     def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_type):
-        super().__init__(coords, canvas, poly_cords, color, outline)
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline)
         self.string_on_block = string
         self.text_id = None
         self.text_coords = [self.coords[0] + 12, self.coords[1] + 1]
         self.inside_type = inside_type
-        self.stableCanvas = stableCanvas
         self.connected = [None]
 
     def create_text(self):
@@ -653,8 +658,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             tag = self.stableCanvas.gettags(resp[0])[0]
             if tag == 'print_block':
                 cords = self.stableCanvas.command_block_coords(0, 0, 30, 120)
-                inside_poly_coords = self.stableCanvas.inside_block_coords(45, 10, 50, 15)
-                assign_block = PrintBlock([0, 0, 30, 120], self.canvas, cords, inside_poly_coords)
+                inside_poly_coords = [45, 10, 50, 15]
+                assign_block = PrintBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords, inside_poly_coords)
                 obj_id = assign_block.create_polygon()
                 poly_id = assign_block.create_inside_polygon()
                 text_id = assign_block.create_text()
@@ -665,8 +670,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[text2_id] = assign_block
             elif tag == 'return_block':
                 cords = self.stableCanvas.command_block_coords(0, 0, 30, 120)
-                inside_poly_coords = self.stableCanvas.inside_block_coords(52, 10, 40, 15)
-                assign_block = ReturnBlock([0, 0, 30, 120], self.canvas, cords, inside_poly_coords)
+                inside_poly_coords = [52, 10, 40, 15]
+                assign_block = ReturnBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords)
                 obj_id = assign_block.create_polygon()
                 poly_id = assign_block.create_inside_polygon()
                 text_id = assign_block.create_text()
@@ -675,7 +680,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[text_id] = assign_block
             elif tag == 'inside_block':
                 cords = self.stableCanvas.inside_block_coords(0, 0, 130, 20)
-                bool_op_block = FunctionBlock([0, 0, 130, 20], self.canvas, cords, 'dodger blue', 'steel blue')
+                bool_op_block = FunctionBlock([0, 0, 130, 20], self.canvas, self.stableCanvas, cords, 'dodger blue', 'steel blue')
                 obj_id = bool_op_block.create_polygon()
                 self.movable_blocks[obj_id] = bool_op_block
             elif tag == 'control_block':

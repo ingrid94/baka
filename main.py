@@ -48,7 +48,7 @@ class Block:
                                               fill="green", width=3)
             movable_blocks[line_id] = "line"
         # deletes "line" mark
-        #elif "line" in movable_blocks.values():
+        # elif "line" in movable_blocks.values():
         #    self.line_delete(movable_blocks)
 
     # deletes "line" mark
@@ -212,6 +212,10 @@ class CommandBlock(Block):
             self.connected[1].move_connected(delta_x, delta_y)
         if self.default_items_on_block is not None:
             self.default_items_on_block.change_inside_coords(delta_x, delta_y)
+        if self.connected[2] is not None:
+            self.connected[2].move_connected(delta_x, delta_y)
+            for i in self.connected[2].default_items_id:
+                self.canvas.tag_raise(i)
 
     def move_to_magnet(self, movable_blocks):
         # when mouse press is let go, puts the block in right place
@@ -277,7 +281,8 @@ class ReturnBlock(CommandBlock):
         self.inside_poly_coords = [old_poly_coords[0] + delta_x, old_poly_coords[1]+delta_y, old_poly_coords[2], old_poly_coords[3]]
         self.canvas.move(self.poly_id, delta_x, delta_y)
         self.canvas.tag_raise(self.text_id)
-        self.canvas.tag_raise(self.poly_id)
+        if self.connected[2] is None:
+            self.canvas.tag_raise(self.poly_id)
 
 
 class PrintBlock(CommandBlock):
@@ -419,7 +424,6 @@ class InsideBlock:
 
     def move_connected(self, delta_x, delta_y):
         self.change_coords(delta_x, delta_y)
-
 
 
 class FunctionBlock(InsideBlock):
@@ -605,9 +609,8 @@ class ChooseBlocksCanvas:
         self.canvas.create_text(60, 70, anchor=NW, text='return', tags='return_block')
         self.canvas.create_polygon(self.inside_block_coords(105, 70, 40, 15), fill='light pink', tags='return_block')
 
-        #self.canvas.create_polygon(self.command_block_coords(50, 100, 30, 120), fill='violet red', outline='purple',
+        # self.canvas.create_polygon(self.command_block_coords(50, 100, 30, 120), fill='violet red', outline='purple',
         #                           tags='assign_block')
-
 
         self.canvas.create_polygon(self.inside_block_coords(50, 110, 130, 20), fill='dodger blue', outline='steel blue',
                                    tags='inside_block')
@@ -674,7 +677,6 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[text2_id] = assign_block
             elif tag == 'return_block':
                 cords = self.stableCanvas.command_block_coords(0, 0, 30, 120)
-                inside_poly_coords = [52, 10, 40, 15]
                 assign_block = ReturnBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords)
                 obj_id = assign_block.create_polygon()
                 poly_id = assign_block.create_inside_polygon()

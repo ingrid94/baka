@@ -1,4 +1,3 @@
-# from TypeBlock import TypeBlock
 
 
 class InsideBlock:

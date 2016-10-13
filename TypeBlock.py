@@ -24,6 +24,7 @@ class TypeBlock(InsideBlock):
         old_text_coords = self.text_coords
         self.text_coords = [old_text_coords[0] + delta_x, old_text_coords[1] + delta_y]
         self.canvas.move(self.text_id, delta_x, delta_y)
+        self.canvas.tag_raise(self.obj_id)
         # leaves the text on top always
         self.canvas.tag_raise(self.text_id)
 
@@ -66,18 +67,24 @@ class TypeBlock(InsideBlock):
         if inside_type == 'number':
             if s.replace('.', '', 1).isdigit():
                 self.change_type_block(s, frame, 8, movable_blocks)
+            elif s is "" and self.string_on_block is not None:
+                self.change_type_block(self.string_on_block, frame, 6, movable_blocks)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a number. Try again. ")
         elif inside_type == 'string':
             p = re.match(r'^(\"|\')(.)*(\"|\')$', s, re.S)
             if p:
                 self.change_type_block(s, frame, 6, movable_blocks)
+            elif s is "" and self.string_on_block is not None:
+                self.change_type_block(self.string_on_block, frame, 6, movable_blocks)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a string. Try again. ")
         elif inside_type == 'variable':
             p = re.match(r'^[a-zA-Z_][\w0-9_]*$', s, re.S)
             if p:
                 self.change_type_block(s, frame, 6.5, movable_blocks)
+            elif s is "" and self.string_on_block is not None:
+                self.change_type_block(self.string_on_block, frame, 6, movable_blocks)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a variable. Try again. ")
 

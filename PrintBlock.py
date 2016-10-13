@@ -44,6 +44,14 @@ class PrintBlock(CommandBlock):
         self.canvas.move(self.text2_id, delta_x, delta_y)
         old_poly_coords = self.inside_poly_coords
         self.inside_poly_coords = [old_poly_coords[0] + delta_x, old_poly_coords[1]+delta_y, old_poly_coords[2], old_poly_coords[3]]
-        self.canvas.move(self.poly_id, delta_x, delta_y)
         self.canvas.tag_raise(self.text_id)
-        self.canvas.tag_raise(self.poly_id)
+        if self.connected[2] is None:
+            self.canvas.tag_raise(self.poly_id)
+            self.canvas.move(self.poly_id, delta_x, delta_y)
+
+    def delete_inside_poly(self, movable_blocks):
+        if self.poly_id:
+            del movable_blocks[self.poly_id]
+            self.canvas.delete(self.poly_id)
+            self.default_items_id.remove(self.poly_id)
+            self.poly_id = None

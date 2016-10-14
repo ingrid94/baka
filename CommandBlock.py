@@ -56,11 +56,11 @@ class CommandBlock(Block):
         self.connected[0].connected[1] = None
         self.connected[0] = None
 
-    def get_length(self):
-        blo_len = self.coords[2]
+    def get_height(self):
+        blo_height = self.coords[2]
         if self.connected[1] is not None:
-            blo_len += self.connected[1].get_length()
-        return blo_len
+            blo_height += self.connected[1].get_height()
+        return blo_height
 
     def check_control_block(self, movable_blocks):
         if self.connected[0].connected[0] is not None:

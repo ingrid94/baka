@@ -16,7 +16,7 @@ class ControlBlock(Block):
         return self.obj_id
 
     def renew_magnets(self):
-        upper_magnet = [self.coords[0] + 40, self.coords[1] + 5]
+        upper_magnet = [self.coords[0] + 35, self.coords[1] + 5]
         lower_magnet = [self.coords[0] + 45, self.coords[1] + 35]
         return [upper_magnet, lower_magnet]
 
@@ -51,27 +51,27 @@ class ControlBlock(Block):
         self.connected[0].connected[1] = None
         self.connected[0] = None
 
-    def get_length(self):
-        blo_len = self.coords[2] + self.coords[3] + self.connected[2].get_length()
+    def get_height(self):
+        blo_height = self.coords[2] + self.coords[3] + self.connected[2].get_height()
         if self.connected[0] is not None:
-            return blo_len
+            return blo_height
         elif not isinstance(self.connected[1], ControlBlock):
-            blo_len += self.connected[1].get_length()
+            blo_height += self.connected[1].get_height()
         if not isinstance(self.connected[0], ControlBlock):
-            self.connected[0].get_length()
-        return blo_len
+            self.connected[0].get_height()
+        return blo_height
 
     def redraw(self, movable_blocks):
-        blo_len = self.connected[1].get_length()
-        old_length = self.coords[3]
-        self.coords[3] = blo_len
+        blo_height = self.connected[1].get_height()
+        old_height = self.coords[3]
+        self.coords[3] = blo_height
         self.poly_cords = self.stableCanvas.control_block_coords(self.coords[0], self.coords[1],
-                                                                 self.coords[2], blo_len)[0]
+                                                                 self.coords[2], blo_height)[0]
         del movable_blocks[self.obj_id]
         self.canvas.delete(self.obj_id)
         self.obj_id = self.create_polygon()
         movable_blocks[self.obj_id] = self
-        self.connected[2].move_connected(0, blo_len - old_length)
+        self.connected[2].move_connected(0, blo_height - old_height)
         if self.connected[0] is not None:
             self.check_control_block(movable_blocks)
 
@@ -114,8 +114,8 @@ class ControlBlockLower(Block):
         if self.connected[0].connected[0] is not None:
             self.connected[0].check_control_block(movable_blocks)
 
-    def get_length(self):
-        blo_len = 25
+    def get_height(self):
+        blo_height = 25
         if self.connected[1] is not None:
-            blo_len += self.connected[1].get_length()
-        return blo_len
+            blo_height += self.connected[1].get_height()
+        return blo_height

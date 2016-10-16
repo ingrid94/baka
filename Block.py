@@ -1,5 +1,3 @@
-from InsideBlock import InsideBlock
-
 
 class Block:
     def __init__(self, coords, canvas, poly_cords):
@@ -20,13 +18,6 @@ class Block:
         for el in self.default_items_id:
             if el in closest_objects:
                 closest_objects.remove(el)
-        # Blocks can't connect with InsideBlocks
-        temp = []
-        for elem in closest_objects:
-            if isinstance(movable_blocks[elem], InsideBlock):
-                temp.append(elem)
-        for elem in temp:
-            closest_objects.remove(elem)
         # if there is "line" in dictionary then deletes it
         if "line" in movable_blocks.values():
             self.line_delete(movable_blocks)

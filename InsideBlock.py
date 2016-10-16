@@ -1,3 +1,5 @@
+from CommandBlock import CommandBlock
+from ControlBlock import ControlBlock, ControlBlockLower
 
 
 class InsideBlock:
@@ -25,7 +27,7 @@ class InsideBlock:
 
     def change_coords(self, delta_x, delta_y):
         old_coords = self.coords
-        self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y]
+        self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y, old_coords[2], old_coords[3]]
         self.canvas.move(self.obj_id, delta_x, delta_y)
         self.renew_magnets()
 
@@ -49,12 +51,15 @@ class InsideBlock:
         closest_object = self.get_closest(movable_blocks)
         if closest_object != [] and movable_blocks[closest_object[0]] != "line":
             stable_instance = movable_blocks[closest_object[0]]
-            # gets poly_coords
-            stable_coords = stable_instance.inside_poly_coords
-            line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1], stable_coords[2], stable_coords[3])
-            # draws "line" mark to the block
-            line_id = self.canvas.create_line(line_coords, fill="green", width=3)
-            movable_blocks[line_id] = "line"
+            # When ControlBlock has inside_poly, remove the first condition
+            if not(isinstance(stable_instance, ControlBlock) or isinstance(stable_instance, ControlBlockLower)
+                   or isinstance(stable_instance, InsideBlock)):
+                # gets poly_coords
+                stable_coords = stable_instance.inside_poly_coords
+                line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1], stable_coords[2], stable_coords[3])
+                # draws "line" mark to the block
+                line_id = self.canvas.create_line(line_coords, fill="green", width=3)
+                movable_blocks[line_id] = "line"
 
     # deletes "line" mark
     def line_delete(self, movable_blocks):
@@ -81,9 +86,18 @@ class InsideBlock:
             self.move_connected(delta_x, delta_y)
             stable_instance.connected[2] = self
             self.connected_to_bigger_block = stable_instance
+            if isinstance(stable_instance, CommandBlock):
+               stable_instance.redraw(movable_blocks)
 
     def disconnect_magnet(self):
         self.connected_to_bigger_block = None
 
     def move_connected(self, delta_x, delta_y):
         self.change_coords(delta_x, delta_y)
+
+    def get_width(self):
+        return self.coords[2]
+
+    def raise_tags(self):
+        for el in self.default_items_id:
+            self.canvas.tag_raise(el)

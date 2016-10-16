@@ -10,6 +10,7 @@ class CommandBlock(Block):
         self.color = 'violet red'
         self.outline = 'purple'
         self.stableCanvas = stableCanvas
+        self.inside_poly_coords = [None, None, None, None]
 
     def create_polygon(self):
         self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
@@ -22,7 +23,7 @@ class CommandBlock(Block):
 
     def change_coords(self, delta_x, delta_y):
         old_coords = self.coords
-        self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y, old_coords[2]]
+        self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y, old_coords[2], old_coords[3]]
         self.canvas.move(self.obj_id, delta_x, delta_y)
         self.renew_magnets()
 
@@ -68,3 +69,26 @@ class CommandBlock(Block):
         if isinstance(self.connected[0], ControlBlock):
             self.connected[0].redraw(movable_blocks)
             # self.canvas.tag_raise(self.obj_id)
+
+    def redraw(self, movable_blocks):
+        blo_width = self.connected[2].get_width()
+        old_width = self.coords[3]
+        other_width = old_width - self.inside_poly_coords[2]
+        self.coords[3] = other_width + blo_width
+        self.poly_cords = self.stableCanvas.command_block_coords(self.coords[0], self.coords[1],
+                                                                 self.coords[2], self.coords[3])
+        del movable_blocks[self.obj_id]
+        self.canvas.delete(self.obj_id)
+        self.obj_id = self.create_polygon()
+        movable_blocks[self.obj_id] = self
+        self.raise_tags(self.connected[2])
+        # self.connected[1].move_connected(0, blo_width - old_width)
+        # if self.connected[0] is not None:
+        #    self.check_control_block(movable_blocks)
+
+    def raise_tags(self, item):
+        for el in self.default_items_id:
+            self.canvas.tag_raise(el)
+        inside_id = item.obj_id
+        self.canvas.tag_raise(inside_id)
+        item.raise_tags()

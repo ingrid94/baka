@@ -40,8 +40,9 @@ class CommandBlock(Block):
 
     def move_to_magnet(self, movable_blocks):
         # when mouse press is let go, puts the block in right place
-        magnet_x = self.renew_magnets()[0][0]
-        magnet_y = self.renew_magnets()[0][1]
+        magnets = self.renew_magnets()
+        magnet_x = magnets[0][0]
+        magnet_y = magnets[0][1]
         closest_object = self.get_closest(movable_blocks)
         if closest_object:
             stable_instance = movable_blocks[closest_object[0]]
@@ -49,11 +50,29 @@ class CommandBlock(Block):
             delta_x = stable_magnet[1][0] - magnet_x
             delta_y = stable_magnet[1][1] - magnet_y
             self.move_connected(delta_x, delta_y)
-            stable_instance.connected[1] = self
+            # if user wants to put a block between blocks
+            if stable_instance.connected[1] is not None:
+                under_block = stable_instance.connected[1]
+                under_delta_y = self.get_height()
+                under_block.move_connected(0, under_delta_y)
+                last_connected = self.get_last_connection()
+                last_connected.connected[1] = stable_instance.connected[1]
+                stable_instance.connected[1].connected[0] = last_connected
             self.connected[0] = stable_instance
+            stable_instance.connected[1] = self
             self.check_control_block(movable_blocks)
 
+    def get_last_connection(self):
+        if self.connected[1] is None:
+            return self
+        else:
+            return self.connected[1].get_last_connection()
+
     def disconnect_magnet(self):
+        print("Self alumine ühendus: ")
+        print(self.connected[0])
+        print("Kaasas kantava ülemine ühendus")
+        print(self.connected[0].connected[1])
         self.connected[0].connected[1] = None
         self.connected[0] = None
 

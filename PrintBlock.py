@@ -4,7 +4,7 @@ from CommandBlock import CommandBlock
 
 
 class PrintBlock(CommandBlock):
-    def __init__(self, coords, canvas, stableCanvas, poly_cords, inside_poly_coords):
+    def __init__(self, coords, canvas, stableCanvas, poly_cords):
         super().__init__(coords, canvas, stableCanvas, poly_cords)
         self.string = 'print('
         self.string2 = ')'
@@ -14,7 +14,7 @@ class PrintBlock(CommandBlock):
         self.text_coords = (self.coords[0]+7, self.coords[1]+10)
         self.text2_coords = (self.coords[3]-10, self.coords[1]+10)
         self.inside_magnet_coords = None
-        self.inside_poly_coords = inside_poly_coords
+        self.inside_poly_coords = [self.coords[0]+45, self.coords[1]+10, 50, 15]
         self.inside_color = 'light pink'
 
     def create_text(self):
@@ -45,6 +45,7 @@ class PrintBlock(CommandBlock):
         old_poly_coords = self.inside_poly_coords
         self.inside_poly_coords = [old_poly_coords[0] + delta_x, old_poly_coords[1]+delta_y, old_poly_coords[2], old_poly_coords[3]]
         self.canvas.tag_raise(self.text_id)
+        self.canvas.tag_raise(self.text2_id)
         if self.connected[2] is None:
             self.canvas.tag_raise(self.poly_id)
             self.canvas.move(self.poly_id, delta_x, delta_y)

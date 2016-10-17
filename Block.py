@@ -26,7 +26,7 @@ class Block:
     def check_magnets_during_move(self, movable_blocks):
         # moves magnets also checks other blocks and marks them
         closest_object = self.get_closest(movable_blocks)
-        if closest_object != [] and movable_blocks[closest_object[0]] != "line":
+        if closest_object != [] and closest_object[0] in movable_blocks and movable_blocks[closest_object[0]] != "line":
             stable_instance = movable_blocks[closest_object[0]]
             stable_coords = stable_instance.renew_magnets()
             line_x = stable_coords[1][0]

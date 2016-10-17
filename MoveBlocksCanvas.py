@@ -27,8 +27,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             tag = self.stableCanvas.gettags(resp[0])[0]
             if tag == 'print_block':
                 cords = self.stableCanvas.command_block_coords(0, 0, 30, 120)
-                inside_poly_coords = [45, 10, 50, 15]
-                assign_block = PrintBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords, inside_poly_coords)
+                assign_block = PrintBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords)
                 obj_id = assign_block.create_polygon()
                 poly_id = assign_block.create_inside_polygon()
                 text_id = assign_block.create_text()

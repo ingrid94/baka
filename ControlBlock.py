@@ -4,7 +4,7 @@ from Block import Block
 class ControlBlock(Block):
     def __init__(self, coords, canvas, stable_canvas, poly_cords):
         super().__init__(coords, canvas, poly_cords)
-        # upper connection, main lower connection,  the most lower connection, main inside connection
+        # upper connection, main lower connection,  ControlBlockLower instance, main inside connection
         self.connected = [None, None, None, None]
         self.color = 'orange'
         self.outline = 'chocolate'
@@ -43,9 +43,22 @@ class ControlBlock(Block):
             delta_x = stable_magnet[1][0] - magnet_x
             delta_y = stable_magnet[1][1] - magnet_y
             self.move_connected(delta_x, delta_y)
+            if stable_instance.connected[1] is not None:
+                under_block = stable_instance.connected[1]
+                # Don't know ehy it needs 4 pixels, need to get real height somehow
+                under_delta_y = self.coords[2] + self.coords[3] + self.connected[2].coords[2] - 4
+                under_block.move_connected(0, under_delta_y)
+                self.connected[2].connected[1] = stable_instance.connected[1]
+                stable_instance.connected[1].connected[0] = self.connected[2]
             stable_instance.connected[1] = self
             self.connected[0] = stable_instance
             self.check_control_block(movable_blocks)
+
+    def get_last_connection(self):
+        if self.connected[1] is None:
+            return self
+        else:
+            return self.connected[1].get_last_connection()
 
     def disconnect_magnet(self):
         self.connected[0].connected[1] = None

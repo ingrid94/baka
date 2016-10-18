@@ -56,8 +56,8 @@ class CommandBlock(Block):
                 under_delta_y = self.get_height()
                 under_block.move_connected(0, under_delta_y)
                 last_connected = self.get_last_connection()
-                last_connected.connected[1] = stable_instance.connected[1]
-                stable_instance.connected[1].connected[0] = last_connected
+                last_connected.connected[1] = under_block
+                under_block.connected[0] = last_connected
             self.connected[0] = stable_instance
             stable_instance.connected[1] = self
             self.check_control_block(movable_blocks)

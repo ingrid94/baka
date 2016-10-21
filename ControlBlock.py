@@ -62,8 +62,8 @@ class ControlBlock(Block):
             return self.connected[1].get_last_connection()
 
     def disconnect_magnet(self, movable_blocks, type):
-        self.check_control_block(movable_blocks, type)
         self.connected[0].connected[1] = None
+        self.check_control_block(movable_blocks, type)
         self.connected[0] = None
 
     def get_height(self):
@@ -82,10 +82,13 @@ class ControlBlock(Block):
             blo_height = self.connected[1].get_height()
             self.coords[3] = blo_height
         if connection_type == 'disconnect':
-            blo_height = old_height - self.connected[1].get_height()
-            print(old_height, self.connected[1].get_height())
-            if blo_height < self.empty_block_height:
+            if self.connected[1] is None:
                 blo_height = self.empty_block_height
+            else:
+                blo_height = old_height - self.connected[1].get_height()
+                print(old_height, self.connected[1].get_height())
+                if blo_height < self.empty_block_height:
+                    blo_height = self.empty_block_height
             self.coords[3] = blo_height
 
         self.poly_cords = self.stableCanvas.control_block_coords(self.coords[0], self.coords[1],

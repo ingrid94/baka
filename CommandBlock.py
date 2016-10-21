@@ -81,7 +81,7 @@ class CommandBlock(Block):
 
     def check_control_block(self, movable_blocks, type):
         if self.connected[0].connected[0] is not None:
-            self.connected[0].check_control_block(movable_blocks)
+            self.connected[0].check_control_block(movable_blocks, type)
         if isinstance(self.connected[0], ControlBlock):
             self.connected[0].redraw(movable_blocks, type)
             # self.canvas.tag_raise(self.obj_id)

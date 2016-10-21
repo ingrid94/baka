@@ -53,7 +53,7 @@ class ControlBlock(Block):
                 stable_instance.connected[1].connected[0] = self.connected[2]
             stable_instance.connected[1] = self
             self.connected[0] = stable_instance
-            self.check_control_block(movable_blocks, 'connect')
+            self.check_control_block(movable_blocks)
 
     def get_last_connection(self):
         if self.connected[1] is None:
@@ -61,9 +61,9 @@ class ControlBlock(Block):
         else:
             return self.connected[1].get_last_connection()
 
-    def disconnect_magnet(self, movable_blocks, type):
+    def disconnect_magnet(self, movable_blocks):
         self.connected[0].connected[1] = None
-        self.check_control_block(movable_blocks, type)
+        self.check_control_block(movable_blocks)
         self.connected[0] = None
 
     def get_height(self):
@@ -76,18 +76,15 @@ class ControlBlock(Block):
             self.connected[0].get_height()
         return blo_height
 
-    def redraw(self, movable_blocks, connection_type):
+    def redraw(self, movable_blocks):
         old_height = self.coords[3]
-        if connection_type == 'connect':
+        # if direct block from ControlBlock is disconnected
+        if self.connected[1] is None:
+            blo_height = self.empty_block_height
+        # if something is connecting or something is not directly disconnecting from ControlBlock
+        else:
             blo_height = self.connected[1].get_height()
-        if connection_type == 'disconnect':
-            # if direct block from ControlBlock is disconnected
-            if self.connected[1] is None:
-                blo_height = self.empty_block_height
-            else:
-                blo_height = self.connected[1].get_height()
         self.coords[3] = blo_height
-
         self.poly_cords = self.stableCanvas.control_block_coords(self.coords[0], self.coords[1],
                                                                  self.coords[2], self.coords[3])[0]
         del movable_blocks[self.obj_id]
@@ -96,13 +93,13 @@ class ControlBlock(Block):
         movable_blocks[self.obj_id] = self
         self.connected[2].move_connected(0, blo_height - old_height)
         if self.connected[0] is not None:
-            self.check_control_block(movable_blocks, 'connect')
+            self.check_control_block(movable_blocks)
 
-    def check_control_block(self, movable_blocks, type):
+    def check_control_block(self, movable_blocks):
         if self.connected[0].connected[0] is not None:
-            self.connected[0].check_control_block(movable_blocks, type)
+            self.connected[0].check_control_block(movable_blocks)
         if isinstance(self.connected[0], ControlBlock):
-            self.connected[0].redraw(movable_blocks, type)
+            self.connected[0].redraw(movable_blocks)
 
 
 class ControlBlockLower(Block):
@@ -133,9 +130,9 @@ class ControlBlockLower(Block):
         if self.connected[1] is not None:
             self.connected[1].move_connected(delta_x, delta_y)
 
-    def check_control_block(self, movable_blocks, type):
+    def check_control_block(self, movable_blocks):
         if self.connected[0].connected[0] is not None:
-            self.connected[0].check_control_block(movable_blocks, type)
+            self.connected[0].check_control_block(movable_blocks)
 
     def get_height(self):
         blo_height = 25

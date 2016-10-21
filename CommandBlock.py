@@ -60,7 +60,7 @@ class CommandBlock(Block):
                 under_block.connected[0] = last_connected
             self.connected[0] = stable_instance
             stable_instance.connected[1] = self
-            self.check_control_block(movable_blocks, 'connect')
+            self.check_control_block(movable_blocks)
 
     def get_last_connection(self):
         if self.connected[1] is None:
@@ -68,9 +68,9 @@ class CommandBlock(Block):
         else:
             return self.connected[1].get_last_connection()
 
-    def disconnect_magnet(self, movable_blocks, type):
+    def disconnect_magnet(self, movable_blocks):
         self.connected[0].connected[1] = None
-        self.check_control_block(movable_blocks, type)
+        self.check_control_block(movable_blocks)
         self.connected[0] = None
 
     def get_height(self):
@@ -79,11 +79,11 @@ class CommandBlock(Block):
             blo_height += self.connected[1].get_height()
         return blo_height
 
-    def check_control_block(self, movable_blocks, type):
+    def check_control_block(self, movable_blocks):
         if self.connected[0].connected[0] is not None:
-            self.connected[0].check_control_block(movable_blocks, type)
+            self.connected[0].check_control_block(movable_blocks)
         if isinstance(self.connected[0], ControlBlock):
-            self.connected[0].redraw(movable_blocks, type)
+            self.connected[0].redraw(movable_blocks)
             # self.canvas.tag_raise(self.obj_id)
 
     def redraw(self, movable_blocks):

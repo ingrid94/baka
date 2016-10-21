@@ -10,6 +10,7 @@ class ControlBlock(Block):
         self.outline = 'chocolate'
         self.stableCanvas = stable_canvas
         self.default_items_on_block = None
+        self.empty_block_height = self.coords[3]
 
     def create_polygon(self):
         self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
@@ -52,7 +53,7 @@ class ControlBlock(Block):
                 stable_instance.connected[1].connected[0] = self.connected[2]
             stable_instance.connected[1] = self
             self.connected[0] = stable_instance
-            self.check_control_block(movable_blocks)
+            self.check_control_block(movable_blocks, 'connect')
 
     def get_last_connection(self):
         if self.connected[1] is None:
@@ -60,7 +61,8 @@ class ControlBlock(Block):
         else:
             return self.connected[1].get_last_connection()
 
-    def disconnect_magnet(self):
+    def disconnect_magnet(self, movable_blocks, type):
+        self.check_control_block(movable_blocks, type)
         self.connected[0].connected[1] = None
         self.connected[0] = None
 
@@ -74,25 +76,33 @@ class ControlBlock(Block):
             self.connected[0].get_height()
         return blo_height
 
-    def redraw(self, movable_blocks):
-        blo_height = self.connected[1].get_height()
+    def redraw(self, movable_blocks, connection_type):
         old_height = self.coords[3]
-        self.coords[3] = blo_height
+        if connection_type == 'connect':
+            blo_height = self.connected[1].get_height()
+            self.coords[3] = blo_height
+        if connection_type == 'disconnect':
+            blo_height = old_height - self.connected[1].get_height()
+            print(old_height, self.connected[1].get_height())
+            if blo_height < self.empty_block_height:
+                blo_height = self.empty_block_height
+            self.coords[3] = blo_height
+
         self.poly_cords = self.stableCanvas.control_block_coords(self.coords[0], self.coords[1],
-                                                                 self.coords[2], blo_height)[0]
+                                                                 self.coords[2], self.coords[3])[0]
         del movable_blocks[self.obj_id]
         self.canvas.delete(self.obj_id)
         self.obj_id = self.create_polygon()
         movable_blocks[self.obj_id] = self
         self.connected[2].move_connected(0, blo_height - old_height)
         if self.connected[0] is not None:
-            self.check_control_block(movable_blocks)
+            self.check_control_block(movable_blocks, 'connect')
 
-    def check_control_block(self, movable_blocks):
+    def check_control_block(self, movable_blocks, type):
         if self.connected[0].connected[0] is not None:
-            self.connected[0].check_control_block(movable_blocks)
+            self.connected[0].check_control_block(movable_blocks, type)
         if isinstance(self.connected[0], ControlBlock):
-            self.connected[0].redraw(movable_blocks)
+            self.connected[0].redraw(movable_blocks, type)
 
 
 class ControlBlockLower(Block):
@@ -123,9 +133,9 @@ class ControlBlockLower(Block):
         if self.connected[1] is not None:
             self.connected[1].move_connected(delta_x, delta_y)
 
-    def check_control_block(self, movable_blocks):
+    def check_control_block(self, movable_blocks, type):
         if self.connected[0].connected[0] is not None:
-            self.connected[0].check_control_block(movable_blocks)
+            self.connected[0].check_control_block(movable_blocks, type)
 
     def get_height(self):
         blo_height = 25

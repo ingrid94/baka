@@ -151,7 +151,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             # to disconnect blocks which are connected
             if self.movable_blocks[peale].connected[0] is not None:
                 if not isinstance(self.movable_blocks[peale], ControlBlockLower):
-                    self.movable_blocks[peale].disconnect_magnet()
+                    self.movable_blocks[peale].disconnect_magnet(self.movable_blocks, 'disconnect')
 
     def on_token_button_release(self, event):
         if self.drag_data["item"] is not None:

@@ -69,8 +69,8 @@ class CommandBlock(Block):
             return self.connected[1].get_last_connection()
 
     def disconnect_magnet(self, movable_blocks, type):
-        self.check_control_block(movable_blocks, type)
         self.connected[0].connected[1] = None
+        self.check_control_block(movable_blocks, type)
         self.connected[0] = None
 
     def get_height(self):

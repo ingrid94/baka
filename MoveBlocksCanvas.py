@@ -8,6 +8,7 @@ from FunctionBlock import FunctionBlock
 from PrintBlock import PrintBlock
 from ReturnBlock import ReturnBlock
 from TypeBlock import TypeBlock
+from VariableBlock import VariableBlock
 
 
 class MoveBlocksCanvas(ChooseBlocksCanvas):
@@ -27,24 +28,26 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             tag = self.stableCanvas.gettags(resp[0])[0]
             if tag == 'print_block':
                 cords = self.stableCanvas.command_block_coords(0, 0, 30, 120)
-                assign_block = PrintBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords)
-                obj_id = assign_block.create_polygon()
-                poly_id = assign_block.create_inside_polygon()
-                text_id = assign_block.create_text()
-                text2_id = assign_block.create_text2()
-                self.movable_blocks[obj_id] = assign_block
-                self.movable_blocks[poly_id] = assign_block
-                self.movable_blocks[text_id] = assign_block
-                self.movable_blocks[text2_id] = assign_block
+                print_block = PrintBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords)
+                obj_id = print_block.create_polygon()
+                poly_id = print_block.create_inside_polygon()
+                text_id = print_block.create_text()
+                text2_id = print_block.create_text2()
+                self.movable_blocks[obj_id] = print_block
+                self.movable_blocks[poly_id] = print_block
+                self.movable_blocks[text_id] = print_block
+                self.movable_blocks[text2_id] = print_block
             elif tag == 'return_block':
                 cords = self.stableCanvas.command_block_coords(0, 0, 30, 120)
-                assign_block = ReturnBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords)
-                obj_id = assign_block.create_polygon()
-                poly_id = assign_block.create_inside_polygon()
-                text_id = assign_block.create_text()
-                self.movable_blocks[obj_id] = assign_block
-                self.movable_blocks[poly_id] = assign_block
-                self.movable_blocks[text_id] = assign_block
+                return_block = ReturnBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords)
+                obj_id = return_block.create_polygon()
+                poly_id = return_block.create_inside_polygon()
+                text_id = return_block.create_text()
+                self.movable_blocks[obj_id] = return_block
+                self.movable_blocks[poly_id] = return_block
+                self.movable_blocks[text_id] = return_block
+            elif tag == 'variable_block':
+                self.create_frame('variable_assign')
             elif tag == 'inside_block':
                 cords = self.stableCanvas.inside_block_coords(0, 0, 130, 20)
                 bool_op_block = FunctionBlock([0, 0, 130, 20], self.canvas, self.stableCanvas, cords, 'dodger blue', 'steel blue')
@@ -66,6 +69,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.create_frame('number')
             elif tag == 'variable':
                 self.create_frame('variable')
+            elif tag == 'variable_assign':
+                self.create_frame('variable_assign')
             elif tag == 'string':
                 self.create_frame('string')
             elif tag == 'none':
@@ -78,7 +83,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
     def create_frame(self, inside_type):
 
         text = ""
-        if inside_type == 'variable':
+        if inside_type == 'variable' or inside_type == 'variable_assign':
             text = "Variables must begin with a letter (a - z, A - Z) or underscore (_). \n" \
                    "Other characters can be letters, numbers or _"
         elif inside_type == 'number':
@@ -118,10 +123,12 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.create_type_block(s, frame, 6, inside_type)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a string. Try again. ")
-        elif inside_type == 'variable':
+        elif inside_type == 'variable' or inside_type == 'variable_assign':
             p = re.match(r'^[a-zA-Z_][\w0-9_]*$', s, re.S)
-            if p:
-                self.create_type_block(s, frame, 6.5, inside_type)
+            if p and inside_type == 'variable':
+                self.create_type_block(s, frame, 5.5, inside_type)
+            elif p and inside_type == 'variable_assign':
+                self.create_variable_block(s, frame, 5.5)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a variable. Try again. ")
 
@@ -133,6 +140,23 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         text_id = type_block.create_text()
         self.movable_blocks[obj_id] = type_block
         self.movable_blocks[text_id] = type_block
+        if frame is not None:
+            self.canvas.delete(frame)
+
+    def create_variable_block(self, s, frame, times):
+        w = len(s) * times + 15
+        cords = self.stableCanvas.command_block_coords(0, 0, 30, 110)
+        variable_block = VariableBlock([0, 0, 30, 110], self.canvas, self.stableCanvas, cords, s, w)
+        obj_id = variable_block.create_polygon()
+        variable_poly_id = variable_block.create_variable_polygon()
+        variable_name_id = variable_block.create_variable_name()
+        text_id = variable_block.create_text()
+        inside_poly_id = variable_block.create_inside_polygon()
+        self.movable_blocks[obj_id] = variable_block
+        self.movable_blocks[variable_poly_id] = variable_block
+        self.movable_blocks[variable_name_id] = variable_block
+        self.movable_blocks[text_id] = variable_block
+        self.movable_blocks[inside_poly_id] = variable_block
         if frame is not None:
             self.canvas.delete(frame)
 

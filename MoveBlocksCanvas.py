@@ -126,9 +126,9 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         elif inside_type == 'variable' or inside_type == 'variable_assign':
             p = re.match(r'^[a-zA-Z_][\w0-9_]*$', s, re.S)
             if p and inside_type == 'variable':
-                self.create_type_block(s, frame, 5.5, inside_type)
+                self.create_type_block(s, frame, 6, inside_type)
             elif p and inside_type == 'variable_assign':
-                self.create_variable_block(s, frame, 5.5)
+                self.create_variable_block(s, frame, 6)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a variable. Try again. ")
 
@@ -182,7 +182,10 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             class_instance = self.movable_blocks[self.drag_data["item"]]
             if not isinstance(class_instance, ControlBlockLower):
                 class_instance.move_to_magnet(self.movable_blocks)
-            if isinstance(class_instance, TypeBlock) and (class_instance.inside_type == 'number' or class_instance.inside_type=='string' or class_instance.inside_type=='variable'):
+            if (isinstance(class_instance, TypeBlock) and
+                    (class_instance.inside_type == 'number' or class_instance.inside_type=='string'
+                     or class_instance.inside_type=='variable')) \
+                    or (isinstance(class_instance, VariableBlock)):
                 class_instance.check_if_frame_needed(self.drag_data["item"], self.movable_blocks)
 
         self.drag_data["item"] = None

@@ -82,7 +82,7 @@ class TypeBlock(InsideBlock):
         elif inside_type == 'variable':
             p = re.match(r'^[a-zA-Z_][\w0-9_]*$', s, re.S)
             if p:
-                self.change_type_block(s, frame, 6.5, movable_blocks)
+                self.change_type_block(s, frame, 6, movable_blocks)
             elif s is "" and self.string_on_block is not None:
                 self.change_type_block(self.string_on_block, frame, 6, movable_blocks)
             else:

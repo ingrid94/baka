@@ -11,6 +11,8 @@ class CommandBlock(Block):
         self.outline = 'purple'
         self.stableCanvas = stableCanvas
         self.inside_poly_coords = [None, None, None, None]
+        self.text_id = None
+        self.poly_id = None
 
     def create_polygon(self):
         self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
@@ -87,20 +89,24 @@ class CommandBlock(Block):
             # self.canvas.tag_raise(self.obj_id)
 
     def redraw(self, movable_blocks):
-        blo_width = self.connected[2].get_width()
         old_width = self.coords[3]
-        other_width = old_width - self.inside_poly_coords[2]
-        self.coords[3] = other_width + blo_width
+        if self.connected[2] is not None:
+            blo_width = self.connected[2].get_width()
+            other_width = old_width - self.inside_poly_coords[2]
+            self.coords[3] = other_width + blo_width
+        else:
+            self.coords[3] = 120
         self.poly_cords = self.stableCanvas.command_block_coords(self.coords[0], self.coords[1],
                                                                  self.coords[2], self.coords[3])
         del movable_blocks[self.obj_id]
         self.canvas.delete(self.obj_id)
         self.obj_id = self.create_polygon()
         movable_blocks[self.obj_id] = self
-        self.raise_tags(self.connected[2])
-        # self.connected[1].move_connected(0, blo_width - old_width)
-        # if self.connected[0] is not None:
-        #    self.check_control_block(movable_blocks)
+        if self.connected[2] is not None:
+            self.raise_tags(self.connected[2])
+        else:
+            for el in self.default_items_id:
+                self.canvas.tag_raise(el)
 
     def raise_tags(self, item):
         for el in self.default_items_id:

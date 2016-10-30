@@ -7,8 +7,6 @@ class ReturnBlock(CommandBlock):
     def __init__(self, coords, canvas, stableCanvas, poly_cords):
         super().__init__(coords, canvas, stableCanvas, poly_cords)
         self.string = 'return'
-        self.text_id = None
-        self.poly_id = None
         self.text_coords = (self.coords[0]+7, self.coords[1]+10)
         self.inside_magnet_coords = None
         self.inside_poly_coords = (self.coords[0]+50, self.coords[1]+10, 50, 15)
@@ -21,7 +19,7 @@ class ReturnBlock(CommandBlock):
         return self.text_id
 
     def create_inside_polygon(self):
-        poly_coords = self.stableCanvas.inside_block_coords(self.inside_poly_coords[0], self.inside_poly_coords[1], self.inside_poly_coords[2], self.inside_poly_coords[3])
+        poly_coords = self.stableCanvas.inside_block_coords(self.coords[0]+50, self.coords[1]+10, 50, 15)
         self.poly_id = self.canvas.create_polygon(poly_coords, fill=self.inside_color)
         self.default_items_id.append(self.poly_id)
         return self.poly_id

@@ -9,8 +9,8 @@ class InsideBlock:
         self.coords = coords
         self.canvas = canvas
         self.poly_cords = poly_cords
-        self.connected = []
-        self.connected_to_bigger_block = None
+        # connection to "under" block
+        self.connected = [None]
         self.color = color
         self.outline = outline
         self.obj_id = None
@@ -86,15 +86,21 @@ class InsideBlock:
                 delta_y = stable_magnet[1] - magnet_y
                 self.move_connected(delta_x, delta_y)
                 stable_instance.connected[2] = self
-                self.connected_to_bigger_block = stable_instance
+                self.connected[0] = stable_instance
                 if isinstance(stable_instance, CommandBlock):
                     stable_instance.redraw(movable_blocks)
 
-    def disconnect_magnet(self):
-        self.connected_to_bigger_block = None
+    def disconnect_magnet(self, movable_blocks):
+        self.connected[0].connected[2] = None
+        poly_id = self.connected[0].create_inside_polygon()
+        movable_blocks[poly_id] = self.connected[0]
+        self.connected[0].redraw(movable_blocks)
+        self.connected[0] = None
 
     def move_connected(self, delta_x, delta_y):
         self.change_coords(delta_x, delta_y)
+        if self.connected[0] is not None:
+            self.connected[0].move_connected()
 
     def get_width(self):
         return self.coords[2]

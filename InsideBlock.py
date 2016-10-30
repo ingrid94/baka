@@ -53,7 +53,7 @@ class InsideBlock:
             stable_instance = movable_blocks[closest_object[0]]
             # When ControlBlock has inside_poly, remove the first condition
             if not(isinstance(stable_instance, ControlBlock) or isinstance(stable_instance, ControlBlockLower)
-                   or isinstance(stable_instance, InsideBlock)):
+                   or isinstance(stable_instance, InsideBlock)) and stable_instance.connected[2] is None:
                 # gets poly_coords
                 stable_coords = stable_instance.inside_poly_coords
                 line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1], stable_coords[2], stable_coords[3])
@@ -79,15 +79,16 @@ class InsideBlock:
         closest_object = self.get_closest(movable_blocks)
         if closest_object:
             stable_instance = movable_blocks[closest_object[0]]
-            stable_magnet = [stable_instance.inside_poly_coords[0], stable_instance.inside_poly_coords[1]]
-            stable_instance.delete_inside_poly(movable_blocks)
-            delta_x = stable_magnet[0] - magnet_x
-            delta_y = stable_magnet[1] - magnet_y
-            self.move_connected(delta_x, delta_y)
-            stable_instance.connected[2] = self
-            self.connected_to_bigger_block = stable_instance
-            if isinstance(stable_instance, CommandBlock):
-               stable_instance.redraw(movable_blocks)
+            if stable_instance.connected[2] is None:
+                stable_magnet = [stable_instance.inside_poly_coords[0], stable_instance.inside_poly_coords[1]]
+                stable_instance.delete_inside_poly(movable_blocks)
+                delta_x = stable_magnet[0] - magnet_x
+                delta_y = stable_magnet[1] - magnet_y
+                self.move_connected(delta_x, delta_y)
+                stable_instance.connected[2] = self
+                self.connected_to_bigger_block = stable_instance
+                if isinstance(stable_instance, CommandBlock):
+                    stable_instance.redraw(movable_blocks)
 
     def disconnect_magnet(self):
         self.connected_to_bigger_block = None

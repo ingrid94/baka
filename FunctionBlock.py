@@ -1,4 +1,4 @@
-from InsideBlock import InsideBlock
+from Block import InsideBlock
 
 
 class FunctionBlock(InsideBlock):

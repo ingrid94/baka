@@ -1,6 +1,7 @@
 import tkinter.messagebox
 from tkinter import *
-from CommandBlock import CommandBlock
+
+from Block import CommandBlock
 
 
 class VariableBlock(CommandBlock):

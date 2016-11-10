@@ -1,7 +1,7 @@
 from tkinter import *
 import tkinter.messagebox
 
-from InsideBlock import InsideBlock
+from Block import InsideBlock
 
 
 class TypeBlock(InsideBlock):

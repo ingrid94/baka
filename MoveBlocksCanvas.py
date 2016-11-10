@@ -2,8 +2,8 @@ from tkinter import *
 import tkinter.messagebox
 import re
 
+from Block import ControlBlock, ControlBlockLower
 from ChooseBlocksCanvas import ChooseBlocksCanvas
-from ControlBlock import ControlBlock, ControlBlockLower
 from FunctionBlock import FunctionBlock
 from PrintBlock import PrintBlock
 from ReturnBlock import ReturnBlock

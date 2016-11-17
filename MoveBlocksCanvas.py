@@ -5,6 +5,7 @@ import re
 from Block import ControlBlock, ControlBlockLower
 from ChooseBlocksCanvas import ChooseBlocksCanvas
 from FunctionBlock import FunctionBlock
+from OneMagnetBlock import OneMagnetBlock
 from PrintBlock import PrintBlock
 from ReturnBlock import ReturnBlock
 from TwoMagnetBlock import TwoMagnetBlock
@@ -94,6 +95,16 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.create_two_magnet_block(140, 20, '>=')
             elif tag == 'smaller_or_equal':
                 self.create_two_magnet_block(140, 20, '<=')
+            elif tag == 'not':
+                cords = self.stableCanvas.inside_block_coords(0, 0, 90, 20)
+                one_magnet_block = OneMagnetBlock([0, 0, 90, 20], self.canvas, self.stableCanvas, cords, 'not',
+                                                  10, 'dodger blue', 'steel blue', 'sky blue')
+                obj_id = one_magnet_block.create_polygon()
+                first_poly_id = one_magnet_block.create_first_polygon()
+                text_id = one_magnet_block.create_text()
+                self.movable_blocks[obj_id] = one_magnet_block
+                self.movable_blocks[first_poly_id] = one_magnet_block
+                self.movable_blocks[text_id] = one_magnet_block
 
     def create_frame(self, inside_type):
 

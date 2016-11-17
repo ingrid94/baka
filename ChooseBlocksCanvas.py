@@ -160,5 +160,10 @@ class ChooseBlocksCanvas:
         self.canvas.create_text(362, 180, anchor=NW, text="<=", tags='smaller_or_equal', font='bold')
         self.canvas.create_polygon(self.inside_block_coords(390, 182, 40, 16), fill='sky blue', tags='smaller_or_equal')
 
+        self.canvas.create_polygon(self.inside_block_coords(300, 210, 90, 20), fill='dodger blue',
+                                   outline='steel blue', tags='not')
+        self.canvas.create_text(315, 212, anchor=NW, text='not', tags='not')
+        self.canvas.create_polygon(self.inside_block_coords(340, 212, 40, 16), fill='sky blue', tags='not')
+
     def bind(self, function):
         self.canvas.bind("<ButtonPress-1>", function)

@@ -1,35 +1,20 @@
 from tkinter import *
 
-from Block import InsideBlock
+from OneMagnetBlock import OneMagnetBlock
 
 
-class TwoMagnetBlock(InsideBlock):
+class TwoMagnetBlock(OneMagnetBlock):
     def __init__(self, coords, canvas, stableCanvas, poly_cords, text, text_len, color, outline, inside_color):
-        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline)
+        super().__init__(coords, canvas, stableCanvas, poly_cords, text, text_len, color, outline, inside_color)
         self.text = text
         # connection to "under" block, first inside block, second inside block
         self.connected = [None, None, None]
 
-        self.obj_id = None
-        self.first_poly_id = None
-        self.first_poly_coords = []
         self.second_poly_id = None
         self.second_poly_coords = []
-        self.text_id = None
-        self.text_coords = []
-        self.inside_color = inside_color
 
-        # inside the block
-        self.default_items_id = []
-        self.default_items_on_block = None
-
-        self.first_inside_length = 40
-        self.first_inside_height = 16
         self.second_inside_length = 40
         self.second_inside_height = 16
-        self.block_length = self.coords[2]
-        self.block_height = self.coords[3]
-        self.text_len = text_len
 
     def create_first_polygon(self):
         self.first_poly_coords = self.stableCanvas.inside_block_coords(self.coords[0] + 10, self.coords[1]+2,

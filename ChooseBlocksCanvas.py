@@ -111,17 +111,54 @@ class ChooseBlocksCanvas:
                                    tags='string')
         self.canvas.create_text(65, 320, anchor=NW, text="string", tags='string')
 
-        self.canvas.create_polygon(self.inside_block_coords(50, 350, 63, 15), fill='limegreen', outline='green',
+        self.canvas.create_polygon(self.inside_block_coords(50, 350, 63, 15), fill='dodger blue', outline='steel blue',
                                    tags='none')
         self.canvas.create_text(65, 350, anchor=NW, text="None", tags='none')
 
-        self.canvas.create_polygon(self.inside_block_coords(50, 380, 63, 15), fill='limegreen', outline='green',
+        self.canvas.create_polygon(self.inside_block_coords(50, 380, 63, 15), fill='dodger blue', outline='steel blue',
                                    tags='true')
         self.canvas.create_text(65, 380, anchor=NW, text="True", tags='true')
 
-        self.canvas.create_polygon(self.inside_block_coords(50, 410, 63, 15), fill='limegreen', outline='green',
+        self.canvas.create_polygon(self.inside_block_coords(50, 410, 63, 15), fill='dodger blue', outline='steel blue',
                                    tags='false')
         self.canvas.create_text(65, 410, anchor=NW, text="False", tags='false')
+
+        # right side column
+        self.canvas.create_polygon(self.inside_block_coords(300, 30, 140, 20), fill='dodger blue', outline='steel blue',
+                                   tags='equals')
+        self.canvas.create_polygon(self.inside_block_coords(310, 32, 40, 16), fill='sky blue', tags='equals')
+        self.canvas.create_text(362, 29, anchor=NW, text="==", tags='equals', font='bold')
+        self.canvas.create_polygon(self.inside_block_coords(390, 32, 40, 16), fill='sky blue', tags='equals')
+
+        self.canvas.create_polygon(self.inside_block_coords(300, 60, 140, 20), fill='dodger blue', outline='steel blue',
+                                   tags='not_equal')
+        self.canvas.create_polygon(self.inside_block_coords(310, 62, 40, 16), fill='sky blue', tags='not_equal')
+        self.canvas.create_text(362, 60, anchor=NW, text="!=", tags='not_equal', font='bold')
+        self.canvas.create_polygon(self.inside_block_coords(390, 62, 40, 16), fill='sky blue', tags='not_equal')
+
+        self.canvas.create_polygon(self.inside_block_coords(300, 90, 130, 20), fill='dodger blue', outline='steel blue',
+                                   tags='greater')
+        self.canvas.create_polygon(self.inside_block_coords(310, 92, 40, 16), fill='sky blue', tags='greater')
+        self.canvas.create_text(362, 90, anchor=NW, text=">", tags='greater', font='bold')
+        self.canvas.create_polygon(self.inside_block_coords(380, 92, 40, 16), fill='sky blue', tags='greater')
+
+        self.canvas.create_polygon(self.inside_block_coords(300, 120, 130, 20), fill='dodger blue', outline='steel blue',
+                                   tags='smaller')
+        self.canvas.create_polygon(self.inside_block_coords(310, 122, 40, 16), fill='sky blue', tags='smaller')
+        self.canvas.create_text(362, 120, anchor=NW, text="<", tags='smaller', font='bold')
+        self.canvas.create_polygon(self.inside_block_coords(380, 122, 40, 16), fill='sky blue', tags='smaller')
+
+        self.canvas.create_polygon(self.inside_block_coords(300, 150, 140, 20), fill='dodger blue', outline='steel blue',
+                                   tags='greater_or_equal')
+        self.canvas.create_polygon(self.inside_block_coords(310, 152, 40, 16), fill='sky blue', tags='greater_or_equal')
+        self.canvas.create_text(362, 150, anchor=NW, text=">=", tags='greater_or_equal', font='bold')
+        self.canvas.create_polygon(self.inside_block_coords(390, 152, 40, 16), fill='sky blue', tags='greater_or_equal')
+
+        self.canvas.create_polygon(self.inside_block_coords(300, 180, 140, 20), fill='dodger blue', outline='steel blue',
+                                   tags='smaller_or_equal')
+        self.canvas.create_polygon(self.inside_block_coords(310, 182, 40, 16), fill='sky blue', tags='smaller_or_equal')
+        self.canvas.create_text(362, 180, anchor=NW, text="<=", tags='smaller_or_equal', font='bold')
+        self.canvas.create_polygon(self.inside_block_coords(390, 182, 40, 16), fill='sky blue', tags='smaller_or_equal')
 
     def bind(self, function):
         self.canvas.bind("<ButtonPress-1>", function)

@@ -7,6 +7,7 @@ from ChooseBlocksCanvas import ChooseBlocksCanvas
 from FunctionBlock import FunctionBlock
 from PrintBlock import PrintBlock
 from ReturnBlock import ReturnBlock
+from TwoMagnetBlock import TwoMagnetBlock
 from TypeBlock import TypeBlock
 from VariableBlock import VariableBlock
 
@@ -74,11 +75,25 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             elif tag == 'string':
                 self.create_frame('string')
             elif tag == 'none':
-                self.create_type_block('None', None, 8, 'none')
+                self.create_type_block('None', None, 8, 'none', 'dodger blue', 'steel blue')
             elif tag == 'true':
-                self.create_type_block('True', None, 8, 'true')
+                self.create_type_block('True', None, 8, 'true', 'dodger blue', 'steel blue')
             elif tag == 'false':
-                self.create_type_block('False', None, 7, 'false')
+                self.create_type_block('False', None, 7, 'false', 'dodger blue', 'steel blue')
+            # second column blocks
+            elif tag == 'equals':
+                # args: block length, text length, text
+                self.create_two_magnet_block(140, 20, "==")
+            elif tag == 'not_equal':
+                self.create_two_magnet_block(140, 20, "!=")
+            elif tag == 'greater':
+                self.create_two_magnet_block(130, 10, '>')
+            elif tag == 'smaller':
+                self.create_two_magnet_block(130, 10, '<')
+            elif tag == 'greater_or_equal':
+                self.create_two_magnet_block(140, 20, '>=')
+            elif tag == 'smaller_or_equal':
+                self.create_two_magnet_block(140, 20, '<=')
 
     def create_frame(self, inside_type):
 
@@ -114,28 +129,28 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         s = v.get()
         if inside_type == 'number':
             if s.replace('.', '', 1).isdigit():
-                self.create_type_block(s, frame, 8, inside_type)
+                self.create_type_block(s, frame, 8, inside_type, 'limegreen', 'green')
             else:
                 tkinter.messagebox.showerror("Error", "It's not a number. Try again. ")
         elif inside_type == 'string':
             p = re.match(r'^(\"|\')(.)*(\"|\')$', s, re.S)
             if p:
-                self.create_type_block(s, frame, 6, inside_type)
+                self.create_type_block(s, frame, 6, inside_type, 'limegreen', 'green')
             else:
                 tkinter.messagebox.showerror("Error", "It's not a string. Try again. ")
         elif inside_type == 'variable' or inside_type == 'variable_assign':
             p = re.match(r'^[a-zA-Z_][\w0-9_]*$', s, re.S)
             if p and inside_type == 'variable':
-                self.create_type_block(s, frame, 6, inside_type)
+                self.create_type_block(s, frame, 6, inside_type, 'limegreen', 'green')
             elif p and inside_type == 'variable_assign':
                 self.create_variable_block(s, frame, 6)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a variable. Try again. ")
 
-    def create_type_block(self, s, frame, times, inside_type):
+    def create_type_block(self, s, frame, times, inside_type, color, outline):
         w = len(s) * times + 15
         cords = self.stableCanvas.inside_block_coords(0, 0, w, 20)
-        type_block = TypeBlock([0, 0, w, 20], self.canvas, self.stableCanvas, cords, 'limegreen', 'green', s, inside_type)
+        type_block = TypeBlock([0, 0, w, 20], self.canvas, self.stableCanvas, cords, color, outline, s, inside_type)
         obj_id = type_block.create_polygon()
         text_id = type_block.create_text()
         self.movable_blocks[obj_id] = type_block
@@ -159,6 +174,19 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         self.movable_blocks[inside_poly_id] = variable_block
         if frame is not None:
             self.canvas.delete(frame)
+
+    def create_two_magnet_block(self, blo_len, text_len, text):
+        cords = self.stableCanvas.inside_block_coords(0, 0, blo_len, 20)
+        equals_block = TwoMagnetBlock([0, 0, blo_len, 20], self.canvas, self.stableCanvas, cords, text, text_len,
+                                      'dodger blue', 'steel blue', 'sky blue')
+        obj_id = equals_block.create_polygon()
+        first_poly_id = equals_block.create_first_polygon()
+        text_id = equals_block.create_text()
+        second_poly_id = equals_block.create_second_polygon()
+        self.movable_blocks[obj_id] = equals_block
+        self.movable_blocks[first_poly_id] = equals_block
+        self.movable_blocks[text_id] = equals_block
+        self.movable_blocks[second_poly_id] = equals_block
 
     def create_polygon(self, args, **kw):
         return self.canvas.create_polygon(args, kw)

@@ -75,7 +75,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             elif tag == 'string':
                 self.create_frame('string')
             elif tag == 'none':
-                self.create_type_block('None', None, 8, 'none', 'dodger blue', 'steel blue')
+                self.create_type_block('None', None, 8, 'none', 'limegreen', 'green')
             elif tag == 'true':
                 self.create_type_block('True', None, 8, 'true', 'dodger blue', 'steel blue')
             elif tag == 'false':
@@ -177,16 +177,16 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
 
     def create_two_magnet_block(self, blo_len, text_len, text):
         cords = self.stableCanvas.inside_block_coords(0, 0, blo_len, 20)
-        equals_block = TwoMagnetBlock([0, 0, blo_len, 20], self.canvas, self.stableCanvas, cords, text, text_len,
-                                      'dodger blue', 'steel blue', 'sky blue')
-        obj_id = equals_block.create_polygon()
-        first_poly_id = equals_block.create_first_polygon()
-        text_id = equals_block.create_text()
-        second_poly_id = equals_block.create_second_polygon()
-        self.movable_blocks[obj_id] = equals_block
-        self.movable_blocks[first_poly_id] = equals_block
-        self.movable_blocks[text_id] = equals_block
-        self.movable_blocks[second_poly_id] = equals_block
+        two_magnet_block = TwoMagnetBlock([0, 0, blo_len, 20], self.canvas, self.stableCanvas, cords, text, text_len,
+                                          'dodger blue', 'steel blue', 'sky blue')
+        obj_id = two_magnet_block.create_polygon()
+        first_poly_id = two_magnet_block.create_first_polygon()
+        text_id = two_magnet_block.create_text()
+        second_poly_id = two_magnet_block.create_second_polygon()
+        self.movable_blocks[obj_id] = two_magnet_block
+        self.movable_blocks[first_poly_id] = two_magnet_block
+        self.movable_blocks[text_id] = two_magnet_block
+        self.movable_blocks[second_poly_id] = two_magnet_block
 
     def create_polygon(self, args, **kw):
         return self.canvas.create_polygon(args, kw)

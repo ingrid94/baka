@@ -1,20 +1,20 @@
 from tkinter import *
 
+from Block import InsideBlock
 
-class TwoMagnetBlock:
+
+class TwoMagnetBlock(InsideBlock):
     def __init__(self, coords, canvas, stableCanvas, poly_cords, text, text_len, color, outline, inside_color):
-        self.coords = coords
-        self.canvas = canvas
-        self.stableCanvas = stableCanvas
-        self.poly_cords = poly_cords
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline)
         self.text = text
-        self.color = color
-        self.outline = outline
-        # connection to "under" block
-        self.connected = [None]
+        # connection to "under" block, first inside block, second inside block
+        self.connected = [None, None, None]
 
         self.obj_id = None
         self.first_poly_id = None
+        self.first_poly_coords = []
+        self.second_poly_id = None
+        self.second_poly_coords = []
         self.text_id = None
         self.text_coords = []
         self.inside_color = inside_color
@@ -31,14 +31,10 @@ class TwoMagnetBlock:
         self.block_height = self.coords[3]
         self.text_len = text_len
 
-    def create_polygon(self):
-        self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
-        return self.obj_id
-
     def create_first_polygon(self):
-        poly_coords = self.stableCanvas.inside_block_coords(self.coords[0] + 10, self.coords[1]+2,
+        self.first_poly_coords = self.stableCanvas.inside_block_coords(self.coords[0] + 10, self.coords[1]+2,
                                                             self.first_inside_length, self.first_inside_height)
-        self.first_poly_id = self.canvas.create_polygon(poly_coords, fill=self.inside_color)
+        self.first_poly_id = self.canvas.create_polygon(self.first_poly_coords, fill=self.inside_color)
         self.default_items_on_block = self
         self.default_items_id.append(self.first_poly_id)
         return self.first_poly_id
@@ -51,11 +47,40 @@ class TwoMagnetBlock:
         return self.text_id
 
     def create_second_polygon(self):
-        poly_coords = self.stableCanvas.inside_block_coords(
+        self.second_poly_coords = self.stableCanvas.inside_block_coords(
             self.coords[0] + 10 + self.first_inside_length + 10 + self.text_len + 10,
             self.coords[1] + 2, self.second_inside_length, self.second_inside_height)
-        self.first_poly_id = self.canvas.create_polygon(poly_coords, fill=self.inside_color)
+        self.second_poly_id = self.canvas.create_polygon(self.second_poly_coords, fill=self.inside_color)
         self.default_items_on_block = self
-        self.default_items_id.append(self.first_poly_id)
-        return self.first_poly_id
+        self.default_items_id.append(self.second_poly_id)
+        return self.second_poly_id
 
+    def move_connected(self, delta_x, delta_y):
+        self.change_coords(delta_x, delta_y)
+
+        # moves first polygon magnet
+        old_first_poly_coords = self.first_poly_coords
+        self.first_poly_coords = [old_first_poly_coords[0] + delta_x, old_first_poly_coords[1] + delta_y,
+                                  old_first_poly_coords[2], old_first_poly_coords[3]]
+
+        # moves text
+        old_text_coords = self.text_coords
+        self.text_coords = [old_text_coords[0] + delta_x, old_text_coords[1] + delta_y]
+        self.canvas.move(self.text_id, delta_x, delta_y)
+
+        # moves second polygon magnet
+        old_second_poly_coords = self.second_poly_coords
+        self.second_poly_coords = [old_second_poly_coords[0] + delta_x, old_second_poly_coords[1] + delta_y,
+                                   old_second_poly_coords[2], old_second_poly_coords[3]]
+
+        self.canvas.tag_raise(self.obj_id)
+        # leaves the text on top always
+        self.canvas.tag_raise(self.text_id)
+
+        if self.connected[1] is None:
+            self.canvas.tag_raise(self.first_poly_id)
+            self.canvas.move(self.first_poly_id, delta_x, delta_y)
+
+        if self.connected[2] is None:
+            self.canvas.tag_raise(self.second_poly_id)
+            self.canvas.move(self.second_poly_id, delta_x, delta_y)

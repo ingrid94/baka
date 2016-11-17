@@ -111,7 +111,7 @@ class ChooseBlocksCanvas:
                                    tags='string')
         self.canvas.create_text(65, 320, anchor=NW, text="string", tags='string')
 
-        self.canvas.create_polygon(self.inside_block_coords(50, 350, 63, 15), fill='dodger blue', outline='steel blue',
+        self.canvas.create_polygon(self.inside_block_coords(50, 350, 63, 15), fill='limegreen', outline='green',
                                    tags='none')
         self.canvas.create_text(65, 350, anchor=NW, text="None", tags='none')
 

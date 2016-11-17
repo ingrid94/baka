@@ -160,10 +160,22 @@ class ChooseBlocksCanvas:
         self.canvas.create_text(362, 180, anchor=NW, text="<=", tags='smaller_or_equal', font='bold')
         self.canvas.create_polygon(self.inside_block_coords(390, 182, 40, 16), fill='sky blue', tags='smaller_or_equal')
 
-        self.canvas.create_polygon(self.inside_block_coords(300, 210, 90, 20), fill='dodger blue',
+        self.canvas.create_polygon(self.inside_block_coords(300, 210, 130, 20), fill='dodger blue',
+                                   outline='steel blue', tags='or')
+        self.canvas.create_polygon(self.inside_block_coords(310, 212, 40, 16), fill='sky blue', tags='or')
+        self.canvas.create_text(365, 212, anchor=NW, text="or", tags='or')
+        self.canvas.create_polygon(self.inside_block_coords(385, 212, 40, 16), fill='sky blue', tags='or')
+
+        self.canvas.create_polygon(self.inside_block_coords(300, 240, 130, 20), fill='dodger blue',
+                                   outline='steel blue', tags='and')
+        self.canvas.create_polygon(self.inside_block_coords(310, 242, 40, 16), fill='sky blue', tags='and')
+        self.canvas.create_text(362, 242, anchor=NW, text="and", tags='and')
+        self.canvas.create_polygon(self.inside_block_coords(385, 242, 40, 16), fill='sky blue', tags='and')
+
+        self.canvas.create_polygon(self.inside_block_coords(300, 270, 90, 20), fill='dodger blue',
                                    outline='steel blue', tags='not')
-        self.canvas.create_text(315, 212, anchor=NW, text='not', tags='not')
-        self.canvas.create_polygon(self.inside_block_coords(340, 212, 40, 16), fill='sky blue', tags='not')
+        self.canvas.create_text(315, 272, anchor=NW, text='not', tags='not')
+        self.canvas.create_polygon(self.inside_block_coords(340, 272, 40, 16), fill='sky blue', tags='not')
 
     def bind(self, function):
         self.canvas.bind("<ButtonPress-1>", function)

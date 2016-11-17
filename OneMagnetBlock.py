@@ -62,3 +62,4 @@ class OneMagnetBlock(InsideBlock):
         if self.connected[1] is None:
             self.canvas.tag_raise(self.first_poly_id)
             self.canvas.move(self.first_poly_id, delta_x, delta_y)
+

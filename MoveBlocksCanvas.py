@@ -95,6 +95,10 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.create_two_magnet_block(140, 20, '>=')
             elif tag == 'smaller_or_equal':
                 self.create_two_magnet_block(140, 20, '<=')
+            elif tag == 'or':
+                self.create_two_magnet_block(130, 10, 'or')
+            elif tag == 'and':
+                self.create_two_magnet_block(130, 15, 'and')
             elif tag == 'not':
                 cords = self.stableCanvas.inside_block_coords(0, 0, 90, 20)
                 one_magnet_block = OneMagnetBlock([0, 0, 90, 20], self.canvas, self.stableCanvas, cords, 'not',

@@ -25,8 +25,12 @@ class TwoMagnetBlock(OneMagnetBlock):
         return self.first_poly_id
 
     def create_text(self):
-        self.text_coords = [self.first_inside_length + 22, self.coords[1]-1]
-        self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.text, font='bold')
+        if self.text == 'and' or self.text == 'or':
+            self.text_coords = [self.first_inside_length + 22, self.coords[1] + 2]
+            self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.text)
+        else:
+            self.text_coords = [self.first_inside_length + 22, self.coords[1] - 1]
+            self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.text, font='bold')
         self.default_items_on_block = self
         self.default_items_id.append(self.text_id)
         return self.text_id

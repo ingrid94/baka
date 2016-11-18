@@ -50,10 +50,22 @@ class TwoMagnetBlock(OneMagnetBlock):
 
     def move_connected(self, delta_x, delta_y):
         self.change_coords(delta_x, delta_y)
+        if self.default_items_on_block is not None:
+            self.default_items_on_block.change_inside_coords(delta_x, delta_y)
+        if self.connected[1] is not None:
+            self.connected[1].move_connected(delta_x, delta_y)
+            for i in self.connected[1].default_items_id:
+                self.canvas.tag_raise(i)
+        if self.connected[2] is not None:
+            self.connected[2].move_connected(delta_x, delta_y)
+            for i in self.connected[2].default_items_id:
+                self.canvas.tag_raise(i)
+
+    def change_inside_coords(self, delta_x, delta_y):
 
         # moves first polygon magnet
-        old_first_poly_coords = self.first_poly_coords
-        self.first_poly_coords = [old_first_poly_coords[0] + delta_x, old_first_poly_coords[1] + delta_y,
+        old_first_poly_coords = self.inside_poly_coords
+        self.inside_poly_coords = [old_first_poly_coords[0] + delta_x, old_first_poly_coords[1] + delta_y,
                                   old_first_poly_coords[2], old_first_poly_coords[3]]
 
         # moves text
@@ -77,3 +89,4 @@ class TwoMagnetBlock(OneMagnetBlock):
         if self.connected[2] is None:
             self.canvas.tag_raise(self.second_poly_id)
             self.canvas.move(self.second_poly_id, delta_x, delta_y)
+

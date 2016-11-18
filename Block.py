@@ -405,8 +405,12 @@ class InsideBlock:
                     stable_instance.redraw(movable_blocks)
 
     def disconnect_magnet(self, movable_blocks):
-        self.connected[0].connected[2] = None
-        poly_id = self.connected[0].create_inside_polygon()
+        if isinstance(self.connected[0], CommandBlock):
+            self.connected[0].connected[2] = None
+            poly_id = self.connected[0].create_inside_polygon()
+        elif isinstance(self.connected[0], OneMagnetBlock):
+            self.connected[0].connected[1] = None
+            poly_id = self.connected[0].create_first_polygon()
         movable_blocks[poly_id] = self.connected[0]
         self.connected[0].redraw(movable_blocks)
         self.connected[0] = None
@@ -531,9 +535,7 @@ class OneMagnetBlock(InsideBlock):
 
         self.obj_id = None
         self.first_poly_id = None
-        self.inside_poly_coords = []
         self.text_id = None
-        self.text_coords = []
         self.inside_color = inside_color
 
         # inside the block
@@ -545,18 +547,18 @@ class OneMagnetBlock(InsideBlock):
         self.block_length = self.coords[2]
         self.block_height = self.coords[3]
         self.text_len = text_len
+        self.inside_poly_coords = [self.text_len + 30, self.coords[1] + 2, self.first_inside_length, self.first_inside_height]
+        self.text_coords = [self.coords[0] + 15, self.coords[1]+2]
 
     def create_text(self):
-        self.text_coords = [self.coords[0] + 15, self.coords[1]+2]
         self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.text)
         self.default_items_on_block = self
         self.default_items_id.append(self.text_id)
         return self.text_id
 
     def create_first_polygon(self):
-        self.inside_poly_coords = [self.text_len + 30, self.coords[1] + 2, self.first_inside_length, self.first_inside_height]
-        poly_coords = self.stableCanvas.inside_block_coords(self.text_len + 30, self.coords[1] + 2,
-                                                            self.first_inside_length, self.first_inside_height)
+        poly_coords = self.stableCanvas.inside_block_coords(self.inside_poly_coords[0], self.inside_poly_coords[1],
+                                                            self.inside_poly_coords[2], self.inside_poly_coords[3])
         self.first_poly_id = self.canvas.create_polygon(poly_coords, fill=self.inside_color)
         self.default_items_on_block = self
         self.default_items_id.append(self.first_poly_id)
@@ -564,6 +566,15 @@ class OneMagnetBlock(InsideBlock):
 
     def move_connected(self, delta_x, delta_y):
         self.change_coords(delta_x, delta_y)
+        if self.default_items_on_block is not None:
+            self.default_items_on_block.change_inside_coords(delta_x, delta_y)
+        if self.connected[1] is not None:
+            self.connected[1].move_connected(delta_x, delta_y)
+            for i in self.connected[1].default_items_id:
+                self.canvas.tag_raise(i)
+
+    def change_inside_coords(self, delta_x, delta_y):
+        # self.change_coords(delta_x, delta_y)
 
         # moves first polygon magnet
         old_first_poly_coords = self.inside_poly_coords
@@ -589,3 +600,4 @@ class OneMagnetBlock(InsideBlock):
             self.canvas.delete(self.first_poly_id)
             self.default_items_id.remove(self.first_poly_id)
             self.first_poly_id = None
+

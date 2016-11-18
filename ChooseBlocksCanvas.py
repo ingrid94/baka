@@ -90,10 +90,6 @@ class ChooseBlocksCanvas:
         self.canvas.create_text(130, 105, anchor=NW, text="=", tags='variable_block', font='bold')
         self.canvas.create_polygon(self.inside_block_coords(150, 110, 40, 15), fill='light pink', tags='variable_block')
 
-        # self.canvas.create_polygon(self.inside_block_coords(50, 110, 130, 20), fill='dodger blue',
-        # outline='steel blue', tags='inside_block')
-        # self.canvas.create_polygon(self.inside_block_coords(50, 250, 65, 20), fill='limegreen', outline='green')
-
         self.canvas.create_polygon(self.control_block_coords(50, 150, 30, 35)[0], fill='orange', outline='chocolate',
                                    tags='control_block')
         self.canvas.create_polygon(self.control_block_coords(50, 150, 30, 35)[1], fill='orange', outline='chocolate',

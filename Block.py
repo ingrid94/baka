@@ -1,3 +1,7 @@
+from tkinter import *
+import tkinter.messagebox
+
+
 class Block:
     def __init__(self, coords, canvas, poly_cords):
         self.coords = coords
@@ -358,11 +362,12 @@ class InsideBlock:
         if closest_object != [] and movable_blocks[closest_object[0]] != "line":
             stable_instance = movable_blocks[closest_object[0]]
             # When ControlBlock has inside_poly, remove the first condition
-            if not(isinstance(stable_instance, ControlBlock) or isinstance(stable_instance, ControlBlockLower)
-                   or isinstance(stable_instance, InsideBlock)) and stable_instance.connected[2] is None:
+            if (isinstance(stable_instance, CommandBlock) and stable_instance.connected[2] is None) or \
+                    (isinstance(stable_instance, OneMagnetBlock) and stable_instance.connected[1] is None):
                 # gets poly_coords
                 stable_coords = stable_instance.inside_poly_coords
-                line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1], stable_coords[2], stable_coords[3])
+                line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1],
+                                                                    stable_coords[2], stable_coords[3])
                 # draws "line" mark to the block
                 line_id = self.canvas.create_line(line_coords, fill="green", width=3)
                 movable_blocks[line_id] = "line"
@@ -385,15 +390,18 @@ class InsideBlock:
         closest_object = self.get_closest(movable_blocks)
         if closest_object:
             stable_instance = movable_blocks[closest_object[0]]
-            if stable_instance.connected[2] is None:
-                stable_magnet = [stable_instance.inside_poly_coords[0], stable_instance.inside_poly_coords[1]]
+            if (isinstance(stable_instance, CommandBlock) and stable_instance.connected[2] is None) or \
+                    (isinstance(stable_instance, OneMagnetBlock) and stable_instance.connected[1] is None):
+                stable_magnet = [stable_instance.inside_poly_coords[0], stable_instance.inside_poly_coords[1]+5]
                 stable_instance.delete_inside_poly(movable_blocks)
                 delta_x = stable_magnet[0] - magnet_x
                 delta_y = stable_magnet[1] - magnet_y
                 self.move_connected(delta_x, delta_y)
-                stable_instance.connected[2] = self
                 self.connected[0] = stable_instance
-                if isinstance(stable_instance, CommandBlock):
+                if isinstance(stable_instance, OneMagnetBlock):
+                    stable_instance.connected[1] = self
+                elif isinstance(stable_instance, CommandBlock):
+                    stable_instance.connected[2] = self
                     stable_instance.redraw(movable_blocks)
 
     def disconnect_magnet(self, movable_blocks):
@@ -414,3 +422,170 @@ class InsideBlock:
     def raise_tags(self):
         for el in self.default_items_id:
             self.canvas.tag_raise(el)
+
+
+class TypeBlock(InsideBlock):
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_type):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline)
+        self.string_on_block = string
+        self.text_id = None
+        self.text_coords = [self.coords[0] + 12, self.coords[1] + 1]
+        self.inside_type = inside_type
+        self.connected = [None]
+
+    def create_text(self):
+        self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.string_on_block)
+        self.default_items_id.append(self.text_id)
+        return self.text_id
+
+    def move_connected(self, delta_x, delta_y):
+        self.change_coords(delta_x, delta_y)
+        # moves text
+        old_text_coords = self.text_coords
+        self.text_coords = [old_text_coords[0] + delta_x, old_text_coords[1] + delta_y]
+        self.canvas.move(self.text_id, delta_x, delta_y)
+        self.canvas.tag_raise(self.obj_id)
+        # leaves the text on top always
+        self.canvas.tag_raise(self.text_id)
+
+    def check_if_frame_needed(self, clicked_id, movable_blocks):
+        if clicked_id == self.text_id:
+            self.create_frame(movable_blocks)
+
+    def create_frame(self, movable_blocks):
+
+        text = ""
+        if self.inside_type == 'variable':
+            text = "Variables must begin with a letter (a - z, A - Z) or underscore (_). \n" \
+                   "Other characters can be letters, numbers or _"
+        elif self.inside_type == 'number':
+            text = "Numbers consist of digits (0-9). \n To get floating point number use point (.)"
+        elif self.inside_type == 'string':
+            text = "String literals are written in single or double quotes. "
+
+        frame = Frame(self.canvas)
+        can = self.canvas.create_window(250, 200, window=frame)
+
+        introduction = Label(frame, text=text)
+        introduction.pack(pady=10)
+
+        v = StringVar()
+        e = Entry(frame, textvariable=v)
+        e.pack()
+
+        cancel = Button(frame, text="Cancel", command=lambda: self.delete_item(can))
+        cancel.pack(side=LEFT, padx=30, pady=10)
+
+        confirm = Button(frame, text="Confirm", command=lambda: self.create_type(can, v, self.inside_type, movable_blocks))
+        confirm.pack(side=RIGHT, padx=30, pady=10)
+
+    def delete_item(self, frame):
+        self.canvas.delete(frame)
+
+    def create_type(self, frame, v, inside_type, movable_blocks):
+        s = v.get()
+        if inside_type == 'number':
+            if s.replace('.', '', 1).isdigit():
+                self.change_type_block(s, frame, 8, movable_blocks)
+            elif s is "" and self.string_on_block is not None:
+                self.change_type_block(self.string_on_block, frame, 6, movable_blocks)
+            else:
+                tkinter.messagebox.showerror("Error", "It's not a number. Try again. ")
+        elif inside_type == 'string':
+            p = re.match(r'^(\"|\')(.)*(\"|\')$', s, re.S)
+            if p:
+                self.change_type_block(s, frame, 6, movable_blocks)
+            elif s is "" and self.string_on_block is not None:
+                self.change_type_block(self.string_on_block, frame, 6, movable_blocks)
+            else:
+                tkinter.messagebox.showerror("Error", "It's not a string. Try again. ")
+        elif inside_type == 'variable':
+            p = re.match(r'^[a-zA-Z_][\w0-9_]*$', s, re.S)
+            if p:
+                self.change_type_block(s, frame, 6, movable_blocks)
+            elif s is "" and self.string_on_block is not None:
+                self.change_type_block(self.string_on_block, frame, 6, movable_blocks)
+            else:
+                tkinter.messagebox.showerror("Error", "It's not a variable. Try again. ")
+
+    def change_type_block(self, s, frame, times, movable_blocks):
+        self.string_on_block = s
+        w = len(s) * times + 15
+        self.poly_cords = self.stableCanvas.inside_block_coords(self.coords[0], self.coords[1], w, 16)
+        del movable_blocks[self.obj_id]
+        self.canvas.delete(self.obj_id)
+        self.obj_id = self.create_polygon()
+        movable_blocks[self.obj_id] = self
+        self.canvas.itemconfig(self.text_id, text=s)
+        self.canvas.tag_raise(self.text_id)
+        if frame is not None:
+            self.canvas.delete(frame)
+
+
+class OneMagnetBlock(InsideBlock):
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, text, text_len, color, outline, inside_color):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline)
+        self.text = text
+        # connection to "under" block, first inside block
+        self.connected = [None, None]
+
+        self.obj_id = None
+        self.first_poly_id = None
+        self.inside_poly_coords = []
+        self.text_id = None
+        self.text_coords = []
+        self.inside_color = inside_color
+
+        # inside the block
+        self.default_items_id = []
+        self.default_items_on_block = None
+
+        self.first_inside_length = 40
+        self.first_inside_height = 16
+        self.block_length = self.coords[2]
+        self.block_height = self.coords[3]
+        self.text_len = text_len
+
+    def create_text(self):
+        self.text_coords = [self.coords[0] + 15, self.coords[1]+2]
+        self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.text)
+        self.default_items_on_block = self
+        self.default_items_id.append(self.text_id)
+        return self.text_id
+
+    def create_first_polygon(self):
+        self.inside_poly_coords = [self.text_len + 30, self.coords[1] + 2, self.first_inside_length, self.first_inside_height]
+        poly_coords = self.stableCanvas.inside_block_coords(self.text_len + 30, self.coords[1] + 2,
+                                                            self.first_inside_length, self.first_inside_height)
+        self.first_poly_id = self.canvas.create_polygon(poly_coords, fill=self.inside_color)
+        self.default_items_on_block = self
+        self.default_items_id.append(self.first_poly_id)
+        return self.first_poly_id
+
+    def move_connected(self, delta_x, delta_y):
+        self.change_coords(delta_x, delta_y)
+
+        # moves first polygon magnet
+        old_first_poly_coords = self.inside_poly_coords
+        self.inside_poly_coords = [old_first_poly_coords[0] + delta_x, old_first_poly_coords[1] + delta_y,
+                                   old_first_poly_coords[2], old_first_poly_coords[3]]
+
+        # moves text
+        old_text_coords = self.text_coords
+        self.text_coords = [old_text_coords[0] + delta_x, old_text_coords[1] + delta_y]
+        self.canvas.move(self.text_id, delta_x, delta_y)
+
+        self.canvas.tag_raise(self.obj_id)
+        # leaves the text on top always
+        self.canvas.tag_raise(self.text_id)
+
+        if self.connected[1] is None:
+            self.canvas.tag_raise(self.first_poly_id)
+            self.canvas.move(self.first_poly_id, delta_x, delta_y)
+
+    def delete_inside_poly(self, movable_blocks):
+        if self.first_poly_id:
+            del movable_blocks[self.first_poly_id]
+            self.canvas.delete(self.first_poly_id)
+            self.default_items_id.remove(self.first_poly_id)
+            self.first_poly_id = None

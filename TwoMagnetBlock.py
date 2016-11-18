@@ -1,6 +1,6 @@
 from tkinter import *
 
-from OneMagnetBlock import OneMagnetBlock
+from Block import OneMagnetBlock
 
 
 class TwoMagnetBlock(OneMagnetBlock):
@@ -17,9 +17,11 @@ class TwoMagnetBlock(OneMagnetBlock):
         self.second_inside_height = 16
 
     def create_first_polygon(self):
-        self.first_poly_coords = self.stableCanvas.inside_block_coords(self.coords[0] + 10, self.coords[1]+2,
-                                                            self.first_inside_length, self.first_inside_height)
-        self.first_poly_id = self.canvas.create_polygon(self.first_poly_coords, fill=self.inside_color)
+        self.inside_poly_coords = [self.coords[0] + 10, self.coords[1]+2,
+                                   self.first_inside_length, self.first_inside_height]
+        first_poly_coords = self.stableCanvas.inside_block_coords(self.coords[0] + 10, self.coords[1]+2,
+                                                                  self.first_inside_length, self.first_inside_height)
+        self.first_poly_id = self.canvas.create_polygon(first_poly_coords, fill=self.inside_color)
         self.default_items_on_block = self
         self.default_items_id.append(self.first_poly_id)
         return self.first_poly_id
@@ -36,10 +38,12 @@ class TwoMagnetBlock(OneMagnetBlock):
         return self.text_id
 
     def create_second_polygon(self):
-        self.second_poly_coords = self.stableCanvas.inside_block_coords(
+        self.second_poly_coords = [self.coords[0] + 10 + self.first_inside_length + 10 + self.text_len + 10,
+                                   self.coords[1] + 2, self.second_inside_length, self.second_inside_height]
+        second_poly_coords = self.stableCanvas.inside_block_coords(
             self.coords[0] + 10 + self.first_inside_length + 10 + self.text_len + 10,
             self.coords[1] + 2, self.second_inside_length, self.second_inside_height)
-        self.second_poly_id = self.canvas.create_polygon(self.second_poly_coords, fill=self.inside_color)
+        self.second_poly_id = self.canvas.create_polygon(second_poly_coords, fill=self.inside_color)
         self.default_items_on_block = self
         self.default_items_id.append(self.second_poly_id)
         return self.second_poly_id

@@ -2,14 +2,13 @@ from tkinter import *
 import tkinter.messagebox
 import re
 
-from Block import ControlBlock, ControlBlockLower
+from Block import ControlBlock, ControlBlockLower, TypeBlock, OneMagnetBlock
 from ChooseBlocksCanvas import ChooseBlocksCanvas
 from FunctionBlock import FunctionBlock
-from OneMagnetBlock import OneMagnetBlock
+
 from PrintBlock import PrintBlock
 from ReturnBlock import ReturnBlock
 from TwoMagnetBlock import TwoMagnetBlock
-from TypeBlock import TypeBlock
 from VariableBlock import VariableBlock
 
 
@@ -164,8 +163,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
 
     def create_type_block(self, s, frame, times, inside_type, color, outline):
         w = len(s) * times + 15
-        cords = self.stableCanvas.inside_block_coords(0, 0, w, 20)
-        type_block = TypeBlock([0, 0, w, 20], self.canvas, self.stableCanvas, cords, color, outline, s, inside_type)
+        cords = self.stableCanvas.inside_block_coords(0, 0, w, 16)
+        type_block = TypeBlock([0, 0, w, 16], self.canvas, self.stableCanvas, cords, color, outline, s, inside_type)
         obj_id = type_block.create_polygon()
         text_id = type_block.create_text()
         self.movable_blocks[obj_id] = type_block

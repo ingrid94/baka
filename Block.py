@@ -59,15 +59,14 @@ class Block:
 
 
 class CommandBlock(Block):
-    def __init__(self, coords, canvas, stableCanvas, poly_cords):
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline):
         super().__init__(coords, canvas, poly_cords)
         # upper connection, lower connection, inside_poly connection
         self.connected = [None, None, None]
-        self.color = 'violet red'
-        self.outline = 'purple'
+        self.color = color
+        self.outline = outline
         self.stableCanvas = stableCanvas
         self.inside_poly_coords = [None, None, None, None]
-        self.text_id = None
         self.poly_id = None
 
     def create_polygon(self):
@@ -142,13 +141,12 @@ class CommandBlock(Block):
             self.connected[0].check_control_block(movable_blocks)
         if isinstance(self.connected[0], ControlBlock):
             self.connected[0].redraw_length(movable_blocks)
-            # self.canvas.tag_raise(self.obj_id)
 
     def redraw_base(self, movable_blocks):
         old_width = self.coords[3]
         if self.connected[2] is not None:
             blo_width = self.connected[2].get_width()
-            other_width = old_width - self.inside_poly_coords[2]
+            other_width = old_width - self.inside_poly_coords[3]
             self.coords[3] = other_width + blo_width
         else:
             self.coords[3] = 120
@@ -217,7 +215,7 @@ class ControlBlock(Block):
             self.move_connected(delta_x, delta_y)
             if stable_instance.connected[1] is not None:
                 under_block = stable_instance.connected[1]
-                # Don't know ehy it needs 4 pixels, need to get real height somehow
+                # Don't know why it needs 4 pixels, need to get real height somehow
                 under_delta_y = self.coords[2] + self.coords[3] + self.connected[2].coords[2] - 4
                 under_block.move_connected(0, under_delta_y)
                 self.connected[2].connected[1] = stable_instance.connected[1]
@@ -421,7 +419,7 @@ class InsideBlock:
             self.connected[0].move_connected()
 
     def get_width(self):
-        return self.coords[2]
+        return self.coords[3]
 
     def raise_tags(self):
         for el in self.default_items_id:
@@ -515,7 +513,7 @@ class TypeBlock(InsideBlock):
     def change_type_block(self, s, frame, times, movable_blocks):
         self.string_on_block = s
         w = len(s) * times + 15
-        self.poly_cords = self.stableCanvas.inside_block_coords(self.coords[0], self.coords[1], w, 16)
+        self.poly_cords = self.stableCanvas.inside_block_coords(self.coords[0], self.coords[1], 16, w)
         del movable_blocks[self.obj_id]
         self.canvas.delete(self.obj_id)
         self.obj_id = self.create_polygon()
@@ -547,7 +545,7 @@ class OneMagnetBlock(InsideBlock):
         self.block_length = self.coords[2]
         self.block_height = self.coords[3]
         self.text_len = text_len
-        self.inside_poly_coords = [self.text_len + 30, self.coords[1] + 2, self.first_inside_length, self.first_inside_height]
+        self.inside_poly_coords = [self.text_len + 30, self.coords[1] + 2, self.first_inside_height, self.first_inside_length]
         self.text_coords = [self.coords[0] + 15, self.coords[1]+2]
 
     def create_text(self):
@@ -601,16 +599,15 @@ class OneMagnetBlock(InsideBlock):
             self.first_poly_id = None
 
     def redraw_base(self, movable_blocks):
-        old_width = self.coords[2]
+        old_width = self.coords[3]
         if self.connected[1] is not None:
             blo_width = self.connected[1].get_width()
-            other_width = old_width - self.inside_poly_coords[2]
-            self.coords[2] = other_width + blo_width
+            other_width = old_width - self.inside_poly_coords[3]
+            self.coords[3] = other_width + blo_width
         else:
-            self.coords[2] = 90
+            self.coords[3] = 90
         self.poly_cords = self.stableCanvas.inside_block_coords(self.coords[0], self.coords[1], self.coords[2],
                                                                 self.coords[3])
-        print(self.coords)
         del movable_blocks[self.obj_id]
         self.canvas.delete(self.obj_id)
         self.obj_id = self.create_polygon()

@@ -5,8 +5,8 @@ from Block import CommandBlock
 
 
 class VariableBlock(CommandBlock):
-    def __init__(self, coords, canvas, stableCanvas, poly_cords, variable_name, len):
-        super().__init__(coords, canvas, stableCanvas, poly_cords)
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, variable_name, len):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline)
         self.string = '='
         self.variable_name = variable_name
         self.variable_name_block_len = len
@@ -14,11 +14,11 @@ class VariableBlock(CommandBlock):
         self.variable_name_id = None
         self.text_id = None
         self.poly_id = None
-        self.variable_poly_coords = [self.coords[0] + 10, self.coords[1] + 9, len, 16]
+        self.variable_poly_coords = [self.coords[0] + 10, self.coords[1] + 9, 16, len]
         self.name_text_coords = [self.coords[0] + 20, self.coords[1] + 9]
         self.text_coords = [self.coords[0]+self.variable_name_block_len + 22, self.coords[1]+5]
         # self.inside_magnet_coords = None
-        self.inside_poly_coords = [self.coords[0] + self.variable_name_block_len + 40, self.coords[1]+10, 50, 15]
+        self.inside_poly_coords = [self.coords[0] + self.variable_name_block_len + 40, self.coords[1]+7, 16, 50]
         self.inside_color = 'light pink'
         self.variable_color = 'limegreen'
 
@@ -29,7 +29,7 @@ class VariableBlock(CommandBlock):
         return self.obj_id
 
     def create_variable_polygon(self):
-        poly_coords = self.stableCanvas.inside_block_coords(self.coords[0] + 10, self.coords[1] + 9, self.variable_name_block_len, 16)
+        poly_coords = self.stableCanvas.inside_block_coords(self.coords[0] + 10, self.coords[1] + 9, 16, self.variable_name_block_len)
         self.variable_name_poly_id = self.canvas.create_polygon(poly_coords, fill=self.variable_color)
         self.default_items_on_block = self
         self.default_items_id.append(self.variable_name_poly_id)
@@ -49,7 +49,8 @@ class VariableBlock(CommandBlock):
         return self.text_id
 
     def create_inside_polygon(self):
-        poly_coords = self.stableCanvas.inside_block_coords(self.inside_poly_coords[0], self.inside_poly_coords[1], self.inside_poly_coords[2], self.inside_poly_coords[3])
+        poly_coords = self.stableCanvas.inside_block_coords(self.inside_poly_coords[0], self.inside_poly_coords[1],
+                                                            self.inside_poly_coords[2], self.inside_poly_coords[3])
         self.poly_id = self.canvas.create_polygon(poly_coords, fill=self.inside_color)
         self.default_items_on_block = self
         self.default_items_id.append(self.poly_id)
@@ -71,7 +72,8 @@ class VariableBlock(CommandBlock):
         self.canvas.move(self.text_id, delta_x, delta_y)
 
         old_poly_coords = self.inside_poly_coords
-        self.inside_poly_coords = [old_poly_coords[0] + delta_x, old_poly_coords[1]+delta_y, old_poly_coords[2], old_poly_coords[3]]
+        self.inside_poly_coords = [old_poly_coords[0] + delta_x, old_poly_coords[1]+delta_y, old_poly_coords[2],
+                                   old_poly_coords[3]]
 
         self.canvas.tag_raise(self.text_id)
         self.canvas.tag_raise(self.variable_name_poly_id)

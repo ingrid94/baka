@@ -6,8 +6,8 @@ from Block import ControlBlock, ControlBlockLower, TypeBlock, OneMagnetBlock
 from ChooseBlocksCanvas import ChooseBlocksCanvas
 from FunctionBlock import FunctionBlock
 
-from PrintBlock import PrintBlock
-from ReturnBlock import ReturnBlock
+from TwoTextCommandBlock import TwoTextCommandBlock
+from OneTextCommandBlock import OneTextCommandBlock
 from TwoMagnetBlock import TwoMagnetBlock
 from VariableBlock import VariableBlock
 
@@ -29,7 +29,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             tag = self.stableCanvas.gettags(resp[0])[0]
             if tag == 'print_block':
                 cords = self.stableCanvas.command_block_coords(0, 0, 30, 120)
-                print_block = PrintBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords)
+                print_block = TwoTextCommandBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords, 'violet red',
+                                                  'purple', 'print(', ')', 'light pink')
                 obj_id = print_block.create_polygon()
                 poly_id = print_block.create_inside_polygon()
                 text_id = print_block.create_text()
@@ -40,7 +41,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[text2_id] = print_block
             elif tag == 'return_block':
                 cords = self.stableCanvas.command_block_coords(0, 0, 30, 120)
-                return_block = ReturnBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords)
+                return_block = OneTextCommandBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords, 'violet red',
+                                                   'purple', 'return', 'light pink')
                 obj_id = return_block.create_polygon()
                 poly_id = return_block.create_inside_polygon()
                 text_id = return_block.create_text()
@@ -50,8 +52,9 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             elif tag == 'variable_block':
                 self.create_frame('variable_assign')
             elif tag == 'inside_block':
-                cords = self.stableCanvas.inside_block_coords(0, 0, 130, 20)
-                bool_op_block = FunctionBlock([0, 0, 130, 20], self.canvas, self.stableCanvas, cords, 'dodger blue', 'steel blue')
+                cords = self.stableCanvas.inside_block_coords(0, 0, 20, 130)
+                bool_op_block = FunctionBlock([0, 0, 20, 130], self.canvas, self.stableCanvas, cords, 'dodger blue',
+                                              'steel blue')
                 obj_id = bool_op_block.create_polygon()
                 self.movable_blocks[obj_id] = bool_op_block
             elif tag == 'control_block':
@@ -99,8 +102,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             elif tag == 'and':
                 self.create_two_magnet_block(130, 15, 'and')
             elif tag == 'not':
-                cords = self.stableCanvas.inside_block_coords(0, 0, 90, 20)
-                one_magnet_block = OneMagnetBlock([0, 0, 90, 20], self.canvas, self.stableCanvas, cords, 'not',
+                cords = self.stableCanvas.inside_block_coords(0, 0, 20, 90)
+                one_magnet_block = OneMagnetBlock([0, 0, 20, 90], self.canvas, self.stableCanvas, cords, 'not',
                                                   10, 'dodger blue', 'steel blue', 'sky blue')
                 obj_id = one_magnet_block.create_polygon()
                 first_poly_id = one_magnet_block.create_first_polygon()
@@ -163,8 +166,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
 
     def create_type_block(self, s, frame, times, inside_type, color, outline):
         w = len(s) * times + 15
-        cords = self.stableCanvas.inside_block_coords(0, 0, w, 16)
-        type_block = TypeBlock([0, 0, w, 16], self.canvas, self.stableCanvas, cords, color, outline, s, inside_type)
+        cords = self.stableCanvas.inside_block_coords(0, 0, 16, w)
+        type_block = TypeBlock([0, 0, 16, w], self.canvas, self.stableCanvas, cords, color, outline, s, inside_type)
         obj_id = type_block.create_polygon()
         text_id = type_block.create_text()
         self.movable_blocks[obj_id] = type_block
@@ -175,7 +178,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
     def create_variable_block(self, s, frame, times):
         w = len(s) * times + 15
         cords = self.stableCanvas.command_block_coords(0, 0, 30, 110)
-        variable_block = VariableBlock([0, 0, 30, 110], self.canvas, self.stableCanvas, cords, s, w)
+        variable_block = VariableBlock([0, 0, 30, 110], self.canvas, self.stableCanvas, cords, 'violet red', 'purple',
+                                       s, w)
         obj_id = variable_block.create_polygon()
         variable_poly_id = variable_block.create_variable_polygon()
         variable_name_id = variable_block.create_variable_name()
@@ -190,8 +194,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             self.canvas.delete(frame)
 
     def create_two_magnet_block(self, blo_len, text_len, text):
-        cords = self.stableCanvas.inside_block_coords(0, 0, blo_len, 20)
-        two_magnet_block = TwoMagnetBlock([0, 0, blo_len, 20], self.canvas, self.stableCanvas, cords, text, text_len,
+        cords = self.stableCanvas.inside_block_coords(0, 0, 20, blo_len)
+        two_magnet_block = TwoMagnetBlock([0, 0, 20, blo_len], self.canvas, self.stableCanvas, cords, text, text_len,
                                           'dodger blue', 'steel blue', 'sky blue')
         obj_id = two_magnet_block.create_polygon()
         first_poly_id = two_magnet_block.create_first_polygon()

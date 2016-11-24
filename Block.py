@@ -63,12 +63,9 @@ class Block:
         self.canvas.delete(self.obj_id)
         for el in self.default_items_id:
             self.canvas.delete(el)
-        for i in self.connected:
+        for i in self.connected[1:]:
             if i is not None:
-                if self.connected[0] is not None:
-                    pass
-                else:
-                    i.use_bin(movable_blocks)
+                i.use_bin(movable_blocks)
         del movable_blocks[self.obj_id]
 
 
@@ -405,12 +402,9 @@ class InsideBlock:
         self.canvas.delete(self.obj_id)
         for el in self.default_items_id:
             self.canvas.delete(el)
-        for i in self.connected:
+        for i in self.connected[1:]:
             if i is not None:
-                if self.connected[0] is not None:
-                    pass
-                else:
-                    i.use_bin(movable_blocks)
+                i.use_bin(movable_blocks)
         del movable_blocks[self.obj_id]
 
     def move_to_magnet(self, movable_blocks):

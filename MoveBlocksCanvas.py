@@ -21,6 +21,17 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         self.stableCanvas = t1
         self.stableCanvas.bind(self.create_blocks)
         self.movable_blocks = {}
+        self.photo = None
+        self.item = None
+
+    def create_bin(self):
+        # delete icon: "https://icons8.com/web-app/362/Delete"
+        self.photo = PhotoImage(file="Delete-52.gif")
+        self.item = self.canvas.create_image(460, 35, image=self.photo)
+        self.movable_blocks[self.item] = 'bin'
+
+    def use_bin(self):
+        return "using"
 
     def create_blocks(self, event):
         self.stableCanvas.get_focus_set()
@@ -211,7 +222,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
 
     def on_token_button_press(self, event):
         active = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
-        if len(active) != 0:
+        if len(active) != 0 and self.movable_blocks[active[-1]] != 'bin':
             peale = active[-1]
             self.drag_data["item"] = peale
             self.canvas.tag_raise(peale)
@@ -224,13 +235,13 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                     self.movable_blocks[peale].disconnect_magnet(self.movable_blocks)
 
     def on_token_button_release(self, event):
-        if self.drag_data["item"] is not None:
+        if self.drag_data["item"] is not None and self.movable_blocks[self.drag_data["item"]] != 'bin':
             class_instance = self.movable_blocks[self.drag_data["item"]]
             if not isinstance(class_instance, ControlBlockLower):
                 class_instance.move_to_magnet(self.movable_blocks)
             if (isinstance(class_instance, TypeBlock) and
                     (class_instance.inside_type == 'number' or class_instance.inside_type=='string'
-                     or class_instance.inside_type=='variable')) \
+                     or class_instance.inside_type == 'variable')) \
                     or (isinstance(class_instance, VariableBlock)):
                 class_instance.check_if_frame_needed(self.drag_data["item"], self.movable_blocks)
 
@@ -241,7 +252,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
     def on_token_motion(self, event):
         delta_x = event.x - self.drag_data["x"]
         delta_y = event.y - self.drag_data["y"]
-        if self.drag_data["item"] is not None:
+        if self.drag_data["item"] is not None and self.movable_blocks[self.drag_data["item"]] != 'bin':
             class_instance = self.movable_blocks[self.drag_data["item"]]
             # changes coordinates and moves blocks
             class_instance.move_connected(delta_x, delta_y)

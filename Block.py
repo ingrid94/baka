@@ -10,6 +10,7 @@ class Block:
         self.obj_id = None
         self.default_items_on_block = None
         self.default_items_id = []
+        self.connected = [None]
 
     def get_closest(self, movable_blocks):
         magnet_x = movable_blocks[self.obj_id].renew_magnets()[0][0]
@@ -37,15 +38,16 @@ class Block:
         # moves magnets also checks other blocks and marks them
         closest_object = self.get_closest(movable_blocks)
         if closest_object != [] and closest_object[0] in movable_blocks and movable_blocks[closest_object[0]] != "line":
-            stable_instance = movable_blocks[closest_object[0]]
-            stable_coords = stable_instance.renew_magnets()
-            line_x = stable_coords[1][0]
-            line_y = stable_coords[1][1]
-            # draws "line" mark to the block
-            line_id = self.canvas.create_line(line_x - 15, line_y - 5, line_x-10, line_y,
+            if movable_blocks[closest_object[0]] != 'bin':
+                stable_instance = movable_blocks[closest_object[0]]
+                stable_coords = stable_instance.renew_magnets()
+                line_x = stable_coords[1][0]
+                line_y = stable_coords[1][1]
+                # draws "line" mark to the block
+                line_id = self.canvas.create_line(line_x - 15, line_y - 5, line_x-10, line_y,
                                               line_x+5, line_y, line_x + 10, line_y - 5,
                                               fill="green", width=3)
-            movable_blocks[line_id] = "line"
+                movable_blocks[line_id] = "line"
 
     # deletes "line" mark
     def line_delete(self, movable_blocks):
@@ -56,6 +58,18 @@ class Block:
                 line_key = key
         if line_key is not None:
             del movable_blocks[line_key]
+
+    def use_bin(self, movable_blocks):
+        self.canvas.delete(self.obj_id)
+        for el in self.default_items_id:
+            self.canvas.delete(el)
+        for i in self.connected:
+            if i is not None:
+                if self.connected[0] is not None:
+                    pass
+                else:
+                    i.use_bin(movable_blocks)
+        del movable_blocks[self.obj_id]
 
 
 class CommandBlock(Block):
@@ -102,22 +116,25 @@ class CommandBlock(Block):
         magnet_y = magnets[0][1]
         closest_object = self.get_closest(movable_blocks)
         if closest_object:
-            stable_instance = movable_blocks[closest_object[0]]
-            stable_magnet = stable_instance.renew_magnets()
-            delta_x = stable_magnet[1][0] - magnet_x
-            delta_y = stable_magnet[1][1] - magnet_y
-            self.move_connected(delta_x, delta_y)
-            # if user wants to put a block between blocks
-            if stable_instance.connected[1] is not None:
-                under_block = stable_instance.connected[1]
-                under_delta_y = self.get_height()
-                under_block.move_connected(0, under_delta_y)
-                last_connected = self.get_last_connection()
-                last_connected.connected[1] = under_block
-                under_block.connected[0] = last_connected
-            self.connected[0] = stable_instance
-            stable_instance.connected[1] = self
-            self.check_control_block(movable_blocks)
+            if movable_blocks[closest_object[0]] == 'bin':
+                self.use_bin(movable_blocks)
+            else:
+                stable_instance = movable_blocks[closest_object[0]]
+                stable_magnet = stable_instance.renew_magnets()
+                delta_x = stable_magnet[1][0] - magnet_x
+                delta_y = stable_magnet[1][1] - magnet_y
+                self.move_connected(delta_x, delta_y)
+                # if user wants to put a block between blocks
+                if stable_instance.connected[1] is not None:
+                    under_block = stable_instance.connected[1]
+                    under_delta_y = self.get_height()
+                    under_block.move_connected(0, under_delta_y)
+                    last_connected = self.get_last_connection()
+                    last_connected.connected[1] = under_block
+                    under_block.connected[0] = last_connected
+                self.connected[0] = stable_instance
+                stable_instance.connected[1] = self
+                self.check_control_block(movable_blocks)
 
     def get_last_connection(self):
         if self.connected[1] is None:
@@ -208,21 +225,24 @@ class ControlBlock(Block):
         magnet_y = self.renew_magnets()[0][1]
         closest_object = self.get_closest(movable_blocks)
         if closest_object:
-            stable_instance = movable_blocks[closest_object[0]]
-            stable_magnet = stable_instance.renew_magnets()
-            delta_x = stable_magnet[1][0] - magnet_x
-            delta_y = stable_magnet[1][1] - magnet_y
-            self.move_connected(delta_x, delta_y)
-            if stable_instance.connected[1] is not None:
-                under_block = stable_instance.connected[1]
-                # Don't know why it needs 4 pixels, need to get real height somehow
-                under_delta_y = self.coords[2] + self.coords[3] + self.connected[2].coords[2] - 4
-                under_block.move_connected(0, under_delta_y)
-                self.connected[2].connected[1] = stable_instance.connected[1]
-                stable_instance.connected[1].connected[0] = self.connected[2]
-            stable_instance.connected[1] = self
-            self.connected[0] = stable_instance
-            self.check_control_block(movable_blocks)
+            if movable_blocks[closest_object[0]] == 'bin':
+                self.use_bin(movable_blocks)
+            else:
+                stable_instance = movable_blocks[closest_object[0]]
+                stable_magnet = stable_instance.renew_magnets()
+                delta_x = stable_magnet[1][0] - magnet_x
+                delta_y = stable_magnet[1][1] - magnet_y
+                self.move_connected(delta_x, delta_y)
+                if stable_instance.connected[1] is not None:
+                    under_block = stable_instance.connected[1]
+                    # Don't know why it needs 4 pixels, need to get real height somehow
+                    under_delta_y = self.coords[2] + self.coords[3] + self.connected[2].coords[2] - 4
+                    under_block.move_connected(0, under_delta_y)
+                    self.connected[2].connected[1] = stable_instance.connected[1]
+                    stable_instance.connected[1].connected[0] = self.connected[2]
+                stable_instance.connected[1] = self
+                self.connected[0] = stable_instance
+                self.check_control_block(movable_blocks)
 
     def get_last_connection(self):
         if self.connected[1] is None:
@@ -358,17 +378,18 @@ class InsideBlock:
         # moves magnets also checks other blocks and marks them
         closest_object = self.get_closest(movable_blocks)
         if closest_object != [] and movable_blocks[closest_object[0]] != "line":
-            stable_instance = movable_blocks[closest_object[0]]
-            # When ControlBlock has inside_poly, remove the first condition
-            if (isinstance(stable_instance, CommandBlock) and stable_instance.connected[2] is None) or \
+            if movable_blocks[closest_object[0]] != 'bin':
+                stable_instance = movable_blocks[closest_object[0]]
+                # When ControlBlock has inside_poly, remove the first condition
+                if (isinstance(stable_instance, CommandBlock) and stable_instance.connected[2] is None) or \
                     (isinstance(stable_instance, OneMagnetBlock) and stable_instance.connected[1] is None):
-                # gets poly_coords
-                stable_coords = stable_instance.inside_poly_coords
-                line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1],
+                    # gets poly_coords
+                    stable_coords = stable_instance.inside_poly_coords
+                    line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1],
                                                                     stable_coords[2], stable_coords[3])
-                # draws "line" mark to the block
-                line_id = self.canvas.create_line(line_coords, fill="green", width=3)
-                movable_blocks[line_id] = "line"
+                    # draws "line" mark to the block
+                    line_id = self.canvas.create_line(line_coords, fill="green", width=3)
+                    movable_blocks[line_id] = "line"
 
     # deletes "line" mark
     def line_delete(self, movable_blocks):
@@ -380,6 +401,18 @@ class InsideBlock:
         if line_key is not None:
             del movable_blocks[line_key]
 
+    def use_bin(self, movable_blocks):
+        self.canvas.delete(self.obj_id)
+        for el in self.default_items_id:
+            self.canvas.delete(el)
+        for i in self.connected:
+            if i is not None:
+                if self.connected[0] is not None:
+                    pass
+                else:
+                    i.use_bin(movable_blocks)
+        del movable_blocks[self.obj_id]
+
     def move_to_magnet(self, movable_blocks):
         # when mouse press is let go, puts the block in right place
         magnet_x = self.renew_magnets()[0]
@@ -387,20 +420,23 @@ class InsideBlock:
 
         closest_object = self.get_closest(movable_blocks)
         if closest_object:
-            stable_instance = movable_blocks[closest_object[0]]
-            if (isinstance(stable_instance, CommandBlock) and stable_instance.connected[2] is None) or \
+            if movable_blocks[closest_object[0]] == 'bin':
+                self.use_bin(movable_blocks)
+            else:
+                stable_instance = movable_blocks[closest_object[0]]
+                if (isinstance(stable_instance, CommandBlock) and stable_instance.connected[2] is None) or \
                     (isinstance(stable_instance, OneMagnetBlock) and stable_instance.connected[1] is None):
-                stable_magnet = [stable_instance.inside_poly_coords[0], stable_instance.inside_poly_coords[1]+5]
-                stable_instance.delete_inside_poly(movable_blocks)
-                delta_x = stable_magnet[0] - magnet_x
-                delta_y = stable_magnet[1] - magnet_y
-                self.move_connected(delta_x, delta_y)
-                self.connected[0] = stable_instance
-                if isinstance(stable_instance, OneMagnetBlock):
-                    stable_instance.connected[1] = self
-                elif isinstance(stable_instance, CommandBlock):
-                    stable_instance.connected[2] = self
-                stable_instance.redraw_base(movable_blocks)
+                    stable_magnet = [stable_instance.inside_poly_coords[0], stable_instance.inside_poly_coords[1]+5]
+                    stable_instance.delete_inside_poly(movable_blocks)
+                    delta_x = stable_magnet[0] - magnet_x
+                    delta_y = stable_magnet[1] - magnet_y
+                    self.move_connected(delta_x, delta_y)
+                    self.connected[0] = stable_instance
+                    if isinstance(stable_instance, OneMagnetBlock):
+                        stable_instance.connected[1] = self
+                    elif isinstance(stable_instance, CommandBlock):
+                        stable_instance.connected[2] = self
+                    stable_instance.redraw_base(movable_blocks)
 
     def disconnect_magnet(self, movable_blocks):
         if isinstance(self.connected[0], CommandBlock):

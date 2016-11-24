@@ -13,6 +13,7 @@ def main():
     ChooseBlocksCanvas.create_blocks_fst(t1)
     t2 = MoveBlocksCanvas(root, t1)
     t2.top.geometry("+520+100")
+    t2.create_bin()
     root.mainloop()
 
 

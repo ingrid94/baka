@@ -360,7 +360,8 @@ class InsideBlock:
         # finds closest object to magnet
         closest_object = self.canvas.find_overlapping(magnet_x-5, magnet_y-5, magnet_x+5, magnet_y+5)
         closest_objects = list(closest_object)
-        closest_objects.remove(self.obj_id)
+        if self.obj_id in closest_objects:
+            closest_objects.remove(self.obj_id)
         for el in self.default_items_id:
             if el in closest_objects:
                 closest_objects.remove(el)
@@ -450,9 +451,10 @@ class InsideBlock:
         return self.coords[3]
 
     def get_height(self):
-        return self.coords[2]
+        return self.coords[2] + 4
 
     def raise_tags(self):
+        self.canvas.tag_raise(self.obj_id)
         for el in self.default_items_id:
             self.canvas.tag_raise(el)
 
@@ -632,10 +634,12 @@ class OneMagnetBlock(InsideBlock):
     def redraw_base(self, movable_blocks):
         old_width = self.coords[3]
         if self.connected[1] is not None:
+            self.coords[2] = self.connected[1].get_height()
             blo_width = self.connected[1].get_width()
             other_width = old_width - self.inside_poly_coords[3]
             self.coords[3] = other_width + blo_width
         else:
+            self.coords[2] = 20
             self.coords[3] = 90
         self.poly_cords = self.stableCanvas.inside_block_coords(self.coords[0], self.coords[1], self.coords[2],
                                                                 self.coords[3])
@@ -655,4 +659,12 @@ class OneMagnetBlock(InsideBlock):
             self.canvas.tag_raise(el)
         if self.connected[1] is not None:
             self.connected[1].raise_tags()
+
+    def get_height(self, ):
+        blo_height = self.coords[2]
+        if self.connected[1] is not None:
+            blo_height = 4 + self.connected[1].get_height()
+        else:
+            blo_height += 4
+        return blo_height
 

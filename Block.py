@@ -157,11 +157,18 @@ class CommandBlock(Block):
 
     def redraw_base(self, movable_blocks):
         old_width = self.coords[3]
+        old_height = self.coords[2]
         if self.connected[2] is not None:
+            blo_height = self.connected[2].get_height()
+            other_height = old_height - self.inside_poly_coords[2] - 4
+            self.coords[2] = other_height + blo_height
+            if self.connected[1] is not None:
+                self.connected[1].move_connected(0, self.coords[2] - old_height)
             blo_width = self.connected[2].get_width()
             other_width = old_width - self.inside_poly_coords[3]
             self.coords[3] = other_width + blo_width
         else:
+            self.coords[2] = 30
             self.coords[3] = 120
         self.poly_cords = self.stableCanvas.command_block_coords(self.coords[0], self.coords[1],
                                                                  self.coords[2], self.coords[3])

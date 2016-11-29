@@ -44,9 +44,8 @@ class Block:
                 line_x = stable_coords[1][0]
                 line_y = stable_coords[1][1]
                 # draws "line" mark to the block
-                line_id = self.canvas.create_line(line_x - 15, line_y - 5, line_x-10, line_y,
-                                              line_x+5, line_y, line_x + 10, line_y - 5,
-                                              fill="green", width=3)
+                line_id = self.canvas.create_line(line_x - 15, line_y - 5, line_x-10, line_y, line_x+5, line_y,
+                                                  line_x + 10, line_y - 5, fill="green", width=3)
                 movable_blocks[line_id] = "line"
 
     # deletes "line" mark
@@ -171,17 +170,16 @@ class CommandBlock(Block):
         self.obj_id = self.create_polygon()
         movable_blocks[self.obj_id] = self
         if self.connected[2] is not None:
-            self.raise_tags(self.connected[2])
+            self.raise_tags()
         else:
             for el in self.default_items_id:
                 self.canvas.tag_raise(el)
 
-    def raise_tags(self, item):
+    def raise_tags(self):
         for el in self.default_items_id:
             self.canvas.tag_raise(el)
-        inside_id = item.obj_id
-        self.canvas.tag_raise(inside_id)
-        item.raise_tags()
+        if self.connected[2] is not None:
+            self.connected[2].raise_tags()
 
 
 class ControlBlock(Block):
@@ -419,7 +417,7 @@ class InsideBlock:
             else:
                 stable_instance = movable_blocks[closest_object[0]]
                 if (isinstance(stable_instance, CommandBlock) and stable_instance.connected[2] is None) or \
-                    (isinstance(stable_instance, OneMagnetBlock) and stable_instance.connected[1] is None):
+                        (isinstance(stable_instance, OneMagnetBlock) and stable_instance.connected[1] is None):
                     stable_magnet = [stable_instance.inside_poly_coords[0], stable_instance.inside_poly_coords[1]+5]
                     stable_instance.delete_inside_poly(movable_blocks)
                     delta_x = stable_magnet[0] - magnet_x
@@ -450,6 +448,9 @@ class InsideBlock:
 
     def get_width(self):
         return self.coords[3]
+
+    def get_height(self):
+        return self.coords[2]
 
     def raise_tags(self):
         for el in self.default_items_id:
@@ -643,15 +644,15 @@ class OneMagnetBlock(InsideBlock):
         self.obj_id = self.create_polygon()
         movable_blocks[self.obj_id] = self
         if self.connected[1] is not None:
-            self.raise_tags_item(self.connected[1])
+            self.raise_tags()
         else:
             for el in self.default_items_id:
                 self.canvas.tag_raise(el)
 
-    def raise_tags_item(self, item):
+    def raise_tags(self):
+        self.canvas.tag_raise(self.obj_id)
         for el in self.default_items_id:
             self.canvas.tag_raise(el)
-        inside_id = item.obj_id
-        self.canvas.tag_raise(inside_id)
-        item.raise_tags()
+        if self.connected[1] is not None:
+            self.connected[1].raise_tags()
 

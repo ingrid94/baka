@@ -156,17 +156,15 @@ class CommandBlock(Block):
             self.connected[0].redraw_length(movable_blocks)
 
     def redraw_base(self, movable_blocks):
-        old_width = self.coords[3]
         old_height = self.coords[2]
         if self.connected[2] is not None:
             blo_height = self.connected[2].get_height()
             other_height = old_height - self.inside_poly_coords[2] - 4
-            self.coords[2] = other_height + blo_height
+            self.coords[2] = blo_height + self.inside_poly_coords[2] - 4
             if self.connected[1] is not None:
                 self.connected[1].move_connected(0, self.coords[2] - old_height)
             blo_width = self.connected[2].get_width()
-            other_width = old_width - self.inside_poly_coords[3]
-            self.coords[3] = other_width + blo_width
+            self.coords[3] = blo_width + self.inside_poly_coords[3] + 25
         else:
             self.coords[2] = 30
             self.coords[3] = 120
@@ -434,19 +432,21 @@ class InsideBlock:
                     self.connected[0] = stable_instance
                     if isinstance(stable_instance, OneMagnetBlock):
                         stable_instance.connected[1] = self
+                        stable_instance.coords_connected(movable_blocks)
                     elif isinstance(stable_instance, CommandBlock):
                         stable_instance.connected[2] = self
-                    stable_instance.redraw_base(movable_blocks)
+                        stable_instance.redraw_base(movable_blocks)
 
     def disconnect_magnet(self, movable_blocks):
         if isinstance(self.connected[0], CommandBlock):
             self.connected[0].connected[2] = None
             poly_id = self.connected[0].create_inside_polygon()
+            self.connected[0].redraw_base(movable_blocks)
         elif isinstance(self.connected[0], OneMagnetBlock):
             self.connected[0].connected[1] = None
             poly_id = self.connected[0].create_first_polygon()
+            self.connected[0].coords_disconnected(movable_blocks)
         movable_blocks[poly_id] = self.connected[0]
-        self.connected[0].redraw_base(movable_blocks)
         self.connected[0] = None
 
     def move_connected(self, delta_x, delta_y):
@@ -639,15 +639,6 @@ class OneMagnetBlock(InsideBlock):
             self.first_poly_id = None
 
     def redraw_base(self, movable_blocks):
-        old_width = self.coords[3]
-        if self.connected[1] is not None:
-            self.coords[2] = self.connected[1].get_height()
-            blo_width = self.connected[1].get_width()
-            other_width = old_width - self.inside_poly_coords[3]
-            self.coords[3] = other_width + blo_width
-        else:
-            self.coords[2] = 20
-            self.coords[3] = 90
         self.poly_cords = self.stableCanvas.inside_block_coords(self.coords[0], self.coords[1], self.coords[2],
                                                                 self.coords[3])
         del movable_blocks[self.obj_id]
@@ -660,6 +651,29 @@ class OneMagnetBlock(InsideBlock):
             for el in self.default_items_id:
                 self.canvas.tag_raise(el)
 
+    def coords_connected(self, movable_blocks):
+        old_width = self.coords[3]
+        if self.connected[1] is not None:
+            self.coords[2] = self.connected[1].get_height()
+            blo_width = self.connected[1].get_width()
+            self.coords[3] = blo_width + self.inside_poly_coords[3] + 10
+        self.redraw_base(movable_blocks)
+
+    def coords_disconnected(self, movable_blocks):
+        if self.connected[1] is not None:
+            self.coords[2] = self.connected[1].get_height()
+            blo_width = self.connected[1].get_width()
+            self.coords[3] = blo_width + self.inside_poly_coords[3] + 10
+        else:
+            self.coords[2] = 20
+            self.coords[3] = 90
+        if self.connected[0] is not None:
+            if isinstance(self.connected[0], CommandBlock):
+                self.connected[0].redraw_base(movable_blocks)
+            else:
+                self.connected[0].coords_disconnected(movable_blocks)
+        self.redraw_base(movable_blocks)
+
     def raise_tags(self):
         self.canvas.tag_raise(self.obj_id)
         for el in self.default_items_id:
@@ -667,7 +681,7 @@ class OneMagnetBlock(InsideBlock):
         if self.connected[1] is not None:
             self.connected[1].raise_tags()
 
-    def get_height(self, ):
+    def get_height(self):
         blo_height = self.coords[2]
         if self.connected[1] is not None:
             blo_height = 4 + self.connected[1].get_height()

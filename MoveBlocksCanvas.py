@@ -2,12 +2,11 @@ from tkinter import *
 import tkinter.messagebox
 import re
 
-from Block import ControlBlock, ControlBlockLower, TypeBlock, OneMagnetBlock
+from Block import ControlBlock, ControlBlockLower, TypeBlock, OneMagnetBlock, OneTextCommandBlock
 from ChooseBlocksCanvas import ChooseBlocksCanvas
 from FunctionBlock import FunctionBlock
 
 from TwoTextCommandBlock import TwoTextCommandBlock
-from OneTextCommandBlock import OneTextCommandBlock
 from TwoMagnetBlock import TwoMagnetBlock
 from VariableBlock import VariableBlock
 
@@ -29,9 +28,6 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         self.photo = PhotoImage(file="Delete-52.gif")
         self.item = self.canvas.create_image(460, 35, image=self.photo)
         self.movable_blocks[self.item] = 'bin'
-
-    def use_bin(self):
-        return "using"
 
     def create_blocks(self, event):
         self.stableCanvas.get_focus_set()
@@ -68,17 +64,22 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                                               'steel blue')
                 obj_id = bool_op_block.create_polygon()
                 self.movable_blocks[obj_id] = bool_op_block
-            elif tag == 'control_block':
-                cords = self.stableCanvas.control_block_coords(0, 0, 30, 35)[0]
-                if_block = ControlBlock([0, 0, 30, 35], self.canvas, self.stableCanvas, cords)
+            elif tag == 'if_block':
+                cords = self.stableCanvas.control_block_coords(0, 0, 30, 110, 35)[0]
+                if_block = ControlBlock([0, 0, 30, 110, 35], self.canvas, self.stableCanvas, cords, 'orange',
+                                        'chocolate', 'if', 'peachpuff')
                 obj_id = if_block.create_polygon()
+                inside_id = if_block.create_inside_polygon()
+                text_id = if_block.create_text()
                 self.movable_blocks[obj_id] = if_block
+                self.movable_blocks[inside_id] = if_block
+                self.movable_blocks[text_id] = if_block
                 # lower part of controlBlock
-                cords = self.stableCanvas.control_block_coords(0, 0, 30, 35)[1]
-                if_block_lower = ControlBlockLower([0, 70, 30, 35], self.canvas, cords)
+                cords = self.stableCanvas.control_block_coords(0, 0, 30, 110, 35)[1]
+                if_block_lower = ControlBlockLower([0, 70, 30, 110, 35], self.canvas, cords)
                 obj_id_lower = if_block_lower.create_polygon()
                 self.movable_blocks[obj_id_lower] = if_block_lower
-                if_block.connected[2] = if_block_lower
+                if_block.connected[3] = if_block_lower
                 if_block_lower.connected[0] = if_block
             elif tag == 'number':
                 self.create_frame('number')

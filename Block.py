@@ -67,6 +67,12 @@ class Block:
                 i.use_bin(movable_blocks)
         del movable_blocks[self.obj_id]
 
+    def raise_tags(self):
+        for el in self.default_items_id:
+            self.canvas.tag_raise(el)
+        if self.connected[2] is not None:
+            self.connected[2].raise_tags()
+
 
 class CommandBlock(Block):
     def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline):
@@ -85,7 +91,7 @@ class CommandBlock(Block):
 
     def renew_magnets(self):
         upper_magnet = [self.coords[0] + 35, self.coords[1] + 5]
-        lower_magnet = [self.coords[0] + 35, self.coords[1] + 35]
+        lower_magnet = [self.coords[0] + 35, self.coords[1] + self.coords[2] + 5]
         return [upper_magnet, lower_magnet]
 
     def change_coords(self, delta_x, delta_y):
@@ -159,7 +165,6 @@ class CommandBlock(Block):
         old_height = self.coords[2]
         if self.connected[2] is not None:
             blo_height = self.connected[2].get_height()
-            other_height = old_height - self.inside_poly_coords[2] - 4
             self.coords[2] = blo_height + self.inside_poly_coords[2] - 4
             if self.connected[1] is not None:
                 self.connected[1].move_connected(0, self.coords[2] - old_height)
@@ -168,8 +173,9 @@ class CommandBlock(Block):
         else:
             self.coords[2] = 30
             self.coords[3] = 120
-        self.poly_cords = self.stableCanvas.command_block_coords(self.coords[0], self.coords[1],
-                                                                 self.coords[2], self.coords[3])
+            if self.connected[1] is not None:
+                self.connected[1].move_connected(0, self.coords[2] - old_height)
+        self.change_poly_coords()
         del movable_blocks[self.obj_id]
         self.canvas.delete(self.obj_id)
         self.obj_id = self.create_polygon()
@@ -180,44 +186,87 @@ class CommandBlock(Block):
             for el in self.default_items_id:
                 self.canvas.tag_raise(el)
 
-    def raise_tags(self):
-        for el in self.default_items_id:
-            self.canvas.tag_raise(el)
-        if self.connected[2] is not None:
-            self.connected[2].raise_tags()
+    def change_poly_coords(self):
+        self.poly_cords = self.stableCanvas.command_block_coords(self.coords[0], self.coords[1],
+                                                                 self.coords[2], self.coords[3])
 
 
-class ControlBlock(Block):
-    def __init__(self, coords, canvas, stable_canvas, poly_cords):
-        super().__init__(coords, canvas, poly_cords)
+class OneTextCommandBlock(CommandBlock):
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_color):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline)
+        self.string = string
+        self.text_coords = [self.coords[0]+7, self.coords[1]+10]
+        self.inside_magnet_coords = None
+        self.inside_poly_coords = [self.coords[0]+50, self.coords[1]+7, 16, 50]
+        self.inside_color = inside_color
+        self.text_id = None
+
+    def create_text(self):
+        self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.string)
+        self.default_items_on_block = self
+        self.default_items_id.append(self.text_id)
+        return self.text_id
+
+    def create_inside_polygon(self):
+        poly_coords = self.stableCanvas.inside_block_coords(self.inside_poly_coords[0], self.inside_poly_coords[1],
+                                                            self.inside_poly_coords[2], self.inside_poly_coords[3])
+        self.poly_id = self.canvas.create_polygon(poly_coords, fill=self.inside_color)
+        self.default_items_id.append(self.poly_id)
+        return self.poly_id
+
+    def change_inside_coords(self, delta_x, delta_y):
+        old_text_coords = self.text_coords
+        self.text_coords = [old_text_coords[0] + delta_x, old_text_coords[1] + delta_y]
+        self.canvas.move(self.text_id, delta_x, delta_y)
+        old_poly_coords = self.inside_poly_coords
+        self.inside_poly_coords = [old_poly_coords[0] + delta_x, old_poly_coords[1]+delta_y, old_poly_coords[2], old_poly_coords[3]]
+        self.canvas.tag_raise(self.text_id)
+        if self.connected[2] is None:
+            self.canvas.tag_raise(self.poly_id)
+            self.canvas.move(self.poly_id, delta_x, delta_y)
+
+    def delete_inside_poly(self, movable_blocks):
+        if self.poly_id:
+            del movable_blocks[self.poly_id]
+            self.canvas.delete(self.poly_id)
+            self.default_items_id.remove(self.poly_id)
+            self.poly_id = None
+
+
+class ControlBlock(OneTextCommandBlock):
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_color):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_color)
         # upper connection, main lower connection,  ControlBlockLower instance, main inside connection
+        self.stableCanvas = stableCanvas
         self.connected = [None, None, None, None]
-        self.color = 'orange'
-        self.outline = 'chocolate'
-        self.stableCanvas = stable_canvas
-        self.default_items_on_block = None
-        self.empty_block_height = self.coords[3]
-
-    def create_polygon(self):
-        self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
-        return self.obj_id
+        self.color = color
+        self.outline = outline
+        self.inside_color = inside_color
+        self.string = string
+        self.empty_block_height = self.coords[4]
 
     def renew_magnets(self):
         upper_magnet = [self.coords[0] + 35, self.coords[1] + 5]
-        lower_magnet = [self.coords[0] + 45, self.coords[1] + 35]
+        lower_magnet = [self.coords[0] + 45, self.coords[1] + self.coords[2] + 5]
         return [upper_magnet, lower_magnet]
 
     def change_coords(self, delta_x, delta_y):
         old_coords = self.coords
-        self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y, old_coords[2], old_coords[3]]
+        self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y, old_coords[2], old_coords[3], old_coords[4]]
         self.canvas.move(self.obj_id, delta_x, delta_y)
         self.renew_magnets()
 
     def move_connected(self, delta_x, delta_y):
         self.change_coords(delta_x, delta_y)
-        self.connected[2].move_connected(delta_x, delta_y)
+        self.connected[3].move_connected(delta_x, delta_y)
         if self.connected[1] is not None:
             self.connected[1].move_connected(delta_x, delta_y)
+        if self.default_items_on_block is not None:
+            self.default_items_on_block.change_inside_coords(delta_x, delta_y)
+        if self.connected[2] is not None:
+            self.connected[2].move_connected(delta_x, delta_y)
+            for i in self.connected[2].default_items_id:
+                self.canvas.tag_raise(i)
 
     def move_to_magnet(self, movable_blocks):
         # when mouse press is let go, puts the block in right place
@@ -236,9 +285,9 @@ class ControlBlock(Block):
                 if stable_instance.connected[1] is not None:
                     under_block = stable_instance.connected[1]
                     # Don't know why it needs 4 pixels, need to get real height somehow
-                    under_delta_y = self.coords[2] + self.coords[3] + self.connected[2].coords[2] - 4
+                    under_delta_y = self.coords[2] + self.coords[4] + self.connected[3].coords[2] - 4
                     under_block.move_connected(0, under_delta_y)
-                    self.connected[2].connected[1] = stable_instance.connected[1]
+                    self.connected[3].connected[1] = stable_instance.connected[1]
                     stable_instance.connected[1].connected[0] = self.connected[2]
                 stable_instance.connected[1] = self
                 self.connected[0] = stable_instance
@@ -256,7 +305,7 @@ class ControlBlock(Block):
         self.connected[0] = None
 
     def get_height(self):
-        blo_height = self.coords[2] + self.coords[3] + self.connected[2].get_height()
+        blo_height = self.coords[2] + self.coords[4] + self.connected[3].get_height()
         if self.connected[0] is not None:
             return blo_height
         elif not isinstance(self.connected[1], ControlBlock):
@@ -266,29 +315,35 @@ class ControlBlock(Block):
         return blo_height
 
     def redraw_length(self, movable_blocks):
-        old_height = self.coords[3]
+        old_height = self.coords[4]
         # if direct block from ControlBlock is disconnected
         if self.connected[1] is None:
             blo_height = self.empty_block_height
         # if something is connecting or something is not directly disconnecting from ControlBlock
         else:
             blo_height = self.connected[1].get_height()
-        self.coords[3] = blo_height
+        self.coords[4] = blo_height
         self.poly_cords = self.stableCanvas.control_block_coords(self.coords[0], self.coords[1],
-                                                                 self.coords[2], self.coords[3])[0]
+                                                                 self.coords[2], self.coords[3], self.coords[4])[0]
         del movable_blocks[self.obj_id]
         self.canvas.delete(self.obj_id)
         self.obj_id = self.create_polygon()
         movable_blocks[self.obj_id] = self
-        self.connected[2].move_connected(0, blo_height - old_height)
+        self.connected[3].move_connected(0, blo_height - old_height)
         if self.connected[0] is not None:
             self.check_control_block(movable_blocks)
+        for i in self.default_items_id:
+            self.canvas.tag_raise(i)
 
     def check_control_block(self, movable_blocks):
         if self.connected[0].connected[0] is not None:
             self.connected[0].check_control_block(movable_blocks)
         if isinstance(self.connected[0], ControlBlock):
             self.connected[0].redraw_length(movable_blocks)
+
+    def change_poly_coords(self):
+        self.poly_cords = self.stableCanvas.control_block_coords(self.coords[0], self.coords[1],
+                                                                 self.coords[2], self.coords[3], self.coords[4])[0]
 
 
 class ControlBlockLower(Block):
@@ -310,7 +365,7 @@ class ControlBlockLower(Block):
 
     def change_coords(self, delta_x, delta_y):
         old_coords = self.coords
-        self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y, old_coords[2], old_coords[3]]
+        self.coords = [old_coords[0] + delta_x, old_coords[1] + delta_y, old_coords[2], old_coords[3], old_coords[4]]
         self.canvas.move(self.obj_id, delta_x, delta_y)
         self.renew_magnets()
 
@@ -382,7 +437,8 @@ class InsideBlock:
             if movable_blocks[closest_object[0]] != 'bin':
                 stable_instance = movable_blocks[closest_object[0]]
                 # When ControlBlock has inside_poly, remove the first condition
-                if (isinstance(stable_instance, CommandBlock) and stable_instance.connected[2] is None) or \
+                if ((isinstance(stable_instance, CommandBlock) or isinstance(stable_instance, ControlBlock))
+                    and stable_instance.connected[2] is None) or \
                     (isinstance(stable_instance, OneMagnetBlock) and stable_instance.connected[1] is None):
                     # gets poly_coords
                     stable_coords = stable_instance.inside_poly_coords
@@ -422,7 +478,7 @@ class InsideBlock:
                 self.use_bin(movable_blocks)
             else:
                 stable_instance = movable_blocks[closest_object[0]]
-                if (isinstance(stable_instance, CommandBlock) and stable_instance.connected[2] is None) or \
+                if ((isinstance(stable_instance, CommandBlock) or isinstance(stable_instance, ControlBlock)) and stable_instance.connected[2] is None) or \
                         (isinstance(stable_instance, OneMagnetBlock) and stable_instance.connected[1] is None):
                     stable_magnet = [stable_instance.inside_poly_coords[0], stable_instance.inside_poly_coords[1]+5]
                     stable_instance.delete_inside_poly(movable_blocks)

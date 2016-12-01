@@ -1,7 +1,6 @@
 from tkinter import *
 
-
-from OneTextCommandBlock import OneTextCommandBlock
+from Block import OneTextCommandBlock
 
 
 class TwoTextCommandBlock(OneTextCommandBlock):

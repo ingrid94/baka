@@ -12,6 +12,7 @@ def main():
     t1.top.geometry("+10+100")
     ChooseBlocksCanvas.create_blocks_fst(t1)
     t2 = MoveBlocksCanvas(root, t1)
+    Button(root, text='to code', command=t2.to_code).pack()
     t2.top.geometry("+520+100")
     t2.create_bin()
     root.mainloop()

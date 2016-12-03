@@ -166,15 +166,13 @@ class CommandBlock(Block):
         if self.connected[2] is not None:
             blo_height = self.connected[2].get_height()
             self.coords[2] = blo_height + self.inside_poly_coords[2] - 4
-            if self.connected[1] is not None:
-                self.connected[1].move_connected(0, self.coords[2] - old_height)
+            self.resize_coords(movable_blocks, old_height)
             blo_width = self.connected[2].get_width()
             self.coords[3] = blo_width + self.inside_poly_coords[3] + 25
         else:
             self.coords[2] = 30
             self.coords[3] = 120
-            if self.connected[1] is not None:
-                self.connected[1].move_connected(0, self.coords[2] - old_height)
+            self.resize_coords(movable_blocks, old_height)
         self.change_poly_coords()
         del movable_blocks[self.obj_id]
         self.canvas.delete(self.obj_id)
@@ -185,6 +183,12 @@ class CommandBlock(Block):
         else:
             for el in self.default_items_id:
                 self.canvas.tag_raise(el)
+
+    def resize_coords(self, movable_blocks, old_height):
+        if self.connected[1] is not None:
+            self.connected[1].move_connected(0, self.coords[2] - old_height)
+        if self.connected[0] is not None:
+            self.check_control_block(movable_blocks)
 
     def change_poly_coords(self):
         self.poly_cords = self.stableCanvas.command_block_coords(self.coords[0], self.coords[1],
@@ -236,7 +240,7 @@ class OneTextCommandBlock(CommandBlock):
 class ControlBlock(OneTextCommandBlock):
     def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_color):
         super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_color)
-        # upper connection, main lower connection,  ControlBlockLower instance, main inside connection
+        # upper connection, main lower connection, main inside connection, ControlBlockLower instance
         self.stableCanvas = stableCanvas
         self.connected = [None, None, None, None]
         self.color = color
@@ -336,6 +340,8 @@ class ControlBlock(OneTextCommandBlock):
             self.check_control_block(movable_blocks)
         for i in self.default_items_id:
             self.canvas.tag_raise(i)
+        if self.connected[2] is not None:
+            self.connected[2].raise_tags()
 
     def check_control_block(self, movable_blocks):
         if self.connected[0].connected[0] is not None:
@@ -343,9 +349,20 @@ class ControlBlock(OneTextCommandBlock):
         if isinstance(self.connected[0], ControlBlock):
             self.connected[0].redraw_length(movable_blocks)
 
+    def resize_coords(self, movable_blocks, old_height):
+        if self.connected[1] is not None:
+            self.connected[1].move_connected(0, self.coords[2] - old_height)
+        delta = self.coords[2] - old_height
+        self.coords[4] += delta
+        self.connected[3].move_connected(0, delta)
+        if self.connected[0] is not None:
+            self.check_control_block(movable_blocks)
+
     def change_poly_coords(self):
         self.poly_cords = self.stableCanvas.control_block_coords(self.coords[0], self.coords[1],
                                                                  self.coords[2], self.coords[3], self.coords[4])[0]
+        self.connected[3].poly_cords = self.stableCanvas.control_block_coords(self.coords[0], self.coords[1],
+                                                                 self.coords[2], self.coords[3], self.coords[4])[1]
 
 
 class ControlBlockLower(Block):

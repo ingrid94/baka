@@ -244,6 +244,8 @@ class ControlBlock(OneTextCommandBlock):
         self.inside_color = inside_color
         self.string = string
         self.empty_block_height = self.coords[4]
+        self.text_coords = [self.coords[0]+20, self.coords[1]+10]
+        self.inside_poly_coords = [self.coords[0]+40, self.coords[1]+7, 16, 50]
 
     def renew_magnets(self):
         upper_magnet = [self.coords[0] + 35, self.coords[1] + 5]

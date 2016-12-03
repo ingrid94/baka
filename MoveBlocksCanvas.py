@@ -2,11 +2,10 @@ from tkinter import *
 import tkinter.messagebox
 import re
 
-from Block import ControlBlock, ControlBlockLower, TypeBlock, OneMagnetBlock, OneTextCommandBlock
+from Block import ControlBlock, ControlBlockLower, TypeBlock, OneMagnetBlock, OneTextCommandBlock, TwoTextCommandBlock, \
+    NoneMagnetInsideBlock
 from ChooseBlocksCanvas import ChooseBlocksCanvas
-from FunctionBlock import FunctionBlock
 
-from TwoTextCommandBlock import TwoTextCommandBlock
 from TwoMagnetBlock import TwoMagnetBlock
 from VariableBlock import VariableBlock
 
@@ -60,7 +59,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.create_frame('variable_assign')
             elif tag == 'inside_block':
                 cords = self.stableCanvas.inside_block_coords(0, 0, 20, 130)
-                bool_op_block = FunctionBlock([0, 0, 20, 130], self.canvas, self.stableCanvas, cords, 'dodger blue',
+                bool_op_block = NoneMagnetInsideBlock([0, 0, 20, 130], self.canvas, self.stableCanvas, cords, 'dodger blue',
                                               'steel blue')
                 obj_id = bool_op_block.create_polygon()
                 self.movable_blocks[obj_id] = bool_op_block

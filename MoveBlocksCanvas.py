@@ -53,16 +53,10 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[text_id] = return_block
             elif tag == 'variable_block':
                 self.create_frame('variable_assign')
-            #elif tag == 'inside_block':
-            #    cords = self.stableCanvas.inside_block_coords(0, 0, 20, 130)
-            #    bool_op_block = NoneMagnetInsideBlock([0, 0, 20, 130], self.canvas, self.stableCanvas, cords, 'dodger blue',
-            #                                  'steel blue')
-             #   obj_id = bool_op_block.create_polygon()
-            #    self.movable_blocks[obj_id] = bool_op_block
             elif tag == 'if_block':
                 cords = self.stableCanvas.control_block_coords(0, 0, 30, 110, 35)[0]
                 if_block = ControlBlock([0, 0, 30, 110, 35], self.canvas, self.stableCanvas, cords, 'orange',
-                                        'chocolate', 'if', 'peachpuff')
+                                        'chocolate', 'if ', 'peachpuff')
                 obj_id = if_block.create_polygon()
                 inside_id = if_block.create_inside_polygon()
                 text_id = if_block.create_text()
@@ -110,7 +104,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.create_two_magnet_block(130, 15, 'and')
             elif tag == 'not':
                 cords = self.stableCanvas.inside_block_coords(0, 0, 20, 90)
-                one_magnet_block = OneMagnetBlock([0, 0, 20, 90], self.canvas, self.stableCanvas, cords, 'not',
+                one_magnet_block = OneMagnetBlock([0, 0, 20, 90], self.canvas, self.stableCanvas, cords, 'not ',
                                                   10, 'dodger blue', 'steel blue', 'sky blue')
                 obj_id = one_magnet_block.create_polygon()
                 first_poly_id = one_magnet_block.create_first_polygon()
@@ -269,8 +263,52 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 all_blocks.append(block)
                 if block.connected[0] is None and not isinstance(block, (OneMagnetBlock, TwoMagnetBlock, TypeBlock)):
                     first_blocks.append(block)
-        print(all_blocks)
-        print(first_blocks)
+
+        file = open("generated.py", "w")
+        for block in first_blocks:
+            tabs = 0
+            self.into_file(file, block, tabs)
+        file.close()
+
+    def into_file(self, file, block, tabs):
+        if isinstance(block, TwoTextCommandBlock):
+            self.make_tabs(file, tabs)
+            file.write(block.string)
+            if block.connected[2] is not None:
+                self.into_file(file, block.connected[2], tabs)
+            file.write(block.string2 + '\n')
+            if block.connected[1] is not None:
+                self.into_file(file, block.connected[1], tabs)
+        if isinstance(block, VariableBlock):
+            self.make_tabs(file, tabs)
+            file.write(block.variable_name + ' = ')
+            if block.connected[2] is not None:
+                self.into_file(file, block.connected[2], tabs)
+                file.write('\n')
+            if block.connected[1] is not None:
+                self.into_file(file, block.connected[1], tabs)
+        elif isinstance(block, ControlBlock):
+            self.make_tabs(file, tabs)
+            file.write(block.string)
+            if block.connected[2] is not None:
+                self.into_file(file, block.connected[2], tabs)
+            file.write(': \n')
+            if block.connected[1] is not None:
+                self.into_file(file, block.connected[1], tabs+1)
+            if block.connected[3].connected[1] is not None:
+                self.into_file(file, block.connected[3].connected[1], tabs-1)
+        elif isinstance(block, TypeBlock):
+            file.write(block.string_on_block)
+        elif isinstance(block, OneMagnetBlock):
+            file.write(block.text)
+            if block.connected[1] is not None:
+                self.into_file(file, block.connected[1], tabs)
+        else:
+            print("error")
+
+    def make_tabs(self, file, tabs):
+        for i in range(0, tabs):
+            file.write('    ')
 
 
 class Block:
@@ -1315,17 +1353,3 @@ class TwoMagnetBlock(OneMagnetBlock):
         if self.connected[2] is None:
             self.canvas.tag_raise(self.second_poly_id)
             self.canvas.move(self.second_poly_id, delta_x, delta_y)
-
-
-#class NoneMagnetInsideBlock(InsideBlock):
-#    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline):
-#        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline)
-#        # upper connection, lower connection
-#        self.connected = []
-#        self.stableCanvas = stableCanvas
-
-#    def move_connected(self, delta_x, delta_y):
-#        self.change_coords(delta_x, delta_y)
-#        if self.connected:
-#            for i in self.connected:
-#                i.move_connected(delta_x, delta_y)

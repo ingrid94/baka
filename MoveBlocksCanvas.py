@@ -279,7 +279,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             file.write(block.string2 + '\n')
             if block.connected[1] is not None:
                 self.into_file(file, block.connected[1], tabs)
-        if isinstance(block, VariableBlock):
+        elif isinstance(block, VariableBlock):
             self.make_tabs(file, tabs)
             file.write(block.variable_name + ' = ')
             if block.connected[2] is not None:
@@ -304,7 +304,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             if block.connected[1] is not None:
                 self.into_file(file, block.connected[1], tabs)
         else:
-            print("error")
+            print("error", block)
 
     def make_tabs(self, file, tabs):
         for i in range(0, tabs):

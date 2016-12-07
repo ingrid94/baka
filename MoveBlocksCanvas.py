@@ -5,6 +5,7 @@ import re
 from ChooseBlocksCanvas import ChooseBlocksCanvas
 
 
+# calc: 'limegreen', 'green'
 class MoveBlocksCanvas(ChooseBlocksCanvas):
 
     def __init__(self, root, t1):
@@ -54,8 +55,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             elif tag == 'variable_block':
                 self.create_frame('variable_assign')
             elif tag == 'if_block':
-                cords = self.stableCanvas.control_block_coords(0, 0, 30, 110, 35)[0]
-                if_block = ControlBlock([0, 0, 30, 110, 35], self.canvas, self.stableCanvas, cords, 'orange',
+                cords = self.stableCanvas.control_block_coords(0, 0, 30, 110, 25)[0]
+                if_block = ControlBlock([0, 0, 30, 110, 25], self.canvas, self.stableCanvas, cords, 'orange',
                                         'chocolate', 'if ', 'peachpuff')
                 obj_id = if_block.create_polygon()
                 inside_id = if_block.create_inside_polygon()
@@ -64,8 +65,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[inside_id] = if_block
                 self.movable_blocks[text_id] = if_block
                 # lower part of controlBlock
-                cords = self.stableCanvas.control_block_coords(0, 0, 30, 110, 35)[1]
-                if_block_lower = ControlBlockLower([0, 70, 30, 110, 35], self.canvas, cords)
+                cords = self.stableCanvas.control_block_coords(0, 0, 30, 110, 25)[1]
+                if_block_lower = ControlBlockLower([0, 70, 30, 110, 25], self.canvas, cords)
                 obj_id_lower = if_block_lower.create_polygon()
                 self.movable_blocks[obj_id_lower] = if_block_lower
                 if_block.connected[3] = if_block_lower
@@ -79,7 +80,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             elif tag == 'string':
                 self.create_frame('string')
             elif tag == 'none':
-                self.create_type_block('None', None, 8, 'none', 'limegreen', 'green')
+                self.create_type_block('None', None, 8, 'none', 'dodger blue', 'steel blue')
             elif tag == 'true':
                 self.create_type_block('True', None, 8, 'true', 'dodger blue', 'steel blue')
             elif tag == 'false':
@@ -147,19 +148,19 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         s = v.get()
         if inside_type == 'number':
             if s.replace('.', '', 1).isdigit():
-                self.create_type_block(s, frame, 8, inside_type, 'limegreen', 'green')
+                self.create_type_block(s, frame, 8, inside_type, 'dodger blue', 'steel blue')
             else:
                 tkinter.messagebox.showerror("Error", "It's not a number. Try again. ")
         elif inside_type == 'string':
             p = re.match(r'^(\"|\')(.)*(\"|\')$', s, re.S)
             if p:
-                self.create_type_block(s, frame, 6, inside_type, 'limegreen', 'green')
+                self.create_type_block(s, frame, 6, inside_type, 'dodger blue', 'steel blue')
             else:
                 tkinter.messagebox.showerror("Error", "It's not a string. Try again. ")
         elif inside_type == 'variable' or inside_type == 'variable_assign':
             p = re.match(r'^[a-zA-Z_][\w0-9_]*$', s, re.S)
             if p and inside_type == 'variable':
-                self.create_type_block(s, frame, 6, inside_type, 'limegreen', 'green')
+                self.create_type_block(s, frame, 6, inside_type, 'dodger blue', 'steel blue')
             elif p and inside_type == 'variable_assign':
                 self.create_variable_block(s, frame, 6)
             else:
@@ -600,7 +601,7 @@ class VariableBlock(CommandBlock):
         # self.inside_magnet_coords = None
         self.inside_poly_coords = [self.coords[0] + self.variable_name_block_len + 40, self.coords[1]+7, 16, 50]
         self.inside_color = 'light pink'
-        self.variable_color = 'limegreen'
+        self.variable_color = 'dodger blue'
 
     def create_polygon(self):
         self.poly_cords = self.stableCanvas.command_block_coords(self.coords[0], self.coords[1], self.coords[2],
@@ -737,6 +738,11 @@ class VariableBlock(CommandBlock):
 
         if frame is not None:
             self.canvas.delete(frame)
+
+
+class ListBlock(VariableBlock):
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, variable_name, len):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline, variable_name, len)
 
 
 class ControlBlock(OneTextCommandBlock):

@@ -76,49 +76,27 @@ class ChooseBlocksCanvas:
         # block for variable assignment command
         self.canvas.create_polygon(self.command_block_coords(50, 100, 30, 160), fill='violet red', outline='purple',
                                    tags='variable_block')
-        self.canvas.create_polygon(self.inside_block_coords(60, 109, 16, 55), fill='limegreen', outline='green',
+        self.canvas.create_polygon(self.inside_block_coords(60, 109, 16, 55), fill='dodger blue', outline='steel blue',
                                    tags='variable_block')
         self.canvas.create_text(70, 110, anchor=NW, text="variable", tags='variable_block')
         self.canvas.create_text(130, 105, anchor=NW, text="=", tags='variable_block', font='bold')
         self.canvas.create_polygon(self.inside_block_coords(150, 110, 15, 40), fill='light pink', tags='variable_block')
 
         # block for if statement
-        self.canvas.create_polygon(self.control_block_coords(50, 150, 30, 110, 35)[0], fill='orange',
+        self.canvas.create_polygon(self.control_block_coords(50, 140, 30, 110, 25)[0], fill='orange',
                                    outline='chocolate', tags='if_block')
-        self.canvas.create_polygon(self.control_block_coords(50, 150, 30, 110, 35)[1], fill='orange',
+        self.canvas.create_polygon(self.control_block_coords(50, 140, 30, 110, 25)[1], fill='orange',
                                    outline='chocolate', tags='if_block')
-        self.canvas.create_text(70, 160, anchor=NW, text='if', tags='if_block')
-        self.canvas.create_polygon(self.inside_block_coords(85, 159, 16, 55), fill='peachpuff', tags='if_block')
+        self.canvas.create_text(70, 150, anchor=NW, text='if', tags='if_block')
+        self.canvas.create_polygon(self.inside_block_coords(85, 149, 16, 55), fill='peachpuff', tags='if_block')
 
-        # block for variable
-        self.canvas.create_polygon(self.inside_block_coords(50, 260, 15, 63), fill='limegreen', outline='green',
-                                   tags='variable')
-        self.canvas.create_text(62, 260, anchor=NW, text="variable", tags='variable')
-
-        # block for creating number
-        self.canvas.create_polygon(self.inside_block_coords(50, 290, 15, 63), fill='limegreen', outline='green',
-                                   tags='number')
-        self.canvas.create_text(62, 290, anchor=NW, text="number", tags='number')
-
-        # block for creating string
-        self.canvas.create_polygon(self.inside_block_coords(50, 320, 15, 63), fill='limegreen', outline='green',
-                                   tags='string')
-        self.canvas.create_text(65, 320, anchor=NW, text="string", tags='string')
-
-        # None block
-        self.canvas.create_polygon(self.inside_block_coords(50, 350, 15, 63), fill='limegreen', outline='green',
-                                   tags='none')
-        self.canvas.create_text(65, 350, anchor=NW, text="None", tags='none')
-
-        # True block
-        self.canvas.create_polygon(self.inside_block_coords(50, 380, 15, 63), fill='dodger blue', outline='steel blue',
-                                   tags='true')
-        self.canvas.create_text(65, 380, anchor=NW, text="True", tags='true')
-
-        # False block
-        self.canvas.create_polygon(self.inside_block_coords(50, 410, 15, 63), fill='dodger blue', outline='steel blue',
-                                   tags='false')
-        self.canvas.create_text(65, 410, anchor=NW, text="False", tags='false')
+        # block for while statement
+        self.canvas.create_polygon(self.control_block_coords(50, 230, 30, 115, 25)[0], fill='orange',
+                                   outline='chocolate', tags='while_block')
+        self.canvas.create_polygon(self.control_block_coords(50, 230, 30, 115, 25)[1], fill='orange',
+                                   outline='chocolate', tags='while_block')
+        self.canvas.create_text(60, 240, anchor=NW, text='while', tags='while_block')
+        self.canvas.create_polygon(self.inside_block_coords(95, 239, 16, 55), fill='peachpuff', tags='while_block')
 
         # right side column
         # equals statement block
@@ -182,6 +160,36 @@ class ChooseBlocksCanvas:
                                    outline='steel blue', tags='not')
         self.canvas.create_text(315, 272, anchor=NW, text='not', tags='not')
         self.canvas.create_polygon(self.inside_block_coords(340, 272, 16, 40), fill='sky blue', tags='not')
+
+        # block for variable
+        self.canvas.create_polygon(self.inside_block_coords(300, 300, 15, 63), fill='dodger blue', outline='steel blue',
+                                   tags='variable')
+        self.canvas.create_text(312, 300, anchor=NW, text="variable", tags='variable')
+
+        # block for creating number
+        self.canvas.create_polygon(self.inside_block_coords(300, 330, 15, 63), fill='dodger blue', outline='steel blue',
+                                   tags='number')
+        self.canvas.create_text(312, 330, anchor=NW, text="number", tags='number')
+
+        # block for creating string
+        self.canvas.create_polygon(self.inside_block_coords(300, 360, 15, 63), fill='dodger blue', outline='steel blue',
+                                   tags='string')
+        self.canvas.create_text(315, 360, anchor=NW, text="string", tags='string')
+
+        # None block
+        self.canvas.create_polygon(self.inside_block_coords(400, 300, 15, 63), fill='dodger blue', outline='steel blue',
+                                   tags='none')
+        self.canvas.create_text(415, 300, anchor=NW, text="None", tags='none')
+
+        # True block
+        self.canvas.create_polygon(self.inside_block_coords(400, 330, 15, 63), fill='dodger blue', outline='steel blue',
+                                   tags='true')
+        self.canvas.create_text(415, 330, anchor=NW, text="True", tags='true')
+
+        # False block
+        self.canvas.create_polygon(self.inside_block_coords(400, 360, 15, 63), fill='dodger blue', outline='steel blue',
+                                   tags='false')
+        self.canvas.create_text(415, 360, anchor=NW, text="False", tags='false')
 
     def bind(self, function):
         self.canvas.bind("<ButtonPress-1>", function)

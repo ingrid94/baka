@@ -54,6 +54,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[text_id] = return_block
             elif tag == 'variable_block':
                 self.create_frame('variable_assign')
+            elif tag == 'list_block':
+                self.create_frame('list')
             elif tag == 'if_block':
                 cords = self.stableCanvas.control_block_coords(0, 0, 30, 110, 25)[0]
                 if_block = ControlBlock([0, 0, 30, 110, 25], self.canvas, self.stableCanvas, cords, 'orange',
@@ -117,7 +119,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
     def create_frame(self, inside_type):
 
         text = ""
-        if inside_type == 'variable' or inside_type == 'variable_assign':
+        if inside_type == 'variable' or inside_type == 'variable_assign' or inside_type == 'list':
             text = "Variables must begin with a letter (a - z, A - Z) or underscore (_). \n" \
                    "Other characters can be letters, numbers or _"
         elif inside_type == 'number':
@@ -157,12 +159,12 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.create_type_block(s, frame, 6, inside_type, 'dodger blue', 'steel blue')
             else:
                 tkinter.messagebox.showerror("Error", "It's not a string. Try again. ")
-        elif inside_type == 'variable' or inside_type == 'variable_assign':
+        elif inside_type == 'variable' or inside_type == 'variable_assign' or inside_type == 'list':
             p = re.match(r'^[a-zA-Z_][\w0-9_]*$', s, re.S)
             if p and inside_type == 'variable':
                 self.create_type_block(s, frame, 6, inside_type, 'dodger blue', 'steel blue')
-            elif p and inside_type == 'variable_assign':
-                self.create_variable_block(s, frame, 6)
+            elif p and (inside_type == 'variable_assign' or inside_type == 'list'):
+                self.create_variable_block(s, frame, 6, inside_type)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a variable. Try again. ")
 
@@ -177,16 +179,23 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         if frame is not None:
             self.canvas.delete(frame)
 
-    def create_variable_block(self, s, frame, times):
+    def create_variable_block(self, s, frame, times, inside_type):
         w = len(s) * times + 15
         cords = self.stableCanvas.command_block_coords(0, 0, 30, 110)
-        variable_block = VariableBlock([0, 0, 30, 110], self.canvas, self.stableCanvas, cords, 'violet red', 'purple',
-                                       s, w)
+        if inside_type == 'variable_assign':
+            variable_block = VariableBlock([0, 0, 30, 110], self.canvas, self.stableCanvas, cords, 'violet red',
+                                           'purple', s, w)
+        else:
+            variable_block = ListBlock([0, 0, 30, 110], self.canvas, self.stableCanvas, cords, 'violet red',
+                                       'purple', s, w)
         obj_id = variable_block.create_polygon()
         variable_poly_id = variable_block.create_variable_polygon()
         variable_name_id = variable_block.create_variable_name()
         text_id = variable_block.create_text()
         inside_poly_id = variable_block.create_inside_polygon()
+        if inside_type == 'list':
+            text2_id = variable_block.create_text2()
+            self.movable_blocks[text2_id] = variable_block
         self.movable_blocks[obj_id] = variable_block
         self.movable_blocks[variable_poly_id] = variable_block
         self.movable_blocks[variable_name_id] = variable_block
@@ -598,14 +607,14 @@ class VariableBlock(CommandBlock):
         self.variable_poly_coords = [self.coords[0] + 10, self.coords[1] + 9, 16, len]
         self.name_text_coords = [self.coords[0] + 20, self.coords[1] + 9]
         self.text_coords = [self.coords[0]+self.variable_name_block_len + 22, self.coords[1]+5]
-        # self.inside_magnet_coords = None
         self.inside_poly_coords = [self.coords[0] + self.variable_name_block_len + 40, self.coords[1]+7, 16, 50]
         self.inside_color = 'light pink'
         self.variable_color = 'dodger blue'
 
     def create_polygon(self):
+        self.coords[3] += self.variable_name_block_len
         self.poly_cords = self.stableCanvas.command_block_coords(self.coords[0], self.coords[1], self.coords[2],
-                                                                 self.coords[3] + self.variable_name_block_len)
+                                                                 self.coords[3])
         self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
         return self.obj_id
 
@@ -718,6 +727,7 @@ class VariableBlock(CommandBlock):
         # changes CommandBlock size
         del movable_blocks[self.obj_id]
         self.canvas.delete(self.obj_id)
+        self.coords[3] = 110
         self.create_polygon()
         movable_blocks[self.obj_id] = self
         # changes variable block size
@@ -743,6 +753,97 @@ class VariableBlock(CommandBlock):
 class ListBlock(VariableBlock):
     def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, variable_name, len):
         super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline, variable_name, len)
+        self.text2_id = None
+        self.string = ' = ['
+        self.string2 = '] '
+        self.text2_coords = []
+        self.inside_poly_coords = [self.coords[0] + self.variable_name_block_len + 50, self.coords[1]+7, 16, 50]
+
+    def create_polygon(self):
+        self.coords[3] += self.variable_name_block_len + 15
+        self.poly_cords = self.stableCanvas.command_block_coords(self.coords[0], self.coords[1], self.coords[2],
+                                                                 self.coords[3])
+        self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
+        return self.obj_id
+
+    def create_text(self):
+        self.text_coords = [self.coords[0] + self.variable_name_block_len + 17, self.coords[1] + 5]
+        self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.string, font='bold')
+        self.default_items_on_block = self
+        self.default_items_id.append(self.text_id)
+        return self.text_id
+
+    def create_text2(self):
+        self.text2_coords = [self.coords[0] + self.coords[3] - 15, self.coords[1] + 5]
+        self.text2_id = self.canvas.create_text(self.text2_coords, anchor=NW, text=self.string2, font='bold')
+        self.default_items_on_block = self
+        self.default_items_id.append(self.text2_id)
+        return self.text2_id
+
+    def change_inside_coords(self, delta_x, delta_y):
+
+        old_variable_poly_coords = self.variable_poly_coords
+        self.variable_poly_coords = [old_variable_poly_coords[0] + delta_x, old_variable_poly_coords[1] + delta_y,
+                                     old_variable_poly_coords[2], old_variable_poly_coords[3]]
+        self.canvas.move(self.variable_name_poly_id, delta_x, delta_y)
+
+        old_name_coords = self.name_text_coords
+        self.name_text_coords = [old_name_coords[0] + delta_x, old_name_coords[1] + delta_y]
+        self.canvas.move(self.variable_name_id, delta_x, delta_y)
+
+        old_text_coords = self.text_coords
+        self.text_coords = [old_text_coords[0] + delta_x, old_text_coords[1] + delta_y]
+        self.canvas.move(self.text_id, delta_x, delta_y)
+
+        old_text2_coords = self.text2_coords
+        self.text2_coords = [old_text2_coords[0] + delta_x, old_text2_coords[1] + delta_y]
+        self.canvas.move(self.text2_id, delta_x, delta_y)
+
+        old_poly_coords = self.inside_poly_coords
+        self.inside_poly_coords = [old_poly_coords[0] + delta_x, old_poly_coords[1]+delta_y, old_poly_coords[2],
+                                   old_poly_coords[3]]
+
+        self.canvas.tag_raise(self.text_id)
+        self.canvas.tag_raise(self.text2_id)
+        self.canvas.tag_raise(self.variable_name_poly_id)
+        self.canvas.tag_raise(self.variable_name_id)
+
+        if self.connected[2] is None:
+            self.canvas.tag_raise(self.poly_id)
+            self.canvas.move(self.poly_id, delta_x, delta_y)
+
+    def change_type_block(self, s, frame, times, movable_blocks):
+        self.variable_name = s
+        w = len(s) * times + 15
+        delta_x = w - self.variable_name_block_len
+        self.variable_name_block_len = w
+        # changes CommandBlock size
+        del movable_blocks[self.obj_id]
+        self.canvas.delete(self.obj_id)
+        self.coords[3] = 110
+        self.create_polygon()
+        movable_blocks[self.obj_id] = self
+        # changes variable block size
+        del movable_blocks[self.variable_name_poly_id]
+        self.canvas.delete(self.variable_name_poly_id)
+        self.create_variable_polygon()
+        movable_blocks[self.variable_name_poly_id] = self
+        # changes variable name
+        self.canvas.itemconfig(self.variable_name_id, text=s)
+        # changes '= [' position
+        self.canvas.move(self.text_id, delta_x, 0)
+        # changes ']' position
+        self.canvas.move(self.text2_id, delta_x, 0)
+        # changes inside block position
+        self.canvas.move(self.poly_id, delta_x, 0)
+        # raises texts and inside polygon
+        self.canvas.tag_raise(self.text_id)
+        self.canvas.tag_raise(self.text2_id)
+        self.canvas.tag_raise(self.variable_name_id)
+        self.canvas.tag_raise(self.poly_id)
+
+        if frame is not None:
+            self.canvas.delete(frame)
 
 
 class ControlBlock(OneTextCommandBlock):

@@ -989,7 +989,7 @@ class ControlBlockLower(Block):
 
     def renew_magnets(self):
         upper_magnet = [self.coords[0] + 40, self.coords[1] + 5]
-        lower_magnet = [self.coords[0] + 35, self.coords[1] + 25]
+        lower_magnet = [self.coords[0] + 35, self.coords[1] + 15]
         return [upper_magnet, lower_magnet]
 
     def change_coords(self, delta_x, delta_y):

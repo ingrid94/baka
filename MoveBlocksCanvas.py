@@ -259,6 +259,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             self.drag_data["x"] = event.x
             self.drag_data["y"] = event.y
             class_instance.check_magnets_during_move(self.movable_blocks)
+        return [event.x, event.y]
 
     def binding(self):
         self.canvas.bind("<ButtonPress-1>", self.on_token_button_press)
@@ -1064,8 +1065,30 @@ class InsideBlock:
         if closest_object != [] and movable_blocks[closest_object[0]] != "line":
             if movable_blocks[closest_object[0]] != 'bin':
                 stable_instance = movable_blocks[closest_object[0]]
-                # When ControlBlock has inside_poly, remove the first condition
-                if ((isinstance(stable_instance, CommandBlock) or isinstance(stable_instance, ControlBlock))
+                if isinstance(stable_instance, TwoMagnetBlock):
+                    first = self.canvas.find_withtag('first')
+                    second = self.canvas.find_withtag('second')
+                    magnet = None
+                    for item in closest_object:
+                        if item in first:
+                            magnet = 'first'
+                            break
+                        elif item in second:
+                            magnet = 'second'
+                            break
+                    if magnet is not None:
+                        if magnet == 'first':
+                            # gets poly_coords
+                            stable_coords = stable_instance.inside_poly_coords
+                        elif magnet == 'second':
+                            # gets poly_coords
+                            stable_coords = stable_instance.second_poly_coords
+                        line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1],
+                                                                            stable_coords[2], stable_coords[3])
+                        # draws "line" mark to the block
+                        line_id = self.canvas.create_line(line_coords, fill="green", width=3)
+                        movable_blocks[line_id] = "line"
+                elif ((isinstance(stable_instance, CommandBlock) or isinstance(stable_instance, ControlBlock))
                     and stable_instance.connected[2] is None) or \
                     (isinstance(stable_instance, OneMagnetBlock) and stable_instance.connected[1] is None):
                     # gets poly_coords
@@ -1106,7 +1129,8 @@ class InsideBlock:
                 self.use_bin(movable_blocks)
             else:
                 stable_instance = movable_blocks[closest_object[0]]
-                if ((isinstance(stable_instance, CommandBlock) or isinstance(stable_instance, ControlBlock)) and stable_instance.connected[2] is None) or \
+                if ((isinstance(stable_instance, CommandBlock) or isinstance(stable_instance, ControlBlock))
+                    and stable_instance.connected[2] is None) or \
                         (isinstance(stable_instance, OneMagnetBlock) and stable_instance.connected[1] is None):
                     stable_magnet = [stable_instance.inside_poly_coords[0], stable_instance.inside_poly_coords[1]+5]
                     stable_instance.delete_inside_poly(movable_blocks)
@@ -1114,7 +1138,9 @@ class InsideBlock:
                     delta_y = stable_magnet[1] - magnet_y
                     self.move_connected(delta_x, delta_y)
                     self.connected[0] = stable_instance
-                    if isinstance(stable_instance, OneMagnetBlock):
+                    if isinstance(stable_instance, TwoMagnetBlock):
+                        pass
+                    elif isinstance(stable_instance, OneMagnetBlock):
                         stable_instance.connected[1] = self
                         stable_instance.coords_connected(movable_blocks)
                     elif isinstance(stable_instance, CommandBlock):
@@ -1336,7 +1362,6 @@ class OneMagnetBlock(InsideBlock):
                 self.canvas.tag_raise(el)
 
     def coords_connected(self, movable_blocks):
-        old_width = self.coords[3]
         if self.connected[1] is not None:
             self.coords[2] = self.connected[1].get_height()
             blo_width = self.connected[1].get_width()
@@ -1392,7 +1417,7 @@ class TwoMagnetBlock(OneMagnetBlock):
                                    self.first_inside_height, self.first_inside_length]
         first_poly_coords = self.stableCanvas.inside_block_coords(self.coords[0] + 10, self.coords[1]+2,
                                                                   self.first_inside_height, self.first_inside_length)
-        self.first_poly_id = self.canvas.create_polygon(first_poly_coords, fill=self.inside_color)
+        self.first_poly_id = self.canvas.create_polygon(first_poly_coords, fill=self.inside_color, tag='first')
         self.default_items_on_block = self
         self.default_items_id.append(self.first_poly_id)
         return self.first_poly_id
@@ -1414,7 +1439,7 @@ class TwoMagnetBlock(OneMagnetBlock):
         second_poly_coords = self.stableCanvas.inside_block_coords(
             self.coords[0] + 10 + self.first_inside_length + 10 + self.text_len + 10,
             self.coords[1] + 2, self.second_inside_height, self.second_inside_length)
-        self.second_poly_id = self.canvas.create_polygon(second_poly_coords, fill=self.inside_color)
+        self.second_poly_id = self.canvas.create_polygon(second_poly_coords, fill=self.inside_color, tag='second')
         self.default_items_on_block = self
         self.default_items_id.append(self.second_poly_id)
         return self.second_poly_id
@@ -1431,6 +1456,9 @@ class TwoMagnetBlock(OneMagnetBlock):
             self.connected[2].move_connected(delta_x, delta_y)
             for i in self.connected[2].default_items_id:
                 self.canvas.tag_raise(i)
+
+    def redraw_base(self, movable_blocks):
+        pass
 
     def change_inside_coords(self, delta_x, delta_y):
 

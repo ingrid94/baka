@@ -307,7 +307,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             if block.connected[1] is not None:
                 self.into_file(file, block.connected[1], tabs+1)
             if block.connected[3].connected[1] is not None:
-                self.into_file(file, block.connected[3].connected[1], tabs-1)
+                self.into_file(file, block.connected[3].connected[1], tabs)
         elif isinstance(block, TypeBlock):
             file.write(block.string_on_block)
         elif isinstance(block, OneMagnetBlock):

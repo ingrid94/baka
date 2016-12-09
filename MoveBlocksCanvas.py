@@ -1460,3 +1460,12 @@ class TwoMagnetBlock(OneMagnetBlock):
         if self.connected[2] is None:
             self.canvas.tag_raise(self.second_poly_id)
             self.canvas.move(self.second_poly_id, delta_x, delta_y)
+
+    def raise_tags(self):
+        self.canvas.tag_raise(self.obj_id)
+        for el in self.default_items_id:
+            self.canvas.tag_raise(el)
+        if self.connected[1] is not None:
+            self.connected[1].raise_tags()
+        if self.connected[2] is not None:
+            self.connected[2].raise_tags()

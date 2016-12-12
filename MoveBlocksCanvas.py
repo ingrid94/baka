@@ -238,11 +238,6 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             class_instance = self.movable_blocks[self.drag_data["item"]]
             if not isinstance(class_instance, ControlBlockLower):
                 class_instance.move_to_magnet(self.movable_blocks)
-            if (isinstance(class_instance, TypeBlock) and
-                    (class_instance.inside_type == 'number' or class_instance.inside_type=='string'
-                     or class_instance.inside_type == 'variable')) \
-                    or (isinstance(class_instance, VariableBlock)):
-                class_instance.check_if_frame_needed(self.drag_data["item"], self.movable_blocks)
 
         self.drag_data["item"] = None
         self.drag_data["x"] = 0
@@ -260,10 +255,21 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             class_instance.check_magnets_during_move(self.movable_blocks)
         return [event.x, event.y]
 
+    def on_double_click(self, event):
+        active = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
+        if len(active) != 0 and self.movable_blocks[active[-1]] != 'bin':
+            peale = active[-1]
+            class_instance = self.movable_blocks[peale]
+            if (isinstance(class_instance, TypeBlock) and
+                    (class_instance.inside_type == 'number' or class_instance.inside_type == 'string'
+                     or class_instance.inside_type == 'variable')) or (isinstance(class_instance, VariableBlock)):
+                class_instance.check_if_frame_needed(peale, self.movable_blocks)
+
     def binding(self):
         self.canvas.bind("<ButtonPress-1>", self.on_token_button_press)
         self.canvas.bind("<ButtonRelease-1>", self.on_token_button_release)
         self.canvas.bind("<B1-Motion>", self.on_token_motion)
+        self.canvas.bind("<Double-Button-1>", self.on_double_click)
 
     def to_code(self):
         all_blocks = []

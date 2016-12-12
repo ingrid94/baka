@@ -93,20 +93,20 @@ class ChooseBlocksCanvas:
         # self.canvas.create_polygon(self.inside_block_coords(160, 150, 15, 40), fill='light pink', tags='list_block')
 
         # block for if statement
-        self.canvas.create_polygon(self.control_block_coords(50, 180, 30, 110, 25)[0], fill='orange',
+        self.canvas.create_polygon(self.control_block_coords(50, 140, 30, 110, 25)[0], fill='orange',
                                    outline='chocolate', tags='if_block')
-        self.canvas.create_polygon(self.control_block_coords(50, 180, 30, 110, 25)[1], fill='orange',
+        self.canvas.create_polygon(self.control_block_coords(50, 140, 30, 110, 25)[1], fill='orange',
                                    outline='chocolate', tags='if_block')
-        self.canvas.create_text(70, 190, anchor=NW, text='if', tags='if_block')
-        self.canvas.create_polygon(self.inside_block_coords(85, 189, 16, 55), fill='peachpuff', tags='if_block')
+        self.canvas.create_text(70, 150, anchor=NW, text='if', tags='if_block')
+        self.canvas.create_polygon(self.inside_block_coords(85, 149, 16, 55), fill='peachpuff', tags='if_block')
 
         # block for while statement
-        self.canvas.create_polygon(self.control_block_coords(50, 270, 30, 115, 25)[0], fill='orange',
+        self.canvas.create_polygon(self.control_block_coords(50, 230, 30, 115, 25)[0], fill='orange',
                                    outline='chocolate', tags='while_block')
-        self.canvas.create_polygon(self.control_block_coords(50, 270, 30, 115, 25)[1], fill='orange',
+        self.canvas.create_polygon(self.control_block_coords(50, 230, 30, 115, 25)[1], fill='orange',
                                    outline='chocolate', tags='while_block')
-        self.canvas.create_text(60, 280, anchor=NW, text='while', tags='while_block')
-        self.canvas.create_polygon(self.inside_block_coords(95, 279, 16, 55), fill='peachpuff', tags='while_block')
+        self.canvas.create_text(60, 240, anchor=NW, text='while', tags='while_block')
+        self.canvas.create_polygon(self.inside_block_coords(95, 239, 16, 55), fill='peachpuff', tags='while_block')
 
         # right side column
         # equals statement block

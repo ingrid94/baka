@@ -5,7 +5,6 @@ import re
 from ChooseBlocksCanvas import ChooseBlocksCanvas
 
 
-# calc: 'limegreen', 'green'
 class MoveBlocksCanvas(ChooseBlocksCanvas):
 
     def __init__(self, root, t1):
@@ -16,14 +15,14 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         self.stableCanvas = t1
         self.stableCanvas.bind(self.create_blocks)
         self.movable_blocks = {}
-        self.photo = None
-        self.item = None
+        self.bin_image = None
+        self.bin_id = None
 
     def create_bin(self):
         # delete icon: "https://icons8.com/web-app/362/Delete"
-        self.photo = PhotoImage(file="Delete-52.gif")
-        self.item = self.canvas.create_image(460, 35, image=self.photo)
-        self.movable_blocks[self.item] = 'bin'
+        self.bin_image = PhotoImage(file="Delete-52.gif")
+        self.bin_id = self.canvas.create_image(460, 35, image=self.bin_image)
+        self.movable_blocks[self.bin_id] = 'bin'
 
     def create_blocks(self, event):
         self.stableCanvas.get_focus_set()

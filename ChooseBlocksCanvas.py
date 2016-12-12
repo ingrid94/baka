@@ -83,14 +83,14 @@ class ChooseBlocksCanvas:
         self.canvas.create_polygon(self.inside_block_coords(150, 110, 15, 40), fill='light pink', tags='variable_block')
 
         # block for list
-        self.canvas.create_polygon(self.command_block_coords(50, 140, 30, 180), fill='violet red', outline='purple',
-                                   tags='list_block')
-        self.canvas.create_polygon(self.inside_block_coords(60, 149, 16, 60), fill='dodger blue', outline='steel blue',
-                                   tags='list_block')
-        self.canvas.create_text(70, 150, anchor=NW, text="list name", tags='list_block')
-        self.canvas.create_text(135, 145, anchor=NW, text="= [", tags='list_block', font='bold')
-        self.canvas.create_text(210, 145, anchor=NW, text="]", tags='list_block', font='bold')
-        self.canvas.create_polygon(self.inside_block_coords(160, 150, 15, 40), fill='light pink', tags='list_block')
+        # self.canvas.create_polygon(self.command_block_coords(50, 140, 30, 180), fill='violet red', outline='purple',
+        #                           tags='list_block')
+        # self.canvas.create_polygon(self.inside_block_coords(60, 149, 16, 60), fill='dodger blue', outline='steel blue',
+        #                           tags='list_block')
+        # self.canvas.create_text(70, 150, anchor=NW, text="list name", tags='list_block')
+        # self.canvas.create_text(135, 145, anchor=NW, text="= [", tags='list_block', font='bold')
+        # self.canvas.create_text(210, 145, anchor=NW, text="]", tags='list_block', font='bold')
+        # self.canvas.create_polygon(self.inside_block_coords(160, 150, 15, 40), fill='light pink', tags='list_block')
 
         # block for if statement
         self.canvas.create_polygon(self.control_block_coords(50, 180, 30, 110, 25)[0], fill='orange',

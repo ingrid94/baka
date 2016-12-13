@@ -1,11 +1,14 @@
 from tkinter import *
+from tkinter.font import Font
 
 
 class ChooseBlocksCanvas:
-    def __init__(self, root):
+    def __init__(self, root, myFont, myFontBold):
         self.top = Toplevel(root)
         self.canvas = Canvas(self.top, width=500, height=500, bg="white", highlightthickness=0)
         self.canvas.pack()
+        self.myFont = myFont
+        self.myFontBold = myFontBold
 
     def get_focus_set(self):
         return self.canvas.focus_set()
@@ -59,28 +62,38 @@ class ChooseBlocksCanvas:
         return points
 
     def create_blocks_fst(self):
+        text_height = Font.metrics(self.myFont, 'linespace')
+        top_line = 20
 
-        # block for print() command
-        self.canvas.create_polygon(self.command_block_coords(50, 20, 30, 110), fill='violet red', outline='purple',
-                                   tags='print_block')
-        self.canvas.create_text(60, 30, anchor=NW, text='print(', tags='print_block')
-        self.canvas.create_polygon(self.inside_block_coords(93, 30, 16, 40), fill='light pink', tags='print_block')
-        self.canvas.create_text(147, 30, anchor=NW, text=')', tags='print_block')
+        # block for Expr
+        self.canvas.create_polygon(self.command_block_coords(50, top_line, text_height+15, 110), fill='violet red',
+                                   outline='purple', tags='expr_block')
+        self.canvas.create_polygon(self.inside_block_coords(55, top_line + 10, text_height, 90),
+                                   fill='light pink', tags='expr_block')
+        top_line += text_height+25
 
         # block for return command
-        self.canvas.create_polygon(self.command_block_coords(50, 60, 30, 110), fill='violet red', outline='purple',
-                                   tags='return_block')
-        self.canvas.create_text(60, 70, anchor=NW, text='return', tags='return_block')
-        self.canvas.create_polygon(self.inside_block_coords(100, 70, 16, 40), fill='light pink', tags='return_block')
+        txt_len = Font.measure(self.myFont, 'return')
+        self.canvas.create_polygon(self.command_block_coords(50, top_line, text_height+15, 10 + txt_len + 20 + txt_len),
+                                   fill='violet red', outline='purple', tags='return_block')
+        self.canvas.create_text(57, top_line+8, anchor=NW, text='return', tags='return_block', font=self.myFont)
+        self.canvas.create_polygon(self.inside_block_coords(52+1.3*txt_len, top_line + 10, text_height, txt_len),
+                                   fill='light pink', tags='return_block')
+        top_line += text_height+25
 
         # block for variable assignment command
-        self.canvas.create_polygon(self.command_block_coords(50, 100, 30, 160), fill='violet red', outline='purple',
+        txt_len = Font.measure(self.myFont, 'variable')
+        txt2_len = Font.measure(self.myFontBold, '=')
+        self.canvas.create_polygon(self.command_block_coords(50, top_line, text_height+15,
+                                                             10 + txt_len + 15 + txt2_len + 15 + txt_len + 10),
+                                   fill='violet red', outline='purple', tags='variable_block')
+        self.canvas.create_polygon(self.inside_block_coords(60, top_line + 10, text_height, txt_len+5),
+                                   fill='dodger blue', outline='steel blue', tags='variable_block')
+        self.canvas.create_text(67, top_line+10, anchor=NW, text="variable", tags='variable_block', font=self.myFont)
+        self.canvas.create_text(67 + txt_len + 8, top_line+10, anchor=NW, text="=", tags='variable_block', font=self.myFontBold)
+        self.canvas.create_polygon(self.inside_block_coords(67 + txt_len + 8 + txt2_len + 5, top_line+10, text_height, txt_len), fill='light pink',
                                    tags='variable_block')
-        self.canvas.create_polygon(self.inside_block_coords(60, 109, 16, 55), fill='dodger blue', outline='steel blue',
-                                   tags='variable_block')
-        self.canvas.create_text(70, 110, anchor=NW, text="variable", tags='variable_block')
-        self.canvas.create_text(130, 105, anchor=NW, text="=", tags='variable_block', font='bold')
-        self.canvas.create_polygon(self.inside_block_coords(150, 110, 15, 40), fill='light pink', tags='variable_block')
+        top_line += text_height+25
 
         # block for list
         # self.canvas.create_polygon(self.command_block_coords(50, 140, 30, 180), fill='violet red', outline='purple',
@@ -93,113 +106,168 @@ class ChooseBlocksCanvas:
         # self.canvas.create_polygon(self.inside_block_coords(160, 150, 15, 40), fill='light pink', tags='list_block')
 
         # block for if statement
-        self.canvas.create_polygon(self.control_block_coords(50, 140, 30, 110, 25)[0], fill='orange',
+        txt_len = Font.measure(self.myFont, 'if')
+        self.canvas.create_polygon(self.control_block_coords(50, top_line, text_height+15, 10+txt_len+15+8*txt_len+15, 25)[0], fill='orange',
                                    outline='chocolate', tags='if_block')
-        self.canvas.create_polygon(self.control_block_coords(50, 140, 30, 110, 25)[1], fill='orange',
+        self.canvas.create_polygon(self.control_block_coords(50, top_line, text_height+15, 10+txt_len+10+9*txt_len+15, 25)[1], fill='orange',
                                    outline='chocolate', tags='if_block')
-        self.canvas.create_text(70, 150, anchor=NW, text='if', tags='if_block')
-        self.canvas.create_polygon(self.inside_block_coords(85, 149, 16, 55), fill='peachpuff', tags='if_block')
+        self.canvas.create_text(67, top_line+10, anchor=NW, text='if', tags='if_block', font=self.myFont)
+        self.canvas.create_polygon(self.inside_block_coords(67+2*txt_len, top_line+9, text_height, 8*txt_len), fill='peachpuff', tags='if_block')
+
+        top_line += text_height + 75
 
         # block for while statement
-        self.canvas.create_polygon(self.control_block_coords(50, 230, 30, 115, 25)[0], fill='orange',
+        txt_len = Font.measure(self.myFont, 'while')
+        self.canvas.create_polygon(self.control_block_coords(50, top_line, text_height+15, 10+txt_len+15+txt_len+25, 25)[0], fill='orange',
                                    outline='chocolate', tags='while_block')
-        self.canvas.create_polygon(self.control_block_coords(50, 230, 30, 115, 25)[1], fill='orange',
+        self.canvas.create_polygon(self.control_block_coords(50, top_line, text_height+15, 10+txt_len+15+txt_len+25, 25)[1], fill='orange',
                                    outline='chocolate', tags='while_block')
-        self.canvas.create_text(60, 240, anchor=NW, text='while', tags='while_block')
-        self.canvas.create_polygon(self.inside_block_coords(95, 239, 16, 55), fill='peachpuff', tags='while_block')
+        self.canvas.create_text(60, top_line+10, anchor=NW, text='while', tags='while_block', font=self.myFont)
+        self.canvas.create_polygon(self.inside_block_coords(65+txt_len, top_line+9, text_height, 55), fill='peachpuff', tags='while_block')
+
+        top_line += text_height + 75
 
         # right side column
         # equals statement block
-        self.canvas.create_polygon(self.inside_block_coords(300, 30, 20, 140), fill='dodger blue', outline='steel blue',
+        top_line = 20
+        txt_len = Font.measure(self.myFontBold, ' == ')
+        self.canvas.create_polygon(self.inside_block_coords(300, top_line, text_height+4, 15+2*1.2*txt_len+txt_len+15),
+                                   fill='dodger blue', outline='steel blue', tags='equals')
+        self.canvas.create_polygon(self.inside_block_coords(310, top_line+2, text_height, 1.2*txt_len), fill='sky blue',
                                    tags='equals')
-        self.canvas.create_polygon(self.inside_block_coords(310, 32, 16, 40), fill='sky blue', tags='equals')
-        self.canvas.create_text(362, 29, anchor=NW, text="==", tags='equals', font='bold')
-        self.canvas.create_polygon(self.inside_block_coords(390, 32, 16, 40), fill='sky blue', tags='equals')
+        self.canvas.create_text(312+1.2*txt_len+10, top_line+2, anchor=NW, text="==", tags='equals', font=self.myFontBold)
+        self.canvas.create_polygon(self.inside_block_coords(310+1.2*txt_len+txt_len+10,
+                                                            top_line+2, text_height, 1.2*txt_len),
+                                   fill='sky blue', tags='equals')
+        top_line += text_height + 15
 
         # not equal statement block
-        self.canvas.create_polygon(self.inside_block_coords(300, 60, 20, 140), fill='dodger blue', outline='steel blue',
-                                   tags='not_equal')
-        self.canvas.create_polygon(self.inside_block_coords(310, 62, 16, 40), fill='sky blue', tags='not_equal')
-        self.canvas.create_text(362, 60, anchor=NW, text="!=", tags='not_equal', font='bold')
-        self.canvas.create_polygon(self.inside_block_coords(390, 62, 16, 40), fill='sky blue', tags='not_equal')
+        txt_len = Font.measure(self.myFontBold, ' != ')
+        self.canvas.create_polygon(self.inside_block_coords(300, top_line, text_height+4, 15+2*1.5*txt_len+txt_len+15),
+                                   fill='dodger blue', outline='steel blue', tags='not_equal')
+        self.canvas.create_polygon(self.inside_block_coords(310, top_line + 2, text_height, 1.5*txt_len),
+                                   fill='sky blue', tags='not_equal')
+        self.canvas.create_text(312+1.5*txt_len+10, top_line+2, anchor=NW, text="!=", tags='not_equal', font=self.myFontBold)
+        self.canvas.create_polygon(self.inside_block_coords(310+1.5*txt_len+txt_len+10,
+                                                            top_line+2, text_height, 1.5*txt_len),
+                                   fill='sky blue', tags='not_equal')
+        top_line += text_height + 15
 
         # grater than block
-        self.canvas.create_polygon(self.inside_block_coords(300, 90, 20, 130), fill='dodger blue', outline='steel blue',
+        txt_len = Font.measure(self.myFontBold, ' > ')
+        self.canvas.create_polygon(self.inside_block_coords(300, top_line, text_height+4, 15+2*2*txt_len+txt_len+15), fill='dodger blue', outline='steel blue',
                                    tags='greater')
-        self.canvas.create_polygon(self.inside_block_coords(310, 92, 16, 40), fill='sky blue', tags='greater')
-        self.canvas.create_text(362, 90, anchor=NW, text=">", tags='greater', font='bold')
-        self.canvas.create_polygon(self.inside_block_coords(380, 92, 16, 40), fill='sky blue', tags='greater')
+        self.canvas.create_polygon(self.inside_block_coords(310, top_line+2, text_height, 2*txt_len), fill='sky blue', tags='greater')
+        self.canvas.create_text(312+2*txt_len+10, top_line+2, anchor=NW, text=">", tags='greater', font=self.myFontBold)
+        self.canvas.create_polygon(self.inside_block_coords(310+2*txt_len+txt_len+10, top_line+2, text_height, 2*txt_len), fill='sky blue', tags='greater')
+        top_line += text_height + 15
 
         # smaller than block
-        self.canvas.create_polygon(self.inside_block_coords(300, 120, 20, 130), fill='dodger blue', outline='steel blue',
+        txt_len = Font.measure(self.myFontBold, ' < ')
+        self.canvas.create_polygon(self.inside_block_coords(300, top_line, text_height+4, 15+2*2*txt_len+txt_len+15),
+                                   fill='dodger blue', outline='steel blue', tags='smaller')
+        self.canvas.create_polygon(self.inside_block_coords(310, top_line+2, text_height, 2*txt_len), fill='sky blue',
                                    tags='smaller')
-        self.canvas.create_polygon(self.inside_block_coords(310, 122, 16, 40), fill='sky blue', tags='smaller')
-        self.canvas.create_text(362, 120, anchor=NW, text="<", tags='smaller', font='bold')
-        self.canvas.create_polygon(self.inside_block_coords(380, 122, 16, 40), fill='sky blue', tags='smaller')
+        self.canvas.create_text(312+2*txt_len+10, top_line, anchor=NW, text="<", tags='smaller', font=self.myFontBold)
+        self.canvas.create_polygon(self.inside_block_coords(310+2*txt_len+txt_len+10, top_line+2,
+                                                            text_height, 2*txt_len), fill='sky blue', tags='smaller')
+        top_line += text_height + 15
 
         # grater or equal block
-        self.canvas.create_polygon(self.inside_block_coords(300, 150, 20, 140), fill='dodger blue', outline='steel blue',
+        txt_len = Font.measure(self.myFontBold, ' >= ')
+        self.canvas.create_polygon(self.inside_block_coords(300, top_line, text_height+4, 15+2*1.2*txt_len+txt_len+15),
+                                   fill='dodger blue', outline='steel blue', tags='greater_or_equal')
+        self.canvas.create_polygon(self.inside_block_coords(310, top_line+2, text_height, 1.2*txt_len), fill='sky blue',
                                    tags='greater_or_equal')
-        self.canvas.create_polygon(self.inside_block_coords(310, 152, 16, 40), fill='sky blue', tags='greater_or_equal')
-        self.canvas.create_text(362, 150, anchor=NW, text=">=", tags='greater_or_equal', font='bold')
-        self.canvas.create_polygon(self.inside_block_coords(390, 152, 16, 40), fill='sky blue', tags='greater_or_equal')
+        self.canvas.create_text(312+1.2*txt_len+10, top_line, anchor=NW, text=">=", tags='greater_or_equal',
+                                font=self.myFontBold)
+        self.canvas.create_polygon(self.inside_block_coords(310+1.2*txt_len+txt_len+10,
+                                                            top_line+2, text_height, 1.2*txt_len), fill='sky blue',
+                                   tags='greater_or_equal')
+        top_line += text_height + 15
 
         # smaller or equal block
-        self.canvas.create_polygon(self.inside_block_coords(300, 180, 20, 140), fill='dodger blue', outline='steel blue',
+        txt_len = Font.measure(self.myFontBold, ' <= ')
+        self.canvas.create_polygon(self.inside_block_coords(300, top_line, text_height+4, 15+2*1.2*txt_len+txt_len+15),
+                                   fill='dodger blue', outline='steel blue', tags='smaller_or_equal')
+        self.canvas.create_polygon(self.inside_block_coords(310, top_line+2, text_height, 1.2*txt_len), fill='sky blue',
                                    tags='smaller_or_equal')
-        self.canvas.create_polygon(self.inside_block_coords(310, 182, 16, 40), fill='sky blue', tags='smaller_or_equal')
-        self.canvas.create_text(362, 180, anchor=NW, text="<=", tags='smaller_or_equal', font='bold')
-        self.canvas.create_polygon(self.inside_block_coords(390, 182, 16, 40), fill='sky blue', tags='smaller_or_equal')
+        self.canvas.create_text(312+1.2*txt_len+10, top_line, anchor=NW, text="<=", tags='smaller_or_equal', font=self.myFontBold)
+        self.canvas.create_polygon(self.inside_block_coords(310+1.2*txt_len+txt_len+10,
+                                                            top_line+2, text_height, 1.2*txt_len), fill='sky blue',
+                                   tags='smaller_or_equal')
+        top_line += text_height + 15
 
         # or block
-        self.canvas.create_polygon(self.inside_block_coords(300, 210, 20, 130), fill='dodger blue',
-                                   outline='steel blue', tags='or')
-        self.canvas.create_polygon(self.inside_block_coords(310, 212, 16, 40), fill='sky blue', tags='or')
-        self.canvas.create_text(365, 212, anchor=NW, text="or", tags='or')
-        self.canvas.create_polygon(self.inside_block_coords(385, 212, 16, 40), fill='sky blue', tags='or')
+        txt_len = Font.measure(self.myFontBold, ' or ')
+        self.canvas.create_polygon(self.inside_block_coords(300, top_line, text_height+4, 15+2*1.7*txt_len+txt_len+15),
+                                   fill='dodger blue', outline='steel blue', tags='or')
+        self.canvas.create_polygon(self.inside_block_coords(310, top_line+2, text_height, 1.7*txt_len), fill='sky blue',
+                                   tags='or')
+        self.canvas.create_text(312+1.7*txt_len+10, top_line, anchor=NW, text="or", tags='or', font=self.myFont)
+        self.canvas.create_polygon(self.inside_block_coords(310+1.7*txt_len+txt_len+10, top_line+2, text_height,
+                                                            1.7*txt_len), fill='sky blue', tags='or')
+        top_line += text_height + 15
 
         # and block
-        self.canvas.create_polygon(self.inside_block_coords(300, 240, 20, 130), fill='dodger blue',
-                                   outline='steel blue', tags='and')
-        self.canvas.create_polygon(self.inside_block_coords(310, 242, 16, 40), fill='sky blue', tags='and')
-        self.canvas.create_text(362, 242, anchor=NW, text="and", tags='and')
-        self.canvas.create_polygon(self.inside_block_coords(385, 242, 16, 40), fill='sky blue', tags='and')
+        txt_len = Font.measure(self.myFont, 'and ')
+        self.canvas.create_polygon(self.inside_block_coords(300, top_line, text_height+4, 15+2*1.2*txt_len+txt_len+15),
+                                   fill='dodger blue', outline='steel blue', tags='and')
+        self.canvas.create_polygon(self.inside_block_coords(310, top_line+2, text_height, 1.2*txt_len), fill='sky blue',
+                                   tags='and')
+        self.canvas.create_text(310+1.2*txt_len+12, top_line+2, anchor=NW, text="and", tags='and', font=self.myFont)
+        self.canvas.create_polygon(self.inside_block_coords(312+1.2*txt_len+txt_len+10,
+                                                            top_line+2, text_height, 1.2*txt_len),
+                                   fill='sky blue', tags='and')
+        top_line += text_height + 15
 
         # not block
-        self.canvas.create_polygon(self.inside_block_coords(300, 270, 20, 90), fill='dodger blue',
-                                   outline='steel blue', tags='not')
-        self.canvas.create_text(315, 272, anchor=NW, text='not', tags='not')
-        self.canvas.create_polygon(self.inside_block_coords(340, 272, 16, 40), fill='sky blue', tags='not')
+        txt_len = Font.measure(self.myFont, 'not ')
+        self.canvas.create_polygon(self.inside_block_coords(300, top_line, text_height+4, 10+txt_len+10+1.6*txt_len),
+                                   fill='dodger blue', outline='steel blue', tags='not')
+        self.canvas.create_text(312, top_line+2, anchor=NW, text='not', tags='not', font=self.myFont)
+        self.canvas.create_polygon(self.inside_block_coords(312+txt_len, top_line+2, text_height, 1.6*txt_len),
+                                   fill='sky blue', tags='not')
+        top_line += text_height + 15
 
         # block for variable
-        self.canvas.create_polygon(self.inside_block_coords(300, 300, 15, 63), fill='dodger blue', outline='steel blue',
+        txt_len = Font.measure(self.myFont, 'variable')
+        self.canvas.create_polygon(self.inside_block_coords(300, top_line, text_height, txt_len+20), fill='dodger blue', outline='steel blue',
                                    tags='variable')
-        self.canvas.create_text(312, 300, anchor=NW, text="variable", tags='variable')
-
-        # block for creating number
-        self.canvas.create_polygon(self.inside_block_coords(300, 330, 15, 63), fill='dodger blue', outline='steel blue',
-                                   tags='number')
-        self.canvas.create_text(312, 330, anchor=NW, text="number", tags='number')
-
-        # block for creating string
-        self.canvas.create_polygon(self.inside_block_coords(300, 360, 15, 63), fill='dodger blue', outline='steel blue',
-                                   tags='string')
-        self.canvas.create_text(315, 360, anchor=NW, text="string", tags='string')
+        self.canvas.create_text(315, top_line, anchor=NW, text="variable", tags='variable', font=self.myFont)
 
         # None block
-        self.canvas.create_polygon(self.inside_block_coords(400, 300, 15, 63), fill='dodger blue', outline='steel blue',
+        txt_len = Font.measure(self.myFont, 'None')
+        self.canvas.create_polygon(self.inside_block_coords(400, top_line, text_height, txt_len+20), fill='dodger blue', outline='steel blue',
                                    tags='none')
-        self.canvas.create_text(415, 300, anchor=NW, text="None", tags='none')
+        self.canvas.create_text(415, top_line, anchor=NW, text="None", tags='none', font=self.myFont)
+
+        top_line += text_height + 15
+
+        # block for creating number
+        txt_len = Font.measure(self.myFont, 'number')
+        self.canvas.create_polygon(self.inside_block_coords(300, top_line, text_height, txt_len+20), fill='dodger blue', outline='steel blue',
+                                   tags='number')
+        self.canvas.create_text(315, top_line, anchor=NW, text="number", tags='number', font=self.myFont)
 
         # True block
-        self.canvas.create_polygon(self.inside_block_coords(400, 330, 15, 63), fill='dodger blue', outline='steel blue',
+        txt_len = Font.measure(self.myFont, 'True')
+        self.canvas.create_polygon(self.inside_block_coords(400, top_line, text_height, txt_len+20), fill='dodger blue', outline='steel blue',
                                    tags='true')
-        self.canvas.create_text(415, 330, anchor=NW, text="True", tags='true')
+        self.canvas.create_text(415, top_line, anchor=NW, text="True", tags='true', font=self.myFont)
+        top_line += text_height + 15
+
+        # block for creating string
+        txt_len = Font.measure(self.myFont, 'string')
+        self.canvas.create_polygon(self.inside_block_coords(300, top_line, text_height, txt_len+20), fill='dodger blue', outline='steel blue',
+                                   tags='string')
+        self.canvas.create_text(315, top_line, anchor=NW, text="string", tags='string', font=self.myFont)
 
         # False block
-        self.canvas.create_polygon(self.inside_block_coords(400, 360, 15, 63), fill='dodger blue', outline='steel blue',
+        txt_len = Font.measure(self.myFont, 'False')
+        self.canvas.create_polygon(self.inside_block_coords(400, top_line, text_height, txt_len+25), fill='dodger blue', outline='steel blue',
                                    tags='false')
-        self.canvas.create_text(415, 360, anchor=NW, text="False", tags='false')
+        self.canvas.create_text(415, top_line, anchor=NW, text="False", tags='false', font=self.myFont)
 
     def bind(self, function):
         self.canvas.bind("<ButtonPress-1>", function)

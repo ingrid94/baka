@@ -1,5 +1,6 @@
 from tkinter import *
 import tkinter.messagebox
+from tkinter.font import Font
 import re
 
 from ChooseBlocksCanvas import ChooseBlocksCanvas
@@ -7,16 +8,19 @@ from ChooseBlocksCanvas import ChooseBlocksCanvas
 
 class MoveBlocksCanvas(ChooseBlocksCanvas):
 
-    def __init__(self, root, t1):
-        super().__init__(root)
+    def __init__(self, root, t1, myFont, myFontBold):
+        super().__init__(root, myFont, myFontBold)
         self.root = root
         self.drag_data = {"x": 0, "y": 0, "item": None}
         self.binding()
         self.stableCanvas = t1
         self.stableCanvas.bind(self.create_blocks)
+        self.myFont = myFont
+        self.myFontBold = myFontBold
         self.movable_blocks = {}
         self.bin_image = None
         self.bin_id = None
+        self.text_height = Font.metrics(self.myFont, 'linespace')
 
     def create_bin(self):
         # delete icon: "https://icons8.com/web-app/362/Delete"
@@ -32,7 +36,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             if tag == 'print_block':
                 cords = self.stableCanvas.command_block_coords(0, 0, 30, 120)
                 print_block = TwoTextCommandBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords, 'violet red',
-                                                  'purple', 'print(', ')', 'light pink')
+                                                  'purple', 'print(', ')', 'light pink', self.myFont)
                 obj_id = print_block.create_polygon()
                 poly_id = print_block.create_inside_polygon()
                 text_id = print_block.create_text()
@@ -42,9 +46,11 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[text_id] = print_block
                 self.movable_blocks[text2_id] = print_block
             elif tag == 'return_block':
-                cords = self.stableCanvas.command_block_coords(0, 0, 30, 120)
-                return_block = OneTextCommandBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords, 'violet red',
-                                                   'purple', 'return', 'light pink')
+                txt_len = Font.measure(self.myFont, 'return')
+                cords = self.stableCanvas.command_block_coords(0, 0, self.text_height+15, 10 + txt_len + 20 + txt_len)
+                return_block = OneTextCommandBlock([0, 0, self.text_height+15, 10 + txt_len + 20 + txt_len], self.canvas,
+                                                   self.stableCanvas, cords, 'violet red', 'purple', 'return',
+                                                   'light pink', self.myFont)
                 obj_id = return_block.create_polygon()
                 poly_id = return_block.create_inside_polygon()
                 text_id = return_block.create_text()
@@ -56,9 +62,10 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             elif tag == 'list_block':
                 self.create_frame('list')
             elif tag == 'if_block':
-                cords = self.stableCanvas.control_block_coords(0, 0, 30, 110, 25)[0]
-                if_block = ControlBlock([0, 0, 30, 110, 25], self.canvas, self.stableCanvas, cords, 'orange',
-                                        'chocolate', 'if ', 'peachpuff')
+                txt_len = Font.measure(self.myFont, 'if')
+                cords = self.stableCanvas.control_block_coords(0, 0, self.text_height+15, 10+txt_len+15+8*txt_len+15, 25)[0]
+                if_block = ControlBlock([0, 0, self.text_height+15, 10+txt_len+15+8*txt_len+15, 25], self.canvas, self.stableCanvas, cords, 'orange',
+                                        'chocolate', 'if ', 'peachpuff', self.myFont)
                 obj_id = if_block.create_polygon()
                 inside_id = if_block.create_inside_polygon()
                 text_id = if_block.create_text()
@@ -66,8 +73,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[inside_id] = if_block
                 self.movable_blocks[text_id] = if_block
                 # lower part of controlBlock
-                cords = self.stableCanvas.control_block_coords(0, 0, 30, 110, 25)[1]
-                if_block_lower = ControlBlockLower([0, 70, 30, 110, 25], self.canvas, cords)
+                cords = self.stableCanvas.control_block_coords(0, 0, self.text_height+15, 10+txt_len+15+8*txt_len+15, 25)[1]
+                if_block_lower = ControlBlockLower([0, 70, self.text_height+15, 10+txt_len+15+8*txt_len+15, 25], self.canvas, cords)
                 obj_id_lower = if_block_lower.create_polygon()
                 self.movable_blocks[obj_id_lower] = if_block_lower
                 if_block.connected[3] = if_block_lower
@@ -81,33 +88,34 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             elif tag == 'string':
                 self.create_frame('string')
             elif tag == 'none':
-                self.create_type_block('None', None, 8, 'none', 'dodger blue', 'steel blue')
+                self.create_type_block('None', None, 'none', 'dodger blue', 'steel blue')
             elif tag == 'true':
-                self.create_type_block('True', None, 8, 'true', 'dodger blue', 'steel blue')
+                self.create_type_block('True', None, 'true', 'dodger blue', 'steel blue')
             elif tag == 'false':
-                self.create_type_block('False', None, 7, 'false', 'dodger blue', 'steel blue')
+                self.create_type_block('False', None, 'false', 'dodger blue', 'steel blue')
             # second column blocks
             elif tag == 'equals':
-                # args: block length, text length, text
-                self.create_two_magnet_block(140, 20, "==")
+                self.create_two_magnet_block("==")
             elif tag == 'not_equal':
-                self.create_two_magnet_block(140, 20, "!=")
+                self.create_two_magnet_block("!=")
             elif tag == 'greater':
-                self.create_two_magnet_block(130, 10, '>')
+                self.create_two_magnet_block('>')
             elif tag == 'smaller':
-                self.create_two_magnet_block(130, 10, '<')
+                self.create_two_magnet_block('<')
             elif tag == 'greater_or_equal':
-                self.create_two_magnet_block(140, 20, '>=')
+                self.create_two_magnet_block('>=')
             elif tag == 'smaller_or_equal':
-                self.create_two_magnet_block(140, 20, '<=')
+                self.create_two_magnet_block('<=')
             elif tag == 'or':
-                self.create_two_magnet_block(130, 10, 'or')
+                self.create_two_magnet_block('or')
             elif tag == 'and':
-                self.create_two_magnet_block(130, 15, 'and')
+                self.create_two_magnet_block('and')
             elif tag == 'not':
-                cords = self.stableCanvas.inside_block_coords(0, 0, 20, 90)
-                one_magnet_block = OneMagnetBlock([0, 0, 20, 90], self.canvas, self.stableCanvas, cords, 'not ',
-                                                  10, 'dodger blue', 'steel blue', 'sky blue')
+                txt_len = Font.measure(self.myFont, 'not ')
+                cords = self.stableCanvas.inside_block_coords(0, 0, self.text_height+4, 10+txt_len+10+1.6*txt_len)
+                one_magnet_block = OneMagnetBlock([0, 0, self.text_height+4, 10+txt_len+10+1.6*txt_len], self.canvas,
+                                                  self.stableCanvas, cords, 'not ', 'dodger blue', 'steel blue',
+                                                  'sky blue', self.myFont)
                 obj_id = one_magnet_block.create_polygon()
                 first_poly_id = one_magnet_block.create_first_polygon()
                 text_id = one_magnet_block.create_text()
@@ -149,28 +157,29 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         s = v.get()
         if inside_type == 'number':
             if s.replace('.', '', 1).isdigit():
-                self.create_type_block(s, frame, 8, inside_type, 'dodger blue', 'steel blue')
+                self.create_type_block(s, frame, inside_type, 'dodger blue', 'steel blue')
             else:
                 tkinter.messagebox.showerror("Error", "It's not a number. Try again. ")
         elif inside_type == 'string':
             p = re.match(r'^(\"|\')(.)*(\"|\')$', s, re.S)
             if p:
-                self.create_type_block(s, frame, 6, inside_type, 'dodger blue', 'steel blue')
+                self.create_type_block(s, frame, inside_type, 'dodger blue', 'steel blue')
             else:
                 tkinter.messagebox.showerror("Error", "It's not a string. Try again. ")
         elif inside_type == 'variable' or inside_type == 'variable_assign' or inside_type == 'list':
             p = re.match(r'^[a-zA-Z_][\w0-9_]*$', s, re.S)
             if p and inside_type == 'variable':
-                self.create_type_block(s, frame, 6, inside_type, 'dodger blue', 'steel blue')
+                self.create_type_block(s, frame, inside_type, 'dodger blue', 'steel blue')
             elif p and (inside_type == 'variable_assign' or inside_type == 'list'):
-                self.create_variable_block(s, frame, 6, inside_type)
+                self.create_variable_block(s, frame, inside_type)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a variable. Try again. ")
 
-    def create_type_block(self, s, frame, times, inside_type, color, outline):
-        w = len(s) * times + 15
-        cords = self.stableCanvas.inside_block_coords(0, 0, 16, w)
-        type_block = TypeBlock([0, 0, 16, w], self.canvas, self.stableCanvas, cords, color, outline, s, inside_type)
+    def create_type_block(self, s, frame, inside_type, color, outline):
+        w = Font.measure(self.myFont, s)
+        cords = self.stableCanvas.inside_block_coords(0, 0, self.text_height, w+20)
+        type_block = TypeBlock([0, 0, self.text_height, w], self.canvas, self.stableCanvas, cords, color, outline, s,
+                               inside_type, self.myFont)
         obj_id = type_block.create_polygon()
         text_id = type_block.create_text()
         self.movable_blocks[obj_id] = type_block
@@ -178,23 +187,26 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         if frame is not None:
             self.canvas.delete(frame)
 
-    def create_variable_block(self, s, frame, times, inside_type):
-        w = len(s) * times + 15
-        cords = self.stableCanvas.command_block_coords(0, 0, 30, 110)
-        if inside_type == 'variable_assign':
-            variable_block = VariableBlock([0, 0, 30, 110], self.canvas, self.stableCanvas, cords, 'violet red',
-                                           'purple', s, w)
-        else:
-            variable_block = ListBlock([0, 0, 30, 110], self.canvas, self.stableCanvas, cords, 'violet red',
-                                       'purple', s, w)
+    def create_variable_block(self, s, frame, inside_type):
+        txt_len = Font.measure(self.myFont, s)
+        txt2_len = Font.measure(self.myFontBold, '=')
+        cords = self.stableCanvas.command_block_coords(0, 0, self.text_height+15,
+                                                       10 + txt_len + 15 + txt2_len + 15 + 5*txt2_len + 10)
+        # if inside_type == 'variable_assign':
+        variable_block = VariableBlock([0, 0, self.text_height+15, 10 + txt_len + 15 + txt2_len + 15 + 5*txt2_len + 10],
+                                       self.canvas, self.stableCanvas, cords, 'violet red', 'purple', s,
+                                       self.myFont, self.myFontBold)
+        # else:
+        #    variable_block = ListBlock([0, 0, 30, 110], self.canvas, self.stableCanvas, cords, 'violet red',
+        #                               'purple', s, txt_len)
         obj_id = variable_block.create_polygon()
         variable_poly_id = variable_block.create_variable_polygon()
         variable_name_id = variable_block.create_variable_name()
         text_id = variable_block.create_text()
         inside_poly_id = variable_block.create_inside_polygon()
-        if inside_type == 'list':
-            text2_id = variable_block.create_text2()
-            self.movable_blocks[text2_id] = variable_block
+        # if inside_type == 'list':
+        #    text2_id = variable_block.create_text2()
+        #    self.movable_blocks[text2_id] = variable_block
         self.movable_blocks[obj_id] = variable_block
         self.movable_blocks[variable_poly_id] = variable_block
         self.movable_blocks[variable_name_id] = variable_block
@@ -203,10 +215,16 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         if frame is not None:
             self.canvas.delete(frame)
 
-    def create_two_magnet_block(self, blo_len, text_len, text):
-        cords = self.stableCanvas.inside_block_coords(0, 0, 20, blo_len)
-        two_magnet_block = TwoMagnetBlock([0, 0, 20, blo_len], self.canvas, self.stableCanvas, cords, text, text_len,
-                                          'dodger blue', 'steel blue', 'sky blue')
+    def create_two_magnet_block(self, text):
+        txt_len = Font.measure(self.myFontBold, text)
+        if 1.6*txt_len < 40:
+            inside_len = 40
+        else:
+            inside_len = 1.6*txt_len
+        cords = self.stableCanvas.inside_block_coords(0, 0, self.text_height+4, 15+2*inside_len+txt_len+15)
+        two_magnet_block = TwoMagnetBlock([0, 0, self.text_height+4, 15+2*inside_len+txt_len+15], self.canvas,
+                                          self.stableCanvas, cords, text, 'dodger blue', 'steel blue', 'sky blue',
+                                          self.myFont, self.myFontBold)
         obj_id = two_magnet_block.create_polygon()
         first_poly_id = two_magnet_block.create_first_polygon()
         text_id = two_magnet_block.create_text()
@@ -283,42 +301,42 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         file = open("generated.py", "w")
         for block in first_blocks:
             tabs = 0
-            self.into_file(file, block, tabs)
+            self.into_code(file, block, tabs)
         file.close()
 
-    def into_file(self, file, block, tabs):
+    def into_code(self, file, block, tabs):
         if isinstance(block, TwoTextCommandBlock):
             self.make_tabs(file, tabs)
             file.write(block.string)
             if block.connected[2] is not None:
-                self.into_file(file, block.connected[2], tabs)
+                self.into_code(file, block.connected[2], tabs)
             file.write(block.string2 + '\n')
             if block.connected[1] is not None:
-                self.into_file(file, block.connected[1], tabs)
+                self.into_code(file, block.connected[1], tabs)
         elif isinstance(block, VariableBlock):
             self.make_tabs(file, tabs)
             file.write(block.variable_name + ' = ')
             if block.connected[2] is not None:
-                self.into_file(file, block.connected[2], tabs)
+                self.into_code(file, block.connected[2], tabs)
                 file.write('\n')
             if block.connected[1] is not None:
-                self.into_file(file, block.connected[1], tabs)
+                self.into_code(file, block.connected[1], tabs)
         elif isinstance(block, ControlBlock):
             self.make_tabs(file, tabs)
             file.write(block.string)
             if block.connected[2] is not None:
-                self.into_file(file, block.connected[2], tabs)
+                self.into_code(file, block.connected[2], tabs)
             file.write(': \n')
             if block.connected[1] is not None:
-                self.into_file(file, block.connected[1], tabs+1)
+                self.into_code(file, block.connected[1], tabs+1)
             if block.connected[3].connected[1] is not None:
-                self.into_file(file, block.connected[3].connected[1], tabs)
+                self.into_code(file, block.connected[3].connected[1], tabs)
         elif isinstance(block, TypeBlock):
             file.write(block.string_on_block)
         elif isinstance(block, OneMagnetBlock):
             file.write(block.text)
             if block.connected[1] is not None:
-                self.into_file(file, block.connected[1], tabs)
+                self.into_code(file, block.connected[1], tabs)
         else:
             print("error", block)
 
@@ -409,6 +427,9 @@ class CommandBlock(Block):
         self.stableCanvas = stableCanvas
         self.inside_poly_coords = [None, None, None, None]
         self.poly_id = None
+
+    def get_text_len(self, font, text):
+        return Font.measure(font, text)
 
     def create_polygon(self):
         self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
@@ -521,17 +542,20 @@ class CommandBlock(Block):
 
 
 class OneTextCommandBlock(CommandBlock):
-    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_color):
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_color, myFont):
         super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline)
         self.string = string
-        self.text_coords = [self.coords[0]+7, self.coords[1]+10]
+        self.myFont = myFont
+        self.text_coords = [self.coords[0]+7, self.coords[1]+8]
         self.inside_magnet_coords = None
-        self.inside_poly_coords = [self.coords[0]+50, self.coords[1]+7, 16, 50]
+        self.txt_len = Font.measure(self.myFont, 'return')
+        self.text_height = Font.metrics(self.myFont, 'linespace')
+        self.inside_poly_coords = [self.coords[0]+2+1.3*self.txt_len, self.coords[1]+ 10, self.text_height, self.txt_len]
         self.inside_color = inside_color
         self.text_id = None
 
     def create_text(self):
-        self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.string)
+        self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.string, font=self.myFont)
         self.default_items_on_block = self
         self.default_items_id.append(self.text_id)
         return self.text_id
@@ -563,8 +587,8 @@ class OneTextCommandBlock(CommandBlock):
 
 
 class TwoTextCommandBlock(OneTextCommandBlock):
-    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, string, string2, inside_color):
-        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_color)
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, string, string2, inside_color, myFont):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_color, myFont)
         self.string2 = string2
         self.text2_id = None
         self.text2_coords = [self.coords[3]-10, self.coords[1]+10]
@@ -601,45 +625,51 @@ class TwoTextCommandBlock(OneTextCommandBlock):
 
 
 class VariableBlock(CommandBlock):
-    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, variable_name, len):
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, variable_name, myFont, myFontBold):
         super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline)
+        self.myFont = myFont
+        self.myFontBold = myFontBold
         self.string = '='
         self.variable_name = variable_name
-        self.variable_name_block_len = len
+        self.text_len = self.get_text_len(myFont, variable_name)
+        self.text2_len = self.get_text_len(myFontBold, self.string)
+        self.text_height = Font.metrics(myFont, 'linespace')
         self.variable_name_poly_id = None
         self.variable_name_id = None
         self.text_id = None
         self.poly_id = None
-        self.variable_poly_coords = [self.coords[0] + 10, self.coords[1] + 9, 16, len]
-        self.name_text_coords = [self.coords[0] + 20, self.coords[1] + 9]
-        self.text_coords = [self.coords[0]+self.variable_name_block_len + 22, self.coords[1]+5]
-        self.inside_poly_coords = [self.coords[0] + self.variable_name_block_len + 40, self.coords[1]+7, 16, 50]
+        self.variable_poly_coords = [self.coords[0] + 9, self.coords[1] + 10, self.text_height, self.text_len+10]
+        self.name_text_coords = [self.coords[0] + 17, self.coords[1] + 10]
+        self.text_coords = [self.coords[0]+self.text_len + 27, self.coords[1]+10]
+        self.inside_poly_coords = [self.coords[0] + self.text_len + self.text2_len + 30, self.coords[1]+10,
+                                   self.text_height, 5*self.text2_len]
         self.inside_color = 'light pink'
         self.variable_color = 'dodger blue'
 
     def create_polygon(self):
-        self.coords[3] += self.variable_name_block_len
+        self.coords[3] = 10 + self.text_len + 15 + self.text2_len + 15 + 5*self.text2_len + 10
         self.poly_cords = self.stableCanvas.command_block_coords(self.coords[0], self.coords[1], self.coords[2],
                                                                  self.coords[3])
         self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
         return self.obj_id
 
     def create_variable_polygon(self):
-        poly_coords = self.stableCanvas.inside_block_coords(self.coords[0] + 10, self.coords[1] + 9, 16, self.variable_name_block_len)
+        poly_coords = self.stableCanvas.inside_block_coords(self.coords[0] + 9, self.coords[1] + 10, self.text_height, self.text_len+10)
         self.variable_name_poly_id = self.canvas.create_polygon(poly_coords, fill=self.variable_color)
         self.default_items_on_block = self
         self.default_items_id.append(self.variable_name_poly_id)
         return self.variable_name_poly_id
 
     def create_variable_name(self):
-        self.variable_name_id = self.canvas.create_text(self.name_text_coords, anchor=NW, text=self.variable_name)
+        self.variable_name_id = self.canvas.create_text(self.name_text_coords, anchor=NW, text=self.variable_name,
+                                                        font=self.myFont)
         self.default_items_on_block = self
         self.default_items_id.append(self.variable_name_id)
         return self.variable_name_id
 
     def create_text(self):
-        self.text_coords = [self.coords[0] + self.variable_name_block_len + 22, self.coords[1] + 5]
-        self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.string, font='bold')
+        self.text_coords = [self.coords[0]+self.text_len + 27, self.coords[1]+10]
+        self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.string, font=self.myFontBold)
         self.default_items_on_block = self
         self.default_items_id.append(self.text_id)
         return self.text_id
@@ -727,9 +757,9 @@ class VariableBlock(CommandBlock):
 
     def change_type_block(self, s, frame, times, movable_blocks):
         self.variable_name = s
-        w = len(s) * times + 15
-        delta_x = w - self.variable_name_block_len
-        self.variable_name_block_len = w
+        w = self.get_text_len(self.myFont, self.variable_name)
+        delta_x = w - self.text_len
+        self.text_len = w
         # changes CommandBlock size
         del movable_blocks[self.obj_id]
         self.canvas.delete(self.obj_id)
@@ -757,8 +787,8 @@ class VariableBlock(CommandBlock):
 
 
 class ListBlock(VariableBlock):
-    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, variable_name, len):
-        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline, variable_name, len)
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, variable_name, myFont, myFontBold):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline, variable_name, myFont, myFontBold)
         self.text2_id = None
         self.string = ' = ['
         self.string2 = '] '
@@ -853,8 +883,8 @@ class ListBlock(VariableBlock):
 
 
 class ControlBlock(OneTextCommandBlock):
-    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_color):
-        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_color)
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_color, myFont):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_color, myFont)
         # upper connection, main lower connection, main inside connection, ControlBlockLower instance
         self.stableCanvas = stableCanvas
         self.connected = [None, None, None, None]
@@ -862,9 +892,10 @@ class ControlBlock(OneTextCommandBlock):
         self.outline = outline
         self.inside_color = inside_color
         self.string = string
+        self.text_len = self.get_text_len(self.myFont, string)
         self.empty_block_height = self.coords[4]
-        self.text_coords = [self.coords[0]+20, self.coords[1]+10]
-        self.inside_poly_coords = [self.coords[0]+40, self.coords[1]+7, 16, 50]
+        self.text_coords = [self.coords[0]+17, self.coords[1]+10]
+        self.inside_poly_coords = [self.coords[0]+20+self.text_len, self.coords[1]+9, self.text_height, 5*self.text_len]
 
     def renew_magnets(self):
         upper_magnet = [self.coords[0] + 35, self.coords[1] + 5]
@@ -905,11 +936,11 @@ class ControlBlock(OneTextCommandBlock):
                 self.move_connected(delta_x, delta_y)
                 if stable_instance.connected[1] is not None:
                     under_block = stable_instance.connected[1]
-                    # Don't know why it needs 4 pixels, need to get real height somehow
-                    under_delta_y = self.coords[2] + self.coords[4] + self.connected[3].coords[2] - 4
+                    # Don't know why it needs 6 pixels, need to get real height somehow
+                    under_delta_y = self.coords[2] + self.coords[4] + self.connected[3].coords[2] - 6
                     under_block.move_connected(0, under_delta_y)
                     self.connected[3].connected[1] = stable_instance.connected[1]
-                    stable_instance.connected[1].connected[0] = self.connected[2]
+                    stable_instance.connected[1].connected[0] = self.connected[3]
                 stable_instance.connected[1] = self
                 self.connected[0] = stable_instance
                 self.check_control_block(movable_blocks)
@@ -977,7 +1008,7 @@ class ControlBlock(OneTextCommandBlock):
         self.poly_cords = self.stableCanvas.control_block_coords(self.coords[0], self.coords[1],
                                                                  self.coords[2], self.coords[3], self.coords[4])[0]
         self.connected[3].poly_cords = self.stableCanvas.control_block_coords(self.coords[0], self.coords[1],
-                                                                 self.coords[2], self.coords[3], self.coords[4])[1]
+                                                                              self.coords[2], self.coords[3], self.coords[4])[1]
 
 
 class ControlBlockLower(Block):
@@ -1020,7 +1051,7 @@ class ControlBlockLower(Block):
 
 
 class InsideBlock:
-    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline):
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, myFont):
         # inside the block
         self.default_items_id = []
         self.coords = coords
@@ -1033,6 +1064,10 @@ class InsideBlock:
         self.obj_id = None
         self.default_items_on_block = None
         self.stableCanvas = stableCanvas
+        self.myFont = myFont
+
+    def get_text_len(self, font, text):
+        return Font.measure(font, text)
 
     def create_polygon(self):
         self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
@@ -1099,7 +1134,7 @@ class InsideBlock:
                     # gets poly_coords
                     stable_coords = stable_instance.inside_poly_coords
                     line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1],
-                                                                    stable_coords[2], stable_coords[3])
+                                                                        stable_coords[2], stable_coords[3])
                     # draws "line" mark to the block
                     line_id = self.canvas.create_line(line_coords, fill="green", width=3)
                     movable_blocks[line_id] = "line"
@@ -1182,8 +1217,9 @@ class InsideBlock:
 
 
 class TypeBlock(InsideBlock):
-    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_type):
-        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline)
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_type, myFont):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline, myFont)
+        self.text_height = Font.metrics(myFont, 'linespace')
         self.string_on_block = string
         self.text_id = None
         self.text_coords = [self.coords[0] + 12, self.coords[1] + 1]
@@ -1191,7 +1227,7 @@ class TypeBlock(InsideBlock):
         self.connected = [None]
 
     def create_text(self):
-        self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.string_on_block)
+        self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.string_on_block, font=self.myFont)
         self.default_items_id.append(self.text_id)
         return self.text_id
 
@@ -1243,32 +1279,32 @@ class TypeBlock(InsideBlock):
         s = v.get()
         if inside_type == 'number':
             if s.replace('.', '', 1).isdigit():
-                self.change_type_block(s, frame, 8, movable_blocks)
+                self.change_type_block(s, frame, movable_blocks)
             elif s is "" and self.string_on_block is not None:
-                self.change_type_block(self.string_on_block, frame, 6, movable_blocks)
+                self.change_type_block(self.string_on_block, frame, movable_blocks)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a number. Try again. ")
         elif inside_type == 'string':
             p = re.match(r'^(\"|\')(.)*(\"|\')$', s, re.S)
             if p:
-                self.change_type_block(s, frame, 6, movable_blocks)
+                self.change_type_block(s, frame, movable_blocks)
             elif s is "" and self.string_on_block is not None:
-                self.change_type_block(self.string_on_block, frame, 6, movable_blocks)
+                self.change_type_block(self.string_on_block, frame, movable_blocks)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a string. Try again. ")
         elif inside_type == 'variable':
             p = re.match(r'^[a-zA-Z_][\w0-9_]*$', s, re.S)
             if p:
-                self.change_type_block(s, frame, 6, movable_blocks)
+                self.change_type_block(s, frame, movable_blocks)
             elif s is "" and self.string_on_block is not None:
-                self.change_type_block(self.string_on_block, frame, 6, movable_blocks)
+                self.change_type_block(self.string_on_block, frame, movable_blocks)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a variable. Try again. ")
 
-    def change_type_block(self, s, frame, times, movable_blocks):
+    def change_type_block(self, s, frame, movable_blocks):
         self.string_on_block = s
-        w = len(s) * times + 15
-        self.poly_cords = self.stableCanvas.inside_block_coords(self.coords[0], self.coords[1], 16, w)
+        w = self.get_text_len(self.myFont, s)
+        self.poly_cords = self.stableCanvas.inside_block_coords(self.coords[0], self.coords[1], self.text_height, w+20)
         del movable_blocks[self.obj_id]
         self.canvas.delete(self.obj_id)
         self.obj_id = self.create_polygon()
@@ -1280,9 +1316,11 @@ class TypeBlock(InsideBlock):
 
 
 class OneMagnetBlock(InsideBlock):
-    def __init__(self, coords, canvas, stableCanvas, poly_cords, text, text_len, color, outline, inside_color):
-        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline)
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, text, color, outline, inside_color, myFont):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline, myFont)
         self.text = text
+        self.text_height = Font.metrics(myFont, 'linespace')
+        self.text_len = self.get_text_len(self.myFont, self.text)
         # connection to "under" block, first inside block
         self.connected = [None, None]
 
@@ -1295,16 +1333,22 @@ class OneMagnetBlock(InsideBlock):
         self.default_items_id = []
         self.default_items_on_block = None
 
-        self.first_inside_length = 40
-        self.first_inside_height = 16
+        self.first_inside_length = self.get_inside_length(1.6)
+        self.first_inside_height = self.text_height
         self.block_length = self.coords[2]
         self.block_height = self.coords[3]
-        self.text_len = text_len
-        self.inside_poly_coords = [self.text_len + 30, self.coords[1] + 2, self.first_inside_height, self.first_inside_length]
-        self.text_coords = [self.coords[0] + 15, self.coords[1]+2]
+        # self.text_len = text_len
+        self.inside_poly_coords = [self.text_len + 12, self.coords[1] + 2, self.first_inside_height, self.first_inside_length]
+        self.text_coords = [self.coords[0] + 12, self.coords[1]]
+
+    def get_inside_length(self, times):
+        if times*self.text_len < 40:
+            return 40
+        else:
+            return times*self.text_len
 
     def create_text(self):
-        self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.text)
+        self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.text, font=self.myFont)
         self.default_items_on_block = self
         self.default_items_id.append(self.text_id)
         return self.text_id
@@ -1379,8 +1423,8 @@ class OneMagnetBlock(InsideBlock):
             blo_width = self.connected[1].get_width()
             self.coords[3] = blo_width + self.inside_poly_coords[3] + 10
         else:
-            self.coords[2] = 20
-            self.coords[3] = 90
+            self.coords[2] = self.block_length
+            self.coords[3] = self.block_height
         if self.connected[0] is not None:
             if isinstance(self.connected[0], CommandBlock):
                 self.connected[0].redraw_base(movable_blocks)
@@ -1405,8 +1449,9 @@ class OneMagnetBlock(InsideBlock):
 
 
 class TwoMagnetBlock(OneMagnetBlock):
-    def __init__(self, coords, canvas, stableCanvas, poly_cords, text, text_len, color, outline, inside_color):
-        super().__init__(coords, canvas, stableCanvas, poly_cords, text, text_len, color, outline, inside_color)
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, text, color, outline, inside_color, myFont, myFontBold):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, text, color, outline, inside_color, myFont)
+        self.myFontBold = myFontBold
         self.text = text
         # connection to "under" block, first inside block, second inside block
         self.connected = [None, None, None]
@@ -1414,14 +1459,14 @@ class TwoMagnetBlock(OneMagnetBlock):
         self.second_poly_id = None
         self.second_poly_coords = []
 
-        self.second_inside_length = 40
-        self.second_inside_height = 16
+        self.second_inside_length = self.get_inside_length(1.6)
+        self.second_inside_height = self.text_height
 
     def create_first_polygon(self):
-        self.inside_poly_coords = [self.coords[0] + 10, self.coords[1]+2,
-                                   self.first_inside_height, self.first_inside_length]
-        first_poly_coords = self.stableCanvas.inside_block_coords(self.coords[0] + 10, self.coords[1]+2,
-                                                                  self.first_inside_height, self.first_inside_length)
+        self.inside_poly_coords = [self.coords[0] + 10, self.coords[1] + 2, self.first_inside_height,
+                                   self.first_inside_length]
+        first_poly_coords = self.stableCanvas.inside_block_coords(self.inside_poly_coords[0], self.inside_poly_coords[1],
+                                                                  self.inside_poly_coords[2], self.inside_poly_coords[3])
         self.first_poly_id = self.canvas.create_polygon(first_poly_coords, fill=self.inside_color, tag='first')
         self.default_items_on_block = self
         self.default_items_id.append(self.first_poly_id)
@@ -1429,11 +1474,11 @@ class TwoMagnetBlock(OneMagnetBlock):
 
     def create_text(self):
         if self.text == 'and' or self.text == 'or':
-            self.text_coords = [self.first_inside_length + 22, self.coords[1] + 2]
-            self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.text)
+            self.text_coords = [self.first_inside_length + 22, self.coords[1]]
+            self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.text, font=self.myFont)
         else:
-            self.text_coords = [self.first_inside_length + 22, self.coords[1] - 1]
-            self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.text, font='bold')
+            self.text_coords = [self.first_inside_length + 22, self.coords[1]+2]
+            self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.text, font=self.myFontBold)
         self.default_items_on_block = self
         self.default_items_id.append(self.text_id)
         return self.text_id

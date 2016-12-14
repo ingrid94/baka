@@ -466,6 +466,8 @@ class CommandBlock(Block):
         self.stableCanvas = stableCanvas
         self.inside_poly_coords = [None, None, None, None]
         self.poly_id = None
+        self.default_height = self.coords[2]
+        self.default_width = self.coords[3]
 
     def get_text_len(self, font, text):
         return Font.measure(font, text)
@@ -548,15 +550,16 @@ class CommandBlock(Block):
 
     def redraw_base(self, movable_blocks):
         old_height = self.coords[2]
+        old_width = self.coords[3]
         if self.connected[2] is not None:
             blo_height = self.connected[2].get_height()
-            self.coords[2] = blo_height + self.inside_poly_coords[2] - 4
+            self.coords[2] = blo_height + 12
             self.resize_coords(movable_blocks, old_height)
             blo_width = self.connected[2].get_width()
-            self.coords[3] = blo_width + self.inside_poly_coords[3] + 25
+            self.coords[3] = old_width + blo_width - self.inside_poly_coords[3]
         else:
-            self.coords[2] = 30
-            self.coords[3] = 120
+            self.coords[2] = self.default_height
+            self.coords[3] = self.default_width
             self.resize_coords(movable_blocks, old_height)
         self.change_poly_coords()
         del movable_blocks[self.obj_id]

@@ -79,6 +79,28 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[obj_id_lower] = if_block_lower
                 if_block.connected[3] = if_block_lower
                 if_block_lower.connected[0] = if_block
+            elif tag == 'while_block':
+                txt_len = Font.measure(self.myFont, 'while')
+                cords = self.stableCanvas.control_block_coords(0, 0, self.text_height + 15,
+                                                               10 + txt_len + 15 + 1.5 * txt_len + 15, 25)[0]
+                while_block = ControlBlock([0, 0, self.text_height + 15, 10 + txt_len + 15 + 1.5 * txt_len + 15, 25],
+                                        self.canvas, self.stableCanvas, cords, 'orange',
+                                        'chocolate', 'while', 'peachpuff', self.myFont)
+                obj_id = while_block.create_polygon()
+                inside_id = while_block.create_inside_polygon()
+                text_id = while_block.create_text()
+                self.movable_blocks[obj_id] = while_block
+                self.movable_blocks[inside_id] = while_block
+                self.movable_blocks[text_id] = while_block
+                # lower part of controlBlock
+                cords = self.stableCanvas.control_block_coords(0, 0, self.text_height + 15,
+                                                               10 + txt_len + 15 + 1.5 * txt_len + 15, 25)[1]
+                if_block_lower = ControlBlockLower(
+                    [0, 70, self.text_height + 15, 10 + txt_len + 15 + 1.5 * txt_len + 15, 25], self.canvas, cords)
+                obj_id_lower = if_block_lower.create_polygon()
+                self.movable_blocks[obj_id_lower] = if_block_lower
+                while_block.connected[3] = if_block_lower
+                if_block_lower.connected[0] = while_block
             elif tag == 'number':
                 self.create_frame('number')
             elif tag == 'variable':
@@ -912,7 +934,13 @@ class ControlBlock(OneTextCommandBlock):
         self.text_len = self.get_text_len(self.myFont, string)
         self.empty_block_height = self.coords[4]
         self.text_coords = [self.coords[0]+17, self.coords[1]+10]
-        self.inside_poly_coords = [self.coords[0]+20+self.text_len, self.coords[1]+9, self.text_height, 5*self.text_len]
+        self.inside_poly_coords = [self.coords[0]+25+self.text_len, self.coords[1]+9, self.text_height, self.get_inside_length(1.5)]
+
+    def get_inside_length(self, times):
+        if times*self.text_len < 50:
+            return 50
+        else:
+            return times*self.text_len
 
     def renew_magnets(self):
         upper_magnet = [self.coords[0] + 35, self.coords[1] + 5]

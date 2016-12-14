@@ -161,11 +161,11 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             else:
                 tkinter.messagebox.showerror("Error", "It's not a number. Try again. ")
         elif inside_type == 'string':
-            p = re.match(r'^(\"|\')(.)*(\"|\')$', s, re.S)
-            if p:
-                self.create_type_block(s, frame, inside_type, 'dodger blue', 'steel blue')
-            else:
-                tkinter.messagebox.showerror("Error", "It's not a string. Try again. ")
+            # p = re.match(r'^(\"|\')(.)*(\"|\')$', s, re.S)
+            # if p:
+            self.create_string_block(s, frame, inside_type, 'dodger blue', 'steel blue')
+            # else:
+            #    tkinter.messagebox.showerror("Error", "It's not a string. Try again. ")
         elif inside_type == 'variable' or inside_type == 'variable_assign' or inside_type == 'list':
             p = re.match(r'^[a-zA-Z_][\w0-9_]*$', s, re.S)
             if p and inside_type == 'variable':
@@ -178,12 +178,27 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
     def create_type_block(self, s, frame, inside_type, color, outline):
         w = Font.measure(self.myFont, s)
         cords = self.stableCanvas.inside_block_coords(0, 0, self.text_height, w+20)
-        type_block = TypeBlock([0, 0, self.text_height, w], self.canvas, self.stableCanvas, cords, color, outline, s,
+        type_block = TypeBlock([0, 0, self.text_height, w+20], self.canvas, self.stableCanvas, cords, color, outline, s,
                                inside_type, self.myFont)
         obj_id = type_block.create_polygon()
         text_id = type_block.create_text()
         self.movable_blocks[obj_id] = type_block
         self.movable_blocks[text_id] = type_block
+        if frame is not None:
+            self.canvas.delete(frame)
+
+    def create_string_block(self, s, frame, inside_type, color, outline):
+        w = Font.measure(self.myFont, s)
+        cords = self.stableCanvas.inside_block_coords(0, 0, self.text_height, w+20)
+        string_block = StringBlock([0, 0, self.text_height, w+20], self.canvas, self.stableCanvas, cords, color, outline,
+                                   s, inside_type, self.myFont, self.myFontBold)
+        obj_id = string_block.create_polygon()
+        text_id = string_block.create_text()
+        quotes_ids = string_block.create_quotes()
+        self.movable_blocks[obj_id] = string_block
+        self.movable_blocks[text_id] = string_block
+        self.movable_blocks[quotes_ids[0]] = string_block
+        self.movable_blocks[quotes_ids[1]] = string_block
         if frame is not None:
             self.canvas.delete(frame)
 
@@ -331,6 +346,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.into_code(file, block.connected[1], tabs+1)
             if block.connected[3].connected[1] is not None:
                 self.into_code(file, block.connected[3].connected[1], tabs)
+        elif isinstance(block, StringBlock):
+            file.write(repr(block.string_on_block))
         elif isinstance(block, TypeBlock):
             file.write(block.string_on_block)
         elif isinstance(block, OneMagnetBlock):
@@ -1285,13 +1302,10 @@ class TypeBlock(InsideBlock):
             else:
                 tkinter.messagebox.showerror("Error", "It's not a number. Try again. ")
         elif inside_type == 'string':
-            p = re.match(r'^(\"|\')(.)*(\"|\')$', s, re.S)
-            if p:
-                self.change_type_block(s, frame, movable_blocks)
-            elif s is "" and self.string_on_block is not None:
+            if s is "" and self.string_on_block is not None:
                 self.change_type_block(self.string_on_block, frame, movable_blocks)
             else:
-                tkinter.messagebox.showerror("Error", "It's not a string. Try again. ")
+                self.change_type_block(s, frame, movable_blocks)
         elif inside_type == 'variable':
             p = re.match(r'^[a-zA-Z_][\w0-9_]*$', s, re.S)
             if p:
@@ -1311,6 +1325,58 @@ class TypeBlock(InsideBlock):
         movable_blocks[self.obj_id] = self
         self.canvas.itemconfig(self.text_id, text=s)
         self.canvas.tag_raise(self.text_id)
+        if frame is not None:
+            self.canvas.delete(frame)
+
+
+class StringBlock(TypeBlock):
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_type, myFont, myFontBold):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_type, myFont)
+        self.quotes = '\"'
+        self.text_height = Font.metrics(myFontBold, 'linespace')
+        self.quote1_coords = [self.coords[0]+5, self.coords[1]]
+        self.quote2_coords = [self.coords[0] + self.coords[3]-5, self.coords[1]]
+        self.quote1_id = None
+        self.quote2_id = None
+        self.myFontBold = myFontBold
+
+    def create_quotes(self):
+        self.quote1_id = self.canvas.create_text(self.quote1_coords, anchor=NW, text=self.quotes, font=self.myFontBold)
+        self.default_items_on_block = self
+        self.default_items_id.append(self.quote1_id)
+        self.quote2_id = self.canvas.create_text(self.quote2_coords, anchor=NW, text=self.quotes, font=self.myFontBold)
+        self.default_items_on_block = self
+        self.default_items_id.append(self.quote2_id)
+        return self.quote1_id, self.quote2_id
+
+    def move_connected(self, delta_x, delta_y):
+        self.change_coords(delta_x, delta_y)
+        # moves text
+        old_text_coords = self.text_coords
+        self.text_coords = [old_text_coords[0] + delta_x, old_text_coords[1] + delta_y]
+        self.canvas.move(self.text_id, delta_x, delta_y)
+        self.canvas.move(self.quote1_id, delta_x, delta_y)
+        self.canvas.move(self.quote2_id, delta_x, delta_y)
+        self.canvas.tag_raise(self.obj_id)
+        # leaves the text on top always
+        self.canvas.tag_raise(self.text_id)
+        self.canvas.tag_raise(self.quote1_id)
+        self.canvas.tag_raise(self.quote2_id)
+
+    def change_type_block(self, s, frame, movable_blocks):
+        old_string_len = self.get_text_len(self.myFont, self.string_on_block)
+        self.string_on_block = s
+        w = self.get_text_len(self.myFont, s)
+        self.poly_cords = self.stableCanvas.inside_block_coords(self.coords[0], self.coords[1], self.text_height, w+20)
+        del movable_blocks[self.obj_id]
+        self.canvas.delete(self.obj_id)
+        self.obj_id = self.create_polygon()
+        movable_blocks[self.obj_id] = self
+        self.canvas.move(self.quote2_id, w-old_string_len, 0)
+        self.canvas.itemconfig(self.text_id, text=s)
+        self.canvas.tag_raise(self.text_id)
+        self.canvas.tag_raise(self.quote1_id)
+        self.canvas.tag_raise(self.quote2_id)
         if frame is not None:
             self.canvas.delete(frame)
 

@@ -582,6 +582,22 @@ class CommandBlock(Block):
         self.poly_cords = self.stableCanvas.command_block_coords(self.coords[0], self.coords[1],
                                                                  self.coords[2], self.coords[3])
 
+    def find_open_inside_connection(self, closest_object, movable_blocks):
+        if self.connected[2] is not None:
+            if not isinstance(self.connected[2], (TypeBlock, StringBlock, ControlBlockLower)):
+                return self.connected[2].find_open_inside_connection(closest_object, movable_blocks)
+        else:
+            return self
+
+    def draw_line_insideblock(self, closest_object, movable_blocks):
+        # gets poly_coords
+        stable_coords = self.inside_poly_coords
+        line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1],
+                                                                stable_coords[2], stable_coords[3])
+        # draws "line" mark to the block
+        line_id = self.canvas.create_line(line_coords, fill="green", width=3)
+        movable_blocks[line_id] = "line"
+
 
 class OneTextCommandBlock(CommandBlock):
     def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, string, inside_color, myFont):
@@ -1151,41 +1167,11 @@ class InsideBlock:
         # moves magnets also checks other blocks and marks them
         closest_object = self.get_closest(movable_blocks)
         if closest_object != [] and movable_blocks[closest_object[0]] != "line":
-            if movable_blocks[closest_object[0]] != 'bin':
+            if movable_blocks[closest_object[0]] != 'bin' or not isinstance(movable_blocks[closest_object[0]], (TypeBlock, StringBlock, ControlBlockLower)):
                 stable_instance = movable_blocks[closest_object[0]]
-                if isinstance(stable_instance, TwoMagnetBlock):
-                    first = self.canvas.find_withtag('first')
-                    second = self.canvas.find_withtag('second')
-                    magnet = None
-                    for item in closest_object:
-                        if item in first:
-                            magnet = 'first'
-                            break
-                        elif item in second:
-                            magnet = 'second'
-                            break
-                    if magnet is not None:
-                        if magnet == 'first':
-                            # gets poly_coords
-                            stable_coords = stable_instance.inside_poly_coords
-                        elif magnet == 'second':
-                            # gets poly_coords
-                            stable_coords = stable_instance.second_poly_coords
-                        line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1],
-                                                                            stable_coords[2], stable_coords[3])
-                        # draws "line" mark to the block
-                        line_id = self.canvas.create_line(line_coords, fill="green", width=3)
-                        movable_blocks[line_id] = "line"
-                elif ((isinstance(stable_instance, CommandBlock) or isinstance(stable_instance, ControlBlock))
-                    and stable_instance.connected[2] is None) or \
-                    (isinstance(stable_instance, OneMagnetBlock) and stable_instance.connected[1] is None):
-                    # gets poly_coords
-                    stable_coords = stable_instance.inside_poly_coords
-                    line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1],
-                                                                        stable_coords[2], stable_coords[3])
-                    # draws "line" mark to the block
-                    line_id = self.canvas.create_line(line_coords, fill="green", width=3)
-                    movable_blocks[line_id] = "line"
+                open_block = stable_instance.find_open_inside_connection(closest_object, movable_blocks)
+                if open_block is not None:
+                    open_block.draw_line_insideblock(closest_object, movable_blocks)
 
     # deletes "line" mark
     def line_delete(self, movable_blocks):
@@ -1544,6 +1530,22 @@ class OneMagnetBlock(InsideBlock):
             blo_height += 4
         return blo_height
 
+    def find_open_inside_connection(self, closest_object, movable_blocks):
+        if self.connected[1] is not None:
+            if not isinstance(self.connected[1], (TypeBlock, StringBlock, ControlBlockLower)):
+                return self.connected[1].find_open_inside_connection(closest_object, movable_blocks)
+        else:
+            return self
+
+    def draw_line_insideblock(self, closest_object, movable_blocks):
+        # gets poly_coords
+        stable_coords = self.inside_poly_coords
+        line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1],
+                                                            stable_coords[2], stable_coords[3])
+        # draws "line" mark to the block
+        line_id = self.canvas.create_line(line_coords, fill="green", width=3)
+        movable_blocks[line_id] = "line"
+
 
 class TwoMagnetBlock(OneMagnetBlock):
     def __init__(self, coords, canvas, stableCanvas, poly_cords, text, color, outline, inside_color, myFont, myFontBold):
@@ -1644,3 +1646,47 @@ class TwoMagnetBlock(OneMagnetBlock):
             self.connected[1].raise_tags()
         if self.connected[2] is not None:
             self.connected[2].raise_tags()
+
+    def get_magnet(self, closest_object):
+        first = self.canvas.find_withtag('first')
+        second = self.canvas.find_withtag('second')
+        magnet = None
+        for item in closest_object:
+            if item in first:
+                magnet = 'first'
+                break
+            elif item in second:
+                magnet = 'second'
+                break
+        return magnet
+
+    def find_open_inside_connection(self, closest_object, movable_blocks):
+        magnet = self.get_magnet(closest_object)
+        if magnet is not None:
+            if magnet == 'first':
+                if self.connected[1] is not None:
+                    if not isinstance(self.connected[1], (TypeBlock, StringBlock, ControlBlockLower)):
+                        return self.connected[1].find_open_inside_connection(closest_object, movable_blocks)
+                else:
+                    return self
+            elif magnet == 'second':
+                if self.connected[2] is not None:
+                    if not isinstance(self.connected[2], (TypeBlock, StringBlock, ControlBlockLower)):
+                        return self.connected[2].find_open_inside_connection(closest_object, movable_blocks)
+                else:
+                    return self
+
+    def draw_line_insideblock(self, closest_object, movable_blocks):
+        magnet = self.get_magnet(closest_object)
+        if magnet is not None:
+            if magnet == 'first':
+                # gets poly_coords
+                stable_coords = self.inside_poly_coords
+            elif magnet == 'second':
+                # gets poly_coords
+                stable_coords = self.second_poly_coords
+            line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1],
+                                                                stable_coords[2], stable_coords[3])
+            # draws "line" mark to the block
+            line_id = self.canvas.create_line(line_coords, fill="green", width=3)
+            movable_blocks[line_id] = "line"

@@ -286,7 +286,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             # to disconnect blocks which are connected
             if self.movable_blocks[peale].connected[0] is not None:
                 if not isinstance(self.movable_blocks[peale], ControlBlockLower):
-                    self.movable_blocks[peale].disconnect_magnet(self.movable_blocks)
+                    # need to think about closest_object
+                    self.movable_blocks[peale].disconnect_magnet("", self.movable_blocks)
 
     def on_token_button_release(self, event):
         if self.drag_data["item"] is not None and self.movable_blocks[self.drag_data["item"]] != 'bin':
@@ -612,12 +613,16 @@ class OneTextCommandBlock(CommandBlock):
             self.canvas.tag_raise(self.poly_id)
             self.canvas.move(self.poly_id, delta_x, delta_y)
 
-    def delete_inside_poly(self, movable_blocks):
+    def delete_inside_poly(self, closest_object, movable_blocks):
         if self.poly_id:
             del movable_blocks[self.poly_id]
             self.canvas.delete(self.poly_id)
             self.default_items_id.remove(self.poly_id)
             self.poly_id = None
+
+    def inside_connecting(self, item, closest_object, movable_blocks):
+        self.connected[2] = item
+        self.redraw_base(movable_blocks)
 
     def redraw_base(self, movable_blocks):
         old_height = self.coords[2]
@@ -641,6 +646,9 @@ class OneTextCommandBlock(CommandBlock):
         else:
             for el in self.default_items_id:
                 self.canvas.tag_raise(el)
+
+    def get_inside_poly_coords(self, closest_object):
+        return self.inside_poly_coords
 
 
 class TwoTextCommandBlock(OneTextCommandBlock):
@@ -673,7 +681,7 @@ class TwoTextCommandBlock(OneTextCommandBlock):
             self.canvas.tag_raise(self.poly_id)
             self.canvas.move(self.poly_id, delta_x, delta_y)
 
-    def delete_inside_poly(self, movable_blocks):
+    def delete_inside_poly(self, closest_object, movable_blocks):
         if self.poly_id:
             del movable_blocks[self.poly_id]
             self.canvas.delete(self.poly_id)
@@ -766,7 +774,7 @@ class VariableBlock(CommandBlock):
             self.canvas.tag_raise(self.poly_id)
             self.canvas.move(self.poly_id, delta_x, delta_y)
 
-    def delete_inside_poly(self, movable_blocks):
+    def delete_inside_poly(self, closest_object, movable_blocks):
         if self.poly_id:
             del movable_blocks[self.poly_id]
             self.canvas.delete(self.poly_id)
@@ -1204,32 +1212,31 @@ class InsideBlock:
                 stable_instance = movable_blocks[closest_object[0]]
                 if not isinstance(stable_instance, (TypeBlock, StringBlock, ControlBlockLower)):
                     open_block = stable_instance.find_open_inside_connection(closest_object, movable_blocks)
-                    open_magnet = [open_block.inside_poly_coords[0], open_block.inside_poly_coords[1]+5]
-                    open_block.delete_inside_poly(movable_blocks)
-                    delta_x = open_magnet[0] - magnet_x
-                    delta_y = open_magnet[1] - magnet_y
-                    self.move_connected(delta_x, delta_y)
-                    self.connected[0] = open_block
-                    if isinstance(open_block, TwoMagnetBlock):
-                        pass
-                    elif isinstance(open_block, OneMagnetBlock):
-                        open_block.connected[1] = self
-                        open_block.change_base_coords(movable_blocks)
-                    elif isinstance(open_block, CommandBlock):
-                        open_block.connected[2] = self
-                        open_block.redraw_base(movable_blocks)
+                    if open_block is not None:
+                        to_coords = open_block.get_inside_poly_coords(closest_object)
+                        open_magnet = [to_coords[0], to_coords[1]+5]
+                        open_block.delete_inside_poly(closest_object, movable_blocks)
+                        delta_x = open_magnet[0] - magnet_x
+                        delta_y = open_magnet[1] - magnet_y
+                        self.move_connected(delta_x, delta_y)
+                        self.connected[0] = open_block
+                        open_block.inside_connecting(self, closest_object, movable_blocks)
 
-    def disconnect_magnet(self, movable_blocks):
+    def disconnect_magnet(self, closest_object, movable_blocks):
         if isinstance(self.connected[0], CommandBlock):
             self.connected[0].connected[2] = None
             poly_id = self.connected[0].create_inside_polygon()
             self.connected[0].redraw_base(movable_blocks)
+            movable_blocks[poly_id] = self.connected[0]
+            self.connected[0] = None
+        elif isinstance(self.connected[0], TwoMagnetBlock):
+            pass
         elif isinstance(self.connected[0], OneMagnetBlock):
             self.connected[0].connected[1] = None
             poly_id = self.connected[0].create_first_polygon()
-            self.connected[0].change_base_coords(movable_blocks)
-        movable_blocks[poly_id] = self.connected[0]
-        self.connected[0] = None
+            self.connected[0].change_base_coords(closest_object, movable_blocks)
+            movable_blocks[poly_id] = self.connected[0]
+            self.connected[0] = None
 
     def move_connected(self, delta_x, delta_y):
         self.change_coords(delta_x, delta_y)
@@ -1416,8 +1423,8 @@ class OneMagnetBlock(InsideBlock):
 
         self.first_inside_length = self.get_inside_length(1.6)
         self.first_inside_height = self.text_height
-        self.block_length = self.coords[2]
-        self.block_height = self.coords[3]
+        self.block_length = self.coords[3]
+        self.block_height = self.coords[2]
         # self.text_len = text_len
         self.inside_poly_coords = [self.text_len + 12, self.coords[1] + 2, self.first_inside_height, self.first_inside_length]
         self.text_coords = [self.coords[0] + 12, self.coords[1]]
@@ -1471,7 +1478,10 @@ class OneMagnetBlock(InsideBlock):
             self.canvas.tag_raise(self.first_poly_id)
             self.canvas.move(self.first_poly_id, delta_x, delta_y)
 
-    def delete_inside_poly(self, movable_blocks):
+    def get_inside_poly_coords(self, closest_object):
+        return self.inside_poly_coords
+
+    def delete_inside_poly(self, closest_object, movable_blocks):
         if self.first_poly_id:
             del movable_blocks[self.first_poly_id]
             self.canvas.delete(self.first_poly_id)
@@ -1485,25 +1495,25 @@ class OneMagnetBlock(InsideBlock):
         self.canvas.delete(self.obj_id)
         self.obj_id = self.create_polygon()
         movable_blocks[self.obj_id] = self
-        if self.connected[1] is not None:
-            self.raise_tags()
-        else:
-            for el in self.default_items_id:
-                self.canvas.tag_raise(el)
+        self.raise_tags()
 
-    def change_base_coords(self, movable_blocks):
+    def inside_connecting(self, item, closest_object, movable_blocks):
+        self.connected[1] = item
+        self.change_base_coords(closest_object, movable_blocks)
+
+    def change_base_coords(self, closest_object, movable_blocks):
         if self.connected[1] is not None:
             self.coords[2] = self.connected[1].get_height()
             blo_width = self.connected[1].get_width()
             self.coords[3] = 10 + self.text_len + 10 + blo_width
         else:
-            self.coords[2] = self.block_length
-            self.coords[3] = self.block_height
+            self.coords[3] = self.block_length
+            self.coords[2] = self.block_height
         if self.connected[0] is not None:
             if isinstance(self.connected[0], CommandBlock):
                 self.connected[0].redraw_base(movable_blocks)
             else:
-                self.connected[0].change_base_coords(movable_blocks)
+                self.connected[0].change_base_coords(closest_object, movable_blocks)
         self.redraw_base(movable_blocks)
 
     def raise_tags(self):
@@ -1597,11 +1607,7 @@ class TwoMagnetBlock(OneMagnetBlock):
             for i in self.connected[2].default_items_id:
                 self.canvas.tag_raise(i)
 
-    def redraw_base(self, movable_blocks):
-        pass
-
     def change_inside_coords(self, delta_x, delta_y):
-
         # moves first polygon magnet
         old_first_poly_coords = self.inside_poly_coords
         self.inside_poly_coords = [old_first_poly_coords[0] + delta_x, old_first_poly_coords[1] + delta_y,
@@ -1624,9 +1630,13 @@ class TwoMagnetBlock(OneMagnetBlock):
         if self.connected[1] is None:
             self.canvas.tag_raise(self.first_poly_id)
             self.canvas.move(self.first_poly_id, delta_x, delta_y)
+        else:
+            self.canvas.move(self.first_poly_id, delta_x, delta_y)
 
         if self.connected[2] is None:
             self.canvas.tag_raise(self.second_poly_id)
+            self.canvas.move(self.second_poly_id, delta_x, delta_y)
+        else:
             self.canvas.move(self.second_poly_id, delta_x, delta_y)
 
     def raise_tags(self):
@@ -1681,3 +1691,76 @@ class TwoMagnetBlock(OneMagnetBlock):
             # draws "line" mark to the block
             line_id = self.canvas.create_line(line_coords, fill="green", width=3)
             movable_blocks[line_id] = "line"
+
+    def get_inside_poly_coords(self, closest_object):
+        magnet = self.get_magnet(closest_object)
+        stable_coords = []
+        if magnet is not None:
+            if magnet == 'first':
+                # gets poly_coords
+                stable_coords = self.inside_poly_coords
+            elif magnet == 'second':
+                # gets poly_coords
+                stable_coords = self.second_poly_coords
+        return stable_coords
+
+    def change_base_coords(self, closest_object, movable_blocks):
+        magnet = self.get_magnet(closest_object)
+        if magnet == 'first':
+            old_len = self.coords[3]
+            if self.connected[1] is not None:
+                self.coords[2] = self.connected[1].get_height()
+                blo_width = self.connected[1].get_width()
+                if self.connected[2] is not None:
+                    blo_width2 = self.connected[2].get_width()
+                    self.coords[3] = 10 + blo_width + 10 + self.text_len + blo_width2 + 15
+                else:
+                    self.coords[3] = 10 + blo_width + 10 + self.text_len + self.second_inside_length + 15
+                delta = self.coords[3] - old_len
+                self.change_inside_coords(delta, 0)
+                if self.connected[2] is not None:
+                    self.connected[2].move_connected(delta, 0)
+            else:
+                self.coords[3] = self.block_length
+                self.coords[2] = self.block_height
+            if self.connected[0] is not None:
+                if isinstance(self.connected[0], CommandBlock):
+                    self.connected[0].redraw_base(movable_blocks)
+                else:
+                    self.connected[0].change_base_coords(closest_object, movable_blocks)
+            self.redraw_base(movable_blocks)
+        elif magnet == 'second':
+            if self.connected[2] is not None:
+                self.coords[2] = self.connected[2].get_height()
+                blo_width = self.connected[2].get_width()
+                if self.connected[1] is not None:
+                    blo_width2 = self.connected[1].get_width()
+                    self.coords[3] = 10 + blo_width + 10 + self.text_len + blo_width2 + 15
+                else:
+                    self.coords[3] = 10 + self.first_inside_length + 10 + self.text_len + blo_width + 15
+            else:
+                self.coords[3] = self.block_length
+                self.coords[2] = self.block_height
+            if self.connected[0] is not None:
+                if isinstance(self.connected[0], CommandBlock):
+                    self.connected[0].redraw_base(movable_blocks)
+                else:
+                    self.connected[0].change_base_coords(closest_object, movable_blocks)
+            self.redraw_base(movable_blocks)
+
+    def inside_connecting(self, item, closest_object, movable_blocks):
+        magnet = self.get_magnet(closest_object)
+        if magnet == 'first':
+            self.connected[1] = item
+            self.change_base_coords(closest_object, movable_blocks)
+        elif magnet == 'second':
+            self.connected[2] = item
+            self.change_base_coords(closest_object, movable_blocks)
+
+    def delete_inside_poly(self, closest_object, movable_blocks):
+        # need inside_polygons to deter which magnet it's communicating with
+        magnet = self.get_magnet(closest_object)
+        if magnet == 'first':
+            self.canvas.itemconfig(self.first_poly_id, state=HIDDEN)
+        elif magnet == 'second':
+            self.canvas.itemconfig(self.second_poly_id, state=HIDDEN)

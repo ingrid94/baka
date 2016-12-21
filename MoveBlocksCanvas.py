@@ -287,7 +287,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             if self.movable_blocks[peale].connected[0] is not None:
                 if not isinstance(self.movable_blocks[peale], ControlBlockLower):
                     # need to think about closest_object
-                    self.movable_blocks[peale].disconnect_magnet("", self.movable_blocks)
+                    self.movable_blocks[peale].disconnect_magnet(self.movable_blocks)
 
     def on_token_button_release(self, event):
         if self.drag_data["item"] is not None and self.movable_blocks[self.drag_data["item"]] != 'bin':
@@ -1158,7 +1158,7 @@ class InsideBlock:
         magnet_x = movable_blocks[self.obj_id].renew_magnets()[0]
         magnet_y = movable_blocks[self.obj_id].renew_magnets()[1]
         # finds closest object to magnet
-        closest_object = self.canvas.find_overlapping(magnet_x-5, magnet_y-5, magnet_x+5, magnet_y+5)
+        closest_object = self.canvas.find_overlapping(magnet_x-10, magnet_y-10, magnet_x+10, magnet_y+10)
         closest_objects = list(closest_object)
         if self.obj_id in closest_objects:
             closest_objects.remove(self.obj_id)
@@ -1222,7 +1222,10 @@ class InsideBlock:
                         self.connected[0] = open_block
                         open_block.inside_connecting(self, closest_object, movable_blocks)
 
-    def disconnect_magnet(self, closest_object, movable_blocks):
+    def disconnect_magnet(self, movable_blocks):
+        self.canvas.itemconfig('first', state=NORMAL)
+        self.canvas.itemconfig('second', state=NORMAL)
+        closest_object = self.get_closest(movable_blocks)
         if isinstance(self.connected[0], CommandBlock):
             self.connected[0].connected[2] = None
             poly_id = self.connected[0].create_inside_polygon()
@@ -1230,7 +1233,16 @@ class InsideBlock:
             movable_blocks[poly_id] = self.connected[0]
             self.connected[0] = None
         elif isinstance(self.connected[0], TwoMagnetBlock):
-            pass
+            magnet = self.connected[0].get_magnet(closest_object)
+            if magnet is not None:
+                if magnet == 'first':
+                    self.connected[0].connected[1] = None
+                    self.connected[0].change_base_coords(closest_object, movable_blocks)
+                    self.connected[0] = None
+                elif magnet == 'second':
+                    self.connected[0].connected[2] = None
+                    self.connected[0].change_base_coords(closest_object, movable_blocks)
+                    self.connected[0] = None
         elif isinstance(self.connected[0], OneMagnetBlock):
             self.connected[0].connected[1] = None
             poly_id = self.connected[0].create_first_polygon()
@@ -1716,19 +1728,27 @@ class TwoMagnetBlock(OneMagnetBlock):
                     self.coords[3] = 10 + blo_width + 10 + self.text_len + blo_width2 + 15
                 else:
                     self.coords[3] = 10 + blo_width + 10 + self.text_len + self.second_inside_length + 15
-                delta = self.coords[3] - old_len
-                self.change_inside_coords(delta, 0)
-                if self.connected[2] is not None:
-                    self.connected[2].move_connected(delta, 0)
             else:
-                self.coords[3] = self.block_length
-                self.coords[2] = self.block_height
+                if self.connected[2] is not None:
+                    blo_width2 = self.connected[2].get_width()
+                    self.coords[3] = 10 + self.first_inside_length + 10 + self.text_len + blo_width2 + 15
+                else:
+                    self.coords[3] = 10 + self.first_inside_length + 10 + self.text_len + self.second_inside_length + 15
             if self.connected[0] is not None:
                 if isinstance(self.connected[0], CommandBlock):
                     self.connected[0].redraw_base(movable_blocks)
                 else:
                     self.connected[0].change_base_coords(closest_object, movable_blocks)
             self.redraw_base(movable_blocks)
+            delta = self.coords[3] - old_len
+            self.canvas.move(self.text_id, delta, 0)
+            self.canvas.move(self.second_poly_id, delta, 0)
+            # moves second polygon magnet
+            old_second_poly_coords = self.second_poly_coords
+            self.second_poly_coords = [old_second_poly_coords[0] + delta, old_second_poly_coords[1],
+                                       old_second_poly_coords[2], old_second_poly_coords[3]]
+            if self.connected[2] is not None:
+                self.connected[2].move_connected(delta, 0)
         elif magnet == 'second':
             if self.connected[2] is not None:
                 self.coords[2] = self.connected[2].get_height()
@@ -1739,8 +1759,11 @@ class TwoMagnetBlock(OneMagnetBlock):
                 else:
                     self.coords[3] = 10 + self.first_inside_length + 10 + self.text_len + blo_width + 15
             else:
-                self.coords[3] = self.block_length
-                self.coords[2] = self.block_height
+                if self.connected[1] is not None:
+                    blo_width = self.connected[1].get_width()
+                    self.coords[3] = 10 + blo_width + 10 + self.text_len + self.second_inside_length + 15
+                else:
+                    self.coords[3] = 10 + self.first_inside_length + 10 + self.text_len + self.second_inside_length + 15
             if self.connected[0] is not None:
                 if isinstance(self.connected[0], CommandBlock):
                     self.connected[0].redraw_base(movable_blocks)

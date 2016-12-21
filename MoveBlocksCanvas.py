@@ -1720,50 +1720,87 @@ class TwoMagnetBlock(OneMagnetBlock):
         magnet = self.get_magnet(closest_object)
         if magnet == 'first':
             old_len = self.coords[3]
+            # when connecting with first magnet
             if self.connected[1] is not None:
-                self.coords[2] = self.connected[1].get_height()
+                blo_height = self.connected[1].get_height()
                 blo_width = self.connected[1].get_width()
+                # when second magnet has connection
                 if self.connected[2] is not None:
                     blo_width2 = self.connected[2].get_width()
+                    blo_height2 = self.connected[2].get_height()
                     self.coords[3] = 10 + blo_width + 10 + self.text_len + blo_width2 + 15
+                    if blo_height >= blo_height2:
+                        self.coords[2] = blo_height
+                    else:
+                        self.coords[2] = blo_height2
+                # when second magnet does not have connection
                 else:
                     self.coords[3] = 10 + blo_width + 10 + self.text_len + self.second_inside_length + 15
+                    self.coords[2] = blo_height
+            # when disconnecting from first magnet
             else:
+                # when second magnet has connection
                 if self.connected[2] is not None:
                     blo_width2 = self.connected[2].get_width()
+                    blo_height2 = self.connected[2].get_height()
                     self.coords[3] = 10 + self.first_inside_length + 10 + self.text_len + blo_width2 + 15
+                    self.coords[2] = blo_height2
+                # when second magnet doesn't have connection
                 else:
                     self.coords[3] = 10 + self.first_inside_length + 10 + self.text_len + self.second_inside_length + 15
+                    self.coords[2] = self.block_height
+            # changing parent blocks
             if self.connected[0] is not None:
                 if isinstance(self.connected[0], CommandBlock):
                     self.connected[0].redraw_base(movable_blocks)
                 else:
                     self.connected[0].change_base_coords(closest_object, movable_blocks)
+            # actually redrawing
             self.redraw_base(movable_blocks)
             delta = self.coords[3] - old_len
+            # changing text_field and second_magnet coords
             self.canvas.move(self.text_id, delta, 0)
             self.canvas.move(self.second_poly_id, delta, 0)
             # moves second polygon magnet
             old_second_poly_coords = self.second_poly_coords
             self.second_poly_coords = [old_second_poly_coords[0] + delta, old_second_poly_coords[1],
                                        old_second_poly_coords[2], old_second_poly_coords[3]]
+            # if second magnet is connected, moves blocks
             if self.connected[2] is not None:
                 self.connected[2].move_connected(delta, 0)
+
         elif magnet == 'second':
+            # connecting with second magnet
             if self.connected[2] is not None:
                 self.coords[2] = self.connected[2].get_height()
                 blo_width = self.connected[2].get_width()
+                blo_height = self.connected[2].get_height()
+                # when first magnet is connected
                 if self.connected[1] is not None:
                     blo_width2 = self.connected[1].get_width()
+                    blo_height2 = self.connected[1].get_height()
                     self.coords[3] = 10 + blo_width + 10 + self.text_len + blo_width2 + 15
+                    if blo_height >= blo_height2:
+                        self.coords[2] = blo_height
+                    else:
+                        self.coords[2] = blo_height2
+                # when first magnet is not connected
                 else:
                     self.coords[3] = 10 + self.first_inside_length + 10 + self.text_len + blo_width + 15
+                    self.coords[2] = blo_height
+            # disconnecting from second magnet
             else:
+                # when first magnet is connected
                 if self.connected[1] is not None:
                     blo_width = self.connected[1].get_width()
+                    blo_height = self.connected[1].get_height()
                     self.coords[3] = 10 + blo_width + 10 + self.text_len + self.second_inside_length + 15
+                    self.coords[2] = blo_height
+                # when first magnet is not connected
                 else:
                     self.coords[3] = 10 + self.first_inside_length + 10 + self.text_len + self.second_inside_length + 15
+                    self.coords[2] = self.block_height
+            # redrawing parents
             if self.connected[0] is not None:
                 if isinstance(self.connected[0], CommandBlock):
                     self.connected[0].redraw_base(movable_blocks)

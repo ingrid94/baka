@@ -33,18 +33,14 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         resp = event.widget.find_overlapping(event.x, event.y, event.x, event.y)
         if len(resp) != 0:
             tag = self.stableCanvas.gettags(resp[0])[0]
-            if tag == 'print_block':
-                cords = self.stableCanvas.command_block_coords(0, 0, 30, 120)
-                print_block = TwoTextCommandBlock([0, 0, 30, 120], self.canvas, self.stableCanvas, cords, 'violet red',
-                                                  'purple', 'print(', ')', 'light pink', self.myFont)
-                obj_id = print_block.create_polygon()
-                poly_id = print_block.create_inside_polygon()
-                text_id = print_block.create_text()
-                text2_id = print_block.create_text2()
-                self.movable_blocks[obj_id] = print_block
-                self.movable_blocks[poly_id] = print_block
-                self.movable_blocks[text_id] = print_block
-                self.movable_blocks[text2_id] = print_block
+            if tag == 'expr_block':
+                cords = self.stableCanvas.command_block_coords(0, 0, self.text_height+15, 110)
+                expr_block = ExprCommandBlock([0, 0, self.text_height+15, 110], self.canvas, self.stableCanvas, cords,
+                                               'violet red', 'purple', 'light pink', self.myFont)
+                obj_id = expr_block.create_polygon()
+                poly_id = expr_block.create_inside_polygon()
+                self.movable_blocks[obj_id] = expr_block
+                self.movable_blocks[poly_id] = expr_block
             elif tag == 'return_block':
                 txt_len = Font.measure(self.myFont, 'return')
                 cords = self.stableCanvas.command_block_coords(0, 0, self.text_height+15, 10 + txt_len + 20 + txt_len)
@@ -574,6 +570,67 @@ class CommandBlock(Block):
         # draws "line" mark to the block
         line_id = self.canvas.create_line(line_coords, fill="green", width=3)
         movable_blocks[line_id] = "line"
+
+
+class ExprCommandBlock(CommandBlock):
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, inside_color, myFont):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, color, outline)
+        self.inside_color = inside_color
+        self.text_height = Font.metrics(myFont, 'linespace')
+        self.inside_poly_coords = [self.coords[0]+5, self.coords[1]+10, self.text_height, self.coords[3]-20]
+
+    def create_inside_polygon(self):
+        poly_coords = self.stableCanvas.inside_block_coords(self.inside_poly_coords[0], self.inside_poly_coords[1],
+                                                            self.inside_poly_coords[2], self.inside_poly_coords[3])
+        self.poly_id = self.canvas.create_polygon(poly_coords, fill=self.inside_color)
+        self.default_items_id.append(self.poly_id)
+        self.default_items_on_block = self
+        return self.poly_id
+
+    def change_inside_coords(self, delta_x, delta_y):
+        old_poly_coords = self.inside_poly_coords
+        self.inside_poly_coords = [old_poly_coords[0] + delta_x, old_poly_coords[1]+delta_y, old_poly_coords[2], old_poly_coords[3]]
+        if self.connected[2] is None:
+            self.canvas.tag_raise(self.poly_id)
+            self.canvas.move(self.poly_id, delta_x, delta_y)
+
+    def delete_inside_poly(self, closest_object, movable_blocks):
+        if self.poly_id:
+            del movable_blocks[self.poly_id]
+            self.canvas.delete(self.poly_id)
+            self.default_items_id.remove(self.poly_id)
+            self.poly_id = None
+
+    def inside_connecting(self, item, closest_object, movable_blocks):
+        self.connected[2] = item
+        self.redraw_base(movable_blocks)
+
+    def redraw_base(self, movable_blocks):
+        old_height = self.coords[2]
+        # when connecting
+        if self.connected[2] is not None:
+            blo_height = self.connected[2].get_height()
+            self.coords[2] = blo_height + 12
+            self.resize_coords(movable_blocks, old_height)
+            blo_width = self.connected[2].get_width()
+            self.coords[3] = 20 + blo_width
+        else:
+            self.coords[2] = self.default_height
+            self.coords[3] = self.default_width
+            self.resize_coords(movable_blocks, old_height)
+        self.change_poly_coords()
+        del movable_blocks[self.obj_id]
+        self.canvas.delete(self.obj_id)
+        self.obj_id = self.create_polygon()
+        movable_blocks[self.obj_id] = self
+        if self.connected[2] is not None:
+            self.raise_tags()
+        else:
+            for el in self.default_items_id:
+                self.canvas.tag_raise(el)
+
+    def get_inside_poly_coords(self, closest_object):
+        return self.inside_poly_coords
 
 
 class OneTextCommandBlock(CommandBlock):
@@ -1818,9 +1875,10 @@ class TwoMagnetBlock(OneMagnetBlock):
             self.change_base_coords(closest_object, movable_blocks)
 
     def delete_inside_poly(self, closest_object, movable_blocks):
+        pass
         # need inside_polygons to deter which magnet it's communicating with
-        magnet = self.get_magnet(closest_object)
-        if magnet == 'first':
-            self.canvas.itemconfig(self.first_poly_id, state=HIDDEN)
-        elif magnet == 'second':
-            self.canvas.itemconfig(self.second_poly_id, state=HIDDEN)
+        # magnet = self.get_magnet(closest_object)
+        # if magnet == 'first':
+        #    self.canvas.itemconfig(self.first_poly_id, state=HIDDEN)
+        #elif magnet == 'second':
+        #    self.canvas.itemconfig(self.second_poly_id, state=HIDDEN)

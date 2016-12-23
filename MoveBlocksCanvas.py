@@ -1804,10 +1804,10 @@ class TwoMagnetBlock(OneMagnetBlock):
         second = self.canvas.find_withtag('second')
         magnet = None
         for item in closest_object:
-            if item in first:
+            if item in first and item == self.first_poly_id:
                 magnet = 'first'
                 break
-            elif item in second:
+            elif item in second and item == self.second_poly_id:
                 magnet = 'second'
                 break
         return magnet

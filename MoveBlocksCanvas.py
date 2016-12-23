@@ -45,7 +45,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 txt_len = Font.measure(self.myFont, 'return')
                 cords = self.stableCanvas.command_block_coords(0, 0, self.text_height+15, 10 + txt_len + 20 + txt_len)
                 return_block = OneTextCommandBlock([0, 0, self.text_height+15, 10 + txt_len + 20 + txt_len], self.canvas,
-                                                   self.stableCanvas, cords, 'violet red', 'purple', 'return',
+                                                   self.stableCanvas, cords, 'violet red', 'purple', 'return ',
                                                    'light pink', self.myFont)
                 obj_id = return_block.create_polygon()
                 poly_id = return_block.create_inside_polygon()
@@ -127,21 +127,21 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.create_type_block('False', None, 'false', 'dodger blue', 'steel blue')
             # second column blocks
             elif tag == 'equals':
-                self.create_two_magnet_block("==")
+                self.create_two_magnet_block("== ")
             elif tag == 'not_equal':
-                self.create_two_magnet_block("!=")
+                self.create_two_magnet_block("!= ")
             elif tag == 'greater':
-                self.create_two_magnet_block('>')
+                self.create_two_magnet_block('> ')
             elif tag == 'smaller':
-                self.create_two_magnet_block('<')
+                self.create_two_magnet_block('< ')
             elif tag == 'greater_or_equal':
-                self.create_two_magnet_block('>=')
+                self.create_two_magnet_block('>= ')
             elif tag == 'smaller_or_equal':
-                self.create_two_magnet_block('<=')
+                self.create_two_magnet_block('<= ')
             elif tag == 'or':
-                self.create_two_magnet_block('or')
+                self.create_two_magnet_block('or ')
             elif tag == 'and':
-                self.create_two_magnet_block('and')
+                self.create_two_magnet_block('and ')
             elif tag == 'not':
                 txt_len = Font.measure(self.myFont, 'not ')
                 cords = self.stableCanvas.inside_block_coords(0, 0, self.text_height+4, 10+txt_len+10+1.6*txt_len)
@@ -349,50 +349,66 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         file = open("generated.py", "w")
         for block in first_blocks:
             tabs = 0
-            self.into_code(file, block, tabs)
+            code = self.into_code(block, tabs)
+            file.write(code)
         file.close()
 
-    def into_code(self, file, block, tabs):
-        if isinstance(block, TwoTextCommandBlock):
-            self.make_tabs(file, tabs)
-            file.write(block.string)
+    def into_code(self, block, tabs):
+        to_code = ''
+        if isinstance(block, ExprCommandBlock):
+            to_code += self.make_tabs(tabs)
             if block.connected[2] is not None:
-                self.into_code(file, block.connected[2], tabs)
-            file.write(block.string2 + '\n')
+                to_code += self.into_code(block.connected[2], tabs) + '\n'
             if block.connected[1] is not None:
-                self.into_code(file, block.connected[1], tabs)
+                to_code += self.into_code(block.connected[1], tabs)
+        elif isinstance(block, OneTextCommandBlock):
+            to_code = self.make_tabs(tabs)
+            if block.connected[2] is not None:
+                to_code += block.string + self.into_code(block.connected[2], tabs) + '\n'
+            if block.connected[1] is not None:
+                to_code += self.into_code(block.connected[1], tabs)
         elif isinstance(block, VariableBlock):
-            self.make_tabs(file, tabs)
-            file.write(block.variable_name + ' = ')
+            to_code += self.make_tabs(tabs)
             if block.connected[2] is not None:
-                self.into_code(file, block.connected[2], tabs)
-                file.write('\n')
+                to_code += block.variable_name + ' = ' + self.into_code(block.connected[2], tabs) + '\n'
             if block.connected[1] is not None:
-                self.into_code(file, block.connected[1], tabs)
+                to_code += self.into_code(block.connected[1], tabs) + '\n'
         elif isinstance(block, ControlBlock):
-            self.make_tabs(file, tabs)
-            file.write(block.string)
+            to_code += self.make_tabs(tabs)
+            to_code += block.string
             if block.connected[2] is not None:
-                self.into_code(file, block.connected[2], tabs)
-            file.write(': \n')
+                to_code += self.into_code(block.connected[2], tabs)
+                to_code += ': \n'
             if block.connected[1] is not None:
-                self.into_code(file, block.connected[1], tabs+1)
+                to_code += self.into_code(block.connected[1], tabs+1)
             if block.connected[3].connected[1] is not None:
-                self.into_code(file, block.connected[3].connected[1], tabs)
-        elif isinstance(block, StringBlock):
-            file.write(repr(block.string_on_block))
-        elif isinstance(block, TypeBlock):
-            file.write(block.string_on_block)
-        elif isinstance(block, OneMagnetBlock):
-            file.write(block.text)
+                to_code += self.into_code(block.connected[3].connected[1], tabs)
+        elif isinstance(block, CallBlock):
             if block.connected[1] is not None:
-                self.into_code(file, block.connected[1], tabs)
+                to_code += block.text + self.into_code(block.connected[1], tabs) + block.text2
+        elif isinstance(block, StringBlock):
+            to_code += repr(block.string_on_block)
+        elif isinstance(block, TypeBlock):
+            to_code += block.string_on_block
+        elif isinstance(block, TwoMagnetBlock):
+            to_code += block.text
+            if block.connected[1] is not None:
+                to_code += self.into_code(block.connected[1], tabs)
+            if block.connected[2] is not None:
+                to_code += self.into_code(block.connected[2], tabs)
+        elif isinstance(block, OneMagnetBlock):
+            to_code += block.text
+            if block.connected[1] is not None:
+                to_code += self.into_code(block.connected[1], tabs)
         else:
             print("error", block)
+        return to_code
 
-    def make_tabs(self, file, tabs):
+    def make_tabs(self, tabs):
+        tab = ''
         for i in range(0, tabs):
-            file.write('    ')
+            tab += '    '
+        return tab
 
 
 class Block:

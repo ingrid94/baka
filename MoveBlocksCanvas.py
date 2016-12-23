@@ -1751,12 +1751,10 @@ class TwoMagnetBlock(OneMagnetBlock):
             self.default_items_on_block.change_inside_coords(delta_x, delta_y)
         if self.connected[1] is not None:
             self.connected[1].move_connected(delta_x, delta_y)
-            for i in self.connected[1].default_items_id:
-                self.canvas.tag_raise(i)
+            self.canvas.tag_raise(self.text_id)
         if self.connected[2] is not None:
             self.connected[2].move_connected(delta_x, delta_y)
-            for i in self.connected[2].default_items_id:
-                self.canvas.tag_raise(i)
+            self.canvas.tag_raise(self.text_id)
 
     def change_inside_coords(self, delta_x, delta_y):
         # moves first polygon magnet
@@ -1792,12 +1790,15 @@ class TwoMagnetBlock(OneMagnetBlock):
 
     def raise_tags(self):
         self.canvas.tag_raise(self.obj_id)
-        for el in self.default_items_id:
-            self.canvas.tag_raise(el)
+        self.canvas.tag_raise(self.text_id)
         if self.connected[1] is not None:
             self.connected[1].raise_tags()
+        else:
+            self.canvas.tag_raise(self.first_poly_id)
         if self.connected[2] is not None:
             self.connected[2].raise_tags()
+        else:
+            self.canvas.tag_raise(self.second_poly_id)
 
     def get_magnet(self, closest_object):
         first = self.canvas.find_withtag('first')

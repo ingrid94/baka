@@ -97,6 +97,20 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[obj_id_lower] = if_block_lower
                 while_block.connected[3] = if_block_lower
                 if_block_lower.connected[0] = while_block
+            elif tag == 'print':
+                txt_len = Font.measure(self.myFont, 'print()')
+                cords = self.stableCanvas.inside_block_coords(0, 0, self.text_height+4, txt_len + 30 + txt_len)
+                print_block = CallBlock([0, 0, self.text_height+4, txt_len + 30 + txt_len], self.canvas,
+                                        self.stableCanvas, cords, 'limegreen', 'green', 'lightgreen', 'print(', ')',
+                                        self.myFont)
+                obj_id = print_block.create_polygon()
+                text_id = print_block.create_text()
+                inside_id = print_block.create_first_polygon()
+                text2_id = print_block.create_text2()
+                self.movable_blocks[obj_id] = print_block
+                self.movable_blocks[text_id] = print_block
+                self.movable_blocks[text2_id] = print_block
+                self.movable_blocks[inside_id] = print_block
             elif tag == 'number':
                 self.create_frame('number')
             elif tag == 'variable':
@@ -1615,6 +1629,74 @@ class OneMagnetBlock(InsideBlock):
         # draws "line" mark to the block
         line_id = self.canvas.create_line(line_coords, fill="green", width=3)
         movable_blocks[line_id] = "line"
+
+
+class CallBlock(OneMagnetBlock):
+    def __init__(self, coords, canvas, stableCanvas, poly_cords, color, outline, inside_color, text, text2, myFont):
+        super().__init__(coords, canvas, stableCanvas, poly_cords, text, color, outline, inside_color, myFont)
+        self.text2 = text2
+        self.text2_id = None
+        self.text2_coords = [self.coords[0]+self.coords[3]-5, self.coords[1]+2]
+        self.text_coords = [self.coords[0]+12, self.coords[1]+2]
+        self.first_inside_length = 1.3*self.text_len
+        self.inside_poly_coords = [self.text_len + 14, self.coords[1] + 2, self.first_inside_height,
+                                   self.first_inside_length]
+
+    def create_text2(self):
+        self.text2_id = self.canvas.create_text(self.text2_coords, anchor=NW, text=self.text2, font=self.myFont)
+        self.default_items_on_block = self
+        self.default_items_id.append(self.text2_id)
+        return self.text2_id
+
+    def change_inside_coords(self, delta_x, delta_y):
+
+        # moves first polygon magnet
+        old_first_poly_coords = self.inside_poly_coords
+        self.inside_poly_coords = [old_first_poly_coords[0] + delta_x, old_first_poly_coords[1] + delta_y,
+                                   old_first_poly_coords[2], old_first_poly_coords[3]]
+
+        # moves text
+        old_text_coords = self.text_coords
+        self.text_coords = [old_text_coords[0] + delta_x, old_text_coords[1] + delta_y]
+        self.canvas.move(self.text_id, delta_x, delta_y)
+
+        # moves text2
+        old_text2_coords = self.text2_coords
+        self.text2_coords = [old_text2_coords[0] + delta_x, old_text2_coords[1] + delta_y]
+        self.canvas.move(self.text2_id, delta_x, delta_y)
+
+        self.canvas.tag_raise(self.obj_id)
+        # leaves the text on top always
+        self.canvas.tag_raise(self.text_id)
+        self.canvas.tag_raise(self.text2_id)
+
+        if self.connected[1] is None:
+            self.canvas.tag_raise(self.first_poly_id)
+            self.canvas.move(self.first_poly_id, delta_x, delta_y)
+
+    def change_base_coords(self, closest_object, movable_blocks):
+        old_width = self.coords[3]
+        # when connecting
+        if self.connected[1] is not None:
+            self.coords[2] = self.connected[1].get_height()
+            blo_width = self.connected[1].get_width()
+            self.coords[3] = 10 + self.text_len + 10 + blo_width + 12
+        # when disconnecting
+        else:
+            self.coords[3] = self.block_length
+            self.coords[2] = self.block_height
+        delta = self.coords[3] - old_width
+        # moves text2
+        old_text2_coords = self.text2_coords
+        self.text2_coords = [old_text2_coords[0] + delta, old_text2_coords[1]]
+        self.canvas.move(self.text2_id, delta, 0)
+        # if this block has parent
+        if self.connected[0] is not None:
+            if isinstance(self.connected[0], CommandBlock):
+                self.connected[0].redraw_base(movable_blocks)
+            else:
+                self.connected[0].change_base_coords(closest_object, movable_blocks)
+        self.redraw_base(movable_blocks)
 
 
 class TwoMagnetBlock(OneMagnetBlock):

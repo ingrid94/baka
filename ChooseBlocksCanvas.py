@@ -127,6 +127,16 @@ class ChooseBlocksCanvas:
 
         top_line += text_height + 75
 
+        txt_len = Font.measure(self.myFont, 'print()')
+        self.canvas.create_polygon(self.inside_block_coords(50, top_line, text_height+4, txt_len + 30 + txt_len),
+                                   fill='limegreen', outline='green',
+                                   tags='print')
+        self.canvas.create_text(65, top_line+2, anchor=NW, text="print(", tags='print', font=self.myFont)
+        self.canvas.create_polygon(self.inside_block_coords(60+txt_len, top_line+2, text_height, txt_len), fill='lightgreen', tags='print')
+        self.canvas.create_text(70+2*txt_len, top_line+2, anchor=NW, text=")", tags='print', font=self.myFont)
+
+        top_line += text_height + 15
+
         # right side column
         # equals statement block
         top_line = 20

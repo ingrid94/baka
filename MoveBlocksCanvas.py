@@ -355,7 +355,16 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
 
     def into_code(self, block, tabs):
         to_code = ''
-        if isinstance(block, ExprCommandBlock):
+        if isinstance(block, ControlBlock):
+            to_code += self.make_tabs(tabs)
+            to_code += block.string
+            if block.connected[2] is not None:
+                to_code += self.into_code(block.connected[2], tabs) + ': \n'
+            if block.connected[1] is not None:
+                to_code += self.into_code(block.connected[1], tabs+1)
+            if block.connected[3].connected[1] is not None:
+                to_code += self.into_code(block.connected[3].connected[1], tabs)
+        elif isinstance(block, ExprCommandBlock):
             to_code += self.make_tabs(tabs)
             if block.connected[2] is not None:
                 to_code += self.into_code(block.connected[2], tabs) + '\n'
@@ -373,16 +382,6 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 to_code += block.variable_name + ' = ' + self.into_code(block.connected[2], tabs) + '\n'
             if block.connected[1] is not None:
                 to_code += self.into_code(block.connected[1], tabs) + '\n'
-        elif isinstance(block, ControlBlock):
-            to_code += self.make_tabs(tabs)
-            to_code += block.string
-            if block.connected[2] is not None:
-                to_code += self.into_code(block.connected[2], tabs)
-                to_code += ': \n'
-            if block.connected[1] is not None:
-                to_code += self.into_code(block.connected[1], tabs+1)
-            if block.connected[3].connected[1] is not None:
-                to_code += self.into_code(block.connected[3].connected[1], tabs)
         elif isinstance(block, CallBlock):
             if block.connected[1] is not None:
                 to_code += block.text + self.into_code(block.connected[1], tabs) + block.text2
@@ -406,6 +405,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
 
     def make_tabs(self, tabs):
         tab = ''
+        print(tabs)
         for i in range(0, tabs):
             tab += '    '
         return tab

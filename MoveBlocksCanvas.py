@@ -112,7 +112,29 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[text2_id] = print_block
                 self.movable_blocks[inside_id] = print_block
             elif tag == 'print_complete':
-                print('vajutas')
+                # expr block
+                cords = self.stableCanvas.command_block_coords(0, 0, self.text_height + 15, 110)
+                expr_block = ExprCommandBlock([0, 0, self.text_height + 15, 110], self.canvas, self.stableCanvas, cords,
+                                              'violet red', 'purple', 'light pink', self.myFont)
+                obj_id = expr_block.create_polygon()
+                poly_id = expr_block.create_inside_polygon()
+                self.movable_blocks[obj_id] = expr_block
+                self.movable_blocks[poly_id] = expr_block
+                # print block
+                txt_len = Font.measure(self.myFont, 'print()')
+                cords = self.stableCanvas.inside_block_coords(0, 0, self.text_height + 4, txt_len + 30 + txt_len)
+                print_block = CallBlock([0, 0, self.text_height + 4, txt_len + 30 + txt_len], self.canvas,
+                                        self.stableCanvas, cords, 'limegreen', 'green', 'lightgreen', 'print(', ')',
+                                        self.myFont)
+                obj_id = print_block.create_polygon()
+                text_id = print_block.create_text()
+                inside_id = print_block.create_first_polygon()
+                text2_id = print_block.create_text2()
+                self.movable_blocks[obj_id] = print_block
+                self.movable_blocks[text_id] = print_block
+                self.movable_blocks[text2_id] = print_block
+                self.movable_blocks[inside_id] = print_block
+                print_block.move_to_magnet(self.movable_blocks)
             elif tag == 'number':
                 self.create_frame('number')
             elif tag == 'variable':

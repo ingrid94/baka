@@ -405,7 +405,6 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
 
     def make_tabs(self, tabs):
         tab = ''
-        print(tabs)
         for i in range(0, tabs):
             tab += '    '
         return tab

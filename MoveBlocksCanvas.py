@@ -164,7 +164,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         elif inside_type == 'number':
             text = "Numbers consist of digits (0-9). \n To get floating point number use point (.)"
         elif inside_type == 'string':
-            text = "String literals are written in single or double quotes. "
+            text = "String literals are written in single or double quotes. (You do not need to add them)"
 
         frame = Frame(self.canvas)
         can = self.canvas.create_window(250, 200, window=frame)
@@ -1391,7 +1391,7 @@ class TypeBlock(InsideBlock):
         elif self.inside_type == 'number':
             text = "Numbers consist of digits (0-9). \n To get floating point number use point (.)"
         elif self.inside_type == 'string':
-            text = "String literals are written in single or double quotes. "
+            text = "String literals are written in single or double quotes. (You do not need to add them)"
 
         frame = Frame(self.canvas)
         can = self.canvas.create_window(250, 200, window=frame)

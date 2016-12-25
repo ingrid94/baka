@@ -803,7 +803,6 @@ class VariableBlock(CommandBlock):
         self.variable_color = 'dodger blue'
 
     def create_polygon(self):
-        self.coords[3] = 10 + self.text_len + 15 + self.text2_len + 15 + 5*self.text2_len + 10
         self.poly_cords = self.stableCanvas.command_block_coords(self.coords[0], self.coords[1], self.coords[2],
                                                                  self.coords[3])
         self.obj_id = self.canvas.create_polygon(self.poly_cords, fill=self.color, outline=self.outline)
@@ -871,6 +870,40 @@ class VariableBlock(CommandBlock):
             self.canvas.delete(self.poly_id)
             self.default_items_id.remove(self.poly_id)
             self.poly_id = None
+
+    def inside_connecting(self, item, closest_object, movable_blocks):
+        self.connected[2] = item
+        self.redraw_base(movable_blocks)
+
+    def redraw_base(self, movable_blocks):
+        old_height = self.coords[2]
+        if self.connected[2] is not None:
+            blo_height = self.connected[2].get_height()
+            self.coords[2] = blo_height + 12
+            self.resize_coords(movable_blocks, old_height)
+            blo_width = self.connected[2].get_width()
+            self.coords[3] = 15 + self.text_len + self.text2_len + 40 + blo_width
+        else:
+            self.coords[2] = self.default_height
+            self.coords[3] = self.default_width
+            self.resize_coords(movable_blocks, old_height)
+        self.change_poly_coords()
+        del movable_blocks[self.obj_id]
+        self.canvas.delete(self.obj_id)
+        self.obj_id = self.create_polygon()
+        movable_blocks[self.obj_id] = self
+        if self.connected[2] is not None:
+            self.raise_tags()
+        else:
+            for el in self.default_items_id:
+                self.canvas.tag_raise(el)
+
+    def get_inside_poly_coords(self, closest_object):
+        return self.inside_poly_coords
+
+    def change_poly_coords(self):
+        self.poly_cords = self.stableCanvas.command_block_coords(self.coords[0], self.coords[1],
+                                                                 self.coords[2], self.coords[3])
 
     # all methods under to change variable name
     def check_if_frame_needed(self, clicked_id, movable_blocks):

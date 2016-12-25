@@ -127,6 +127,18 @@ class ChooseBlocksCanvas:
 
         top_line += text_height + 15
 
+        # complete print block
+        self.canvas.create_polygon(self.command_block_coords(50, top_line, 2*text_height + 5, 135), fill='violet red',
+                                   outline='purple', tags='print_complete')
+        self.canvas.create_polygon(self.inside_block_coords(55, top_line+10, text_height+4, txt_len + 30 + txt_len),
+                                   fill='limegreen', outline='green',
+                                   tags='print_complete')
+        self.canvas.create_text(65, top_line + 12, anchor=NW, text="print(", tags='print_complete', font=self.myFont)
+        self.canvas.create_polygon(self.inside_block_coords(60 + txt_len, top_line + 12, text_height, txt_len),
+                                   fill='lightgreen', tags='print_complete')
+        self.canvas.create_text(70 + 2 * txt_len, top_line + 12, anchor=NW, text=")", tags='print_complete', font=self.myFont)
+        top_line += text_height + 25
+
         # right side column
         # equals statement block
         top_line = 20

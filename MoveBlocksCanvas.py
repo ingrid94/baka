@@ -111,6 +111,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 self.movable_blocks[text_id] = print_block
                 self.movable_blocks[text2_id] = print_block
                 self.movable_blocks[inside_id] = print_block
+            elif tag == 'print_complete':
+                print('vajutas')
             elif tag == 'number':
                 self.create_frame('number')
             elif tag == 'variable':
@@ -336,6 +338,9 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         self.canvas.bind("<ButtonRelease-1>", self.on_token_button_release)
         self.canvas.bind("<B1-Motion>", self.on_token_motion)
         self.canvas.bind("<Double-Button-1>", self.on_double_click)
+
+    def to_blocks(self):
+        pass
 
     def to_code(self):
         all_blocks = []

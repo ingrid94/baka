@@ -2,6 +2,7 @@ from tkinter import *
 import tkinter.messagebox
 from tkinter.font import Font
 import re
+import ast
 
 from ChooseBlocksCanvas import ChooseBlocksCanvas
 
@@ -61,11 +62,11 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             elif tag == 'string':
                 self.create_frame('string')
             elif tag == 'none':
-                self.create_type_block('None', None, 'none', 'dodger blue', 'steel blue', 0, 0)
+                self.create_type_block('None', 'none', 0, 0)
             elif tag == 'true':
-                self.create_type_block('True', None, 'true', 'dodger blue', 'steel blue', 0, 0)
+                self.create_type_block('True', 'true', 0, 0)
             elif tag == 'false':
-                self.create_type_block('False', None, 'false', 'dodger blue', 'steel blue', 0, 0)
+                self.create_type_block('False', 'false', 0, 0)
             # second column blocks
             elif tag == 'equals':
                 self.create_two_magnet_block("== ", 0, 0)
@@ -221,41 +222,39 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         s = v.get()
         if inside_type == 'number':
             if s.replace('.', '', 1).isdigit():
-                self.create_type_block(s, frame, inside_type, 'dodger blue', 'steel blue', 0, 0)
+                self.create_type_block(s, inside_type, 0, 0)
+                self.canvas.delete(frame)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a number. Try again. ")
         elif inside_type == 'string':
-            # p = re.match(r'^(\"|\')(.)*(\"|\')$', s, re.S)
-            # if p:
-            self.create_string_block(s, frame, inside_type, 'dodger blue', 'steel blue', 0, 0)
-            # else:
-            #    tkinter.messagebox.showerror("Error", "It's not a string. Try again. ")
+            self.create_string_block(s, inside_type, 0, 0)
+            self.canvas.delete(frame)
         elif inside_type == 'variable' or inside_type == 'variable_assign' or inside_type == 'list':
             p = re.match(r'^[a-zA-Z_][\w0-9_]*$', s, re.S)
             if p and inside_type == 'variable':
-                self.create_type_block(s, frame, inside_type, 'dodger blue', 'steel blue', 0, 0)
+                self.create_type_block(s, inside_type, 0, 0)
+                self.canvas.delete(frame)
             elif p and (inside_type == 'variable_assign' or inside_type == 'list'):
-                self.create_variable_block(s, frame, inside_type, 0, 0)
+                self.create_variable_block(s, 0, 0)
+                self.canvas.delete(frame)
             else:
                 tkinter.messagebox.showerror("Error", "It's not a variable. Try again. ")
 
-    def create_type_block(self, s, frame, inside_type, color, outline, x, y):
+    def create_type_block(self, s, inside_type, x, y):
         w = Font.measure(self.myFont, s)
         cords = self.stableCanvas.inside_block_coords(x, y, self.text_height, w+20)
-        type_block = TypeBlock([x, y, self.text_height, w+20], self.canvas, self.stableCanvas, cords, color, outline, s,
+        type_block = TypeBlock([x, y, self.text_height, w+20], self.canvas, self.stableCanvas, cords, 'dodger blue', 'steel blue', s,
                                inside_type, self.myFont)
         obj_id = type_block.create_polygon()
         text_id = type_block.create_text()
         self.movable_blocks[obj_id] = type_block
         self.movable_blocks[text_id] = type_block
-        if frame is not None:
-            self.canvas.delete(frame)
         return type_block
 
-    def create_string_block(self, s, frame, inside_type, color, outline, x, y):
+    def create_string_block(self, s, inside_type, x, y):
         w = Font.measure(self.myFont, s)
         cords = self.stableCanvas.inside_block_coords(x, y, self.text_height, w+20)
-        string_block = StringBlock([x, y, self.text_height, w+20], self.canvas, self.stableCanvas, cords, color, outline,
+        string_block = StringBlock([x, y, self.text_height, w+20], self.canvas, self.stableCanvas, cords, 'dodger blue', 'steel blue',
                                    s, inside_type, self.myFont, self.myFontBold)
         obj_id = string_block.create_polygon()
         text_id = string_block.create_text()
@@ -264,37 +263,26 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         self.movable_blocks[text_id] = string_block
         self.movable_blocks[quotes_ids[0]] = string_block
         self.movable_blocks[quotes_ids[1]] = string_block
-        if frame is not None:
-            self.canvas.delete(frame)
         return string_block
 
-    def create_variable_block(self, s, frame, inside_type, x, y):
+    def create_variable_block(self, s, x, y):
         txt_len = Font.measure(self.myFont, s)
         txt2_len = Font.measure(self.myFontBold, '=')
         cords = self.stableCanvas.command_block_coords(x, y, self.text_height+15,
                                                        10 + txt_len + 15 + txt2_len + 15 + 5*txt2_len + 10)
-        # if inside_type == 'variable_assign':
         variable_block = VariableBlock([x, y, self.text_height+15, 10 + txt_len + 15 + txt2_len + 15 + 5*txt2_len + 10],
                                        self.canvas, self.stableCanvas, cords, 'violet red', 'purple', s,
                                        self.myFont, self.myFontBold)
-        # else:
-        #    variable_block = ListBlock([0, 0, 30, 110], self.canvas, self.stableCanvas, cords, 'violet red',
-        #                               'purple', s, txt_len)
         obj_id = variable_block.create_polygon()
         variable_poly_id = variable_block.create_variable_polygon()
         variable_name_id = variable_block.create_variable_name()
         text_id = variable_block.create_text()
         inside_poly_id = variable_block.create_inside_polygon()
-        # if inside_type == 'list':
-        #    text2_id = variable_block.create_text2()
-        #    self.movable_blocks[text2_id] = variable_block
         self.movable_blocks[obj_id] = variable_block
         self.movable_blocks[variable_poly_id] = variable_block
         self.movable_blocks[variable_name_id] = variable_block
         self.movable_blocks[text_id] = variable_block
         self.movable_blocks[inside_poly_id] = variable_block
-        if frame is not None:
-            self.canvas.delete(frame)
         return variable_block
 
     def create_two_magnet_block(self, text, x, y):
@@ -373,7 +361,85 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         self.canvas.bind("<Double-Button-1>", self.on_double_click)
 
     def to_blocks(self):
-        pass
+        file = open('to_blocks.py', 'r')
+        code = file.read()
+        tree = ast.parse(code)
+        x = 50
+        y = 30
+        self.create_blocks_from_code(tree, x, y)
+        print(ast.dump(tree))
+
+    def create_blocks_from_code(self, tree, x, y):
+        if isinstance(tree, ast.Expr):
+            expr_block = self.create_expr_block(x, y)
+            for child in ast.iter_child_nodes(tree):
+                if isinstance(child, ast.Call):
+                    for child1 in ast.iter_child_nodes(child):
+                        if isinstance(child1, ast.Name):
+                            call = child1.id
+                            x = expr_block.inside_poly_coords[0]
+                            y = expr_block.inside_poly_coords[1]
+                            print_block = self.create_print_block(x, y)
+                            print_block.move_to_magnet(self.movable_blocks)
+                        else:
+                            x = print_block.inside_poly_coords[0]
+                            y = print_block.inside_poly_coords[1]
+                            type_block = self.create_types_from_code(child1, x, y)
+                            if type_block is not None:
+                                type_block.move_to_magnet(self.movable_blocks)
+            return expr_block
+        elif isinstance(tree, ast.Assign):
+            for child in ast.iter_child_nodes(tree):
+                if isinstance(child, ast.Name):
+                    var_block = self.create_variable_block(child.id, x, y)
+                else:
+                    x = var_block.inside_poly_coords[0]
+                    y = var_block.inside_poly_coords[1]
+                    type_block = self.create_types_from_code(child, x, y)
+                    if type_block is not None:
+                        type_block.move_to_magnet(self.movable_blocks)
+                    return var_block
+        elif isinstance(tree, ast.While):
+            for child in ast.iter_child_nodes(tree):
+                print(child)
+        elif isinstance(tree, ast.Return):
+            return_block = self.create_return_block(x, y)
+            for child in ast.iter_child_nodes(tree):
+                type_block = self.create_types_from_code(child, x, y)
+                if type_block is not None:
+                    type_block.move_to_magnet(self.movable_blocks)
+            return return_block
+        else:
+            stable_block = None
+            for child in ast.iter_child_nodes(tree):
+                if stable_block is not None:
+                    x = stable_block.coords[0]
+                    y += stable_block.coords[2]
+                    stable_block = self.create_blocks_from_code(child, x, y)
+                    stable_block.move_to_magnet(self.movable_blocks)
+                else:
+                    stable_block = self.create_blocks_from_code(child, x, y)
+
+    def create_types_from_code(self, tree, x, y):
+        if isinstance(tree, ast.Str):
+            s = tree.s
+            type_block = self.create_string_block(s, 'string', x, y)
+            return type_block
+        elif isinstance(tree, ast.Num):
+            num = tree.n
+            type_block = self.create_type_block(num, 'number', x, y)
+            return type_block
+        elif isinstance(tree, ast.NameConstant):
+            val = tree.value
+            if str(val) == 'None':
+                const_block = self.create_type_block(str(val), 'none', x, y)
+                return const_block
+            elif str(val) == 'True':
+                const_block = self.create_type_block(str(val), 'true', x, y)
+                return const_block
+            elif str(val) == 'False':
+                const_block = self.create_type_block(str(val), 'false', x, y)
+                return const_block
 
     def to_code(self):
         all_blocks = []
@@ -1595,7 +1661,7 @@ class OneMagnetBlock(InsideBlock):
         self.block_length = self.coords[3]
         self.block_height = self.coords[2]
         # self.text_len = text_len
-        self.inside_poly_coords = [self.text_len + 12, self.coords[1] + 2, self.first_inside_height, self.first_inside_length]
+        self.inside_poly_coords = [self.coords[0] + self.text_len + 12, self.coords[1] + 2, self.first_inside_height, self.first_inside_length]
         self.text_coords = [self.coords[0] + 12, self.coords[1]]
 
     def get_inside_length(self, times):
@@ -1725,7 +1791,7 @@ class CallBlock(OneMagnetBlock):
         self.text2_coords = [self.coords[0]+self.coords[3]-5, self.coords[1]+2]
         self.text_coords = [self.coords[0]+12, self.coords[1]+2]
         self.first_inside_length = 1.3*self.text_len
-        self.inside_poly_coords = [self.text_len + 14, self.coords[1] + 2, self.first_inside_height,
+        self.inside_poly_coords = [self.coords[0] + self.text_len + 14, self.coords[1] + 2, self.first_inside_height,
                                    self.first_inside_length]
 
     def create_text2(self):

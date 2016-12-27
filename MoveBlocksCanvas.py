@@ -377,17 +377,25 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                     for child1 in ast.iter_child_nodes(child):
                         if isinstance(child1, ast.Name):
                             call = child1.id
-                            x = expr_block.inside_poly_coords[0]
-                            y = expr_block.inside_poly_coords[1]
-                            print_block = self.create_print_block(x, y)
-                            print_block.move_to_magnet(self.movable_blocks)
+                            if call == 'print':
+                                x = expr_block.inside_poly_coords[0]
+                                y = expr_block.inside_poly_coords[1]
+                                print_block = self.create_print_block(x, y)
+                                print_block.move_to_magnet(self.movable_blocks)
+                            else:
+                                x = print_block.inside_poly_coords[0]
+                                y = print_block.inside_poly_coords[1]
+                                type_block = self.create_types_from_code(child1, x, y)
+                                if type_block is not None:
+                                    type_block.move_to_magnet(self.movable_blocks)
+                                return expr_block
                         else:
                             x = print_block.inside_poly_coords[0]
                             y = print_block.inside_poly_coords[1]
                             type_block = self.create_types_from_code(child1, x, y)
                             if type_block is not None:
                                 type_block.move_to_magnet(self.movable_blocks)
-            return expr_block
+                            return expr_block
         elif isinstance(tree, ast.Assign):
             for child in ast.iter_child_nodes(tree):
                 if isinstance(child, ast.Name):
@@ -421,7 +429,11 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                     stable_block = self.create_blocks_from_code(child, x, y)
 
     def create_types_from_code(self, tree, x, y):
-        if isinstance(tree, ast.Str):
+        if isinstance(tree, ast.Name):
+            s = tree.id
+            type_block = self.create_type_block(s, 'variable', x, y)
+            return type_block
+        elif isinstance(tree, ast.Str):
             s = tree.s
             type_block = self.create_string_block(s, 'string', x, y)
             return type_block

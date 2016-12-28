@@ -408,8 +408,23 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                         type_block.move_to_magnet(self.movable_blocks)
                     return var_block
         elif isinstance(tree, ast.While):
+            self.create_while_block(x, y)
             for child in ast.iter_child_nodes(tree):
                 print(child)
+        elif isinstance(tree, ast.If):
+            if_block = self.create_if_block(x, y)
+            if tree.test:
+                x = if_block.inside_poly_coords[0]
+                y = if_block.inside_poly_coords[1]
+                if isinstance(tree.test, ast.Compare):
+                    self.create_compare_from_code(tree.test, x, y)
+                elif isinstance(tree.test, ast.BoolOp):
+                    self.create_boolop_from_code(tree.test, x, y)
+                else:
+                    self.create_types_from_code(tree, x, y)
+
+            for child in ast.iter_child_nodes(tree):
+                magnet = if_block.renew_magnets()[1]
         elif isinstance(tree, ast.Return):
             return_block = self.create_return_block(x, y)
             for child in ast.iter_child_nodes(tree):
@@ -452,6 +467,68 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             elif str(val) == 'False':
                 const_block = self.create_type_block(str(val), 'false', x, y)
                 return const_block
+
+    def create_compare_from_code(self, tree, x, y):
+        if isinstance(tree.ops[0], ast.Eq):
+            magnet_block = self.create_two_magnet_block('== ', x, y)
+            magnet_block.move_to_magnet(self.movable_blocks)
+        elif isinstance(tree.ops[0], ast.NotEq):
+            magnet_block = self.create_two_magnet_block('!= ', x, y)
+            magnet_block.move_to_magnet(self.movable_blocks)
+        elif isinstance(tree.ops[0], ast.Lt):
+            magnet_block = self.create_two_magnet_block('< ', x, y)
+            magnet_block.move_to_magnet(self.movable_blocks)
+        elif isinstance(tree.ops[0], ast.LtE):
+            magnet_block = self.create_two_magnet_block('<= ', x, y)
+            magnet_block.move_to_magnet(self.movable_blocks)
+        elif isinstance(tree.ops[0], ast.Gt):
+            magnet_block = self.create_two_magnet_block('> ', x, y)
+            magnet_block.move_to_magnet(self.movable_blocks)
+        elif isinstance(tree.ops[0], ast.GtE):
+            magnet_block = self.create_two_magnet_block('>= ', x, y)
+            magnet_block.move_to_magnet(self.movable_blocks)
+        elif isinstance(tree.ops[0], ast.Is):
+            pass
+        elif isinstance(tree.ops[0], ast.IsNot):
+            pass
+        elif isinstance(tree.ops[0], ast.In):
+            pass
+        elif isinstance(tree.ops[0], ast.NotIn):
+            pass
+        x = magnet_block.inside_poly_coords[0]
+        y = magnet_block.inside_poly_coords[1]
+        left = self.create_types_from_code(tree.left, x, y)
+        left.move_to_magnet(self.movable_blocks)
+        x = magnet_block.second_poly_coords[0]
+        y = magnet_block.second_poly_coords[1]
+        right = self.create_types_from_code(tree.comparators[0], x, y)
+        right.move_to_magnet(self.movable_blocks)
+
+    def create_boolop_from_code(self, tree, x, y):
+        if isinstance(tree.op, ast.And):
+            magnet_block = self.create_two_magnet_block('and ', x, y)
+            magnet_block.move_to_magnet(self.movable_blocks)
+        elif isinstance(tree.op, ast.Or):
+            magnet_block = self.create_two_magnet_block('or ', x, y)
+            magnet_block.move_to_magnet(self.movable_blocks)
+        x = magnet_block.inside_poly_coords[0]
+        y = magnet_block.inside_poly_coords[1]
+        if isinstance(tree.values[0], ast.Compare):
+            self.create_compare_from_code(tree.values[0], x, y)
+        elif isinstance(tree.values[0], ast.BoolOp):
+            self.create_boolop_from_code(tree.values[0], x, y)
+        elif isinstance(tree.values[0], (ast.Num, ast.Str, ast.Name, ast.NameConstant)):
+            left = self.create_types_from_code(tree.values[0], x, y)
+            left.move_to_magnet(self.movable_blocks)
+        x = magnet_block.second_poly_coords[0]
+        y = magnet_block.second_poly_coords[1]
+        if isinstance(tree.values[1], ast.Compare):
+            self.create_compare_from_code(tree.values[1], x, y)
+        elif isinstance(tree.values[1], ast.BoolOp):
+            self.create_boolop_from_code(tree.values[1], x, y)
+        elif isinstance(tree.values[1], (ast.Num, ast.Str, ast.Name, ast.NameConstant)):
+            right = self.create_types_from_code(tree.values[1], x, y)
+            right.move_to_magnet(self.movable_blocks)
 
     def to_code(self):
         all_blocks = []
@@ -1223,8 +1300,6 @@ class ControlBlock(OneTextCommandBlock):
             self.default_items_on_block.change_inside_coords(delta_x, delta_y)
         if self.connected[2] is not None:
             self.connected[2].move_connected(delta_x, delta_y)
-            for i in self.connected[2].default_items_id:
-                self.canvas.tag_raise(i)
 
     def move_to_magnet(self, movable_blocks):
         # when mouse press is let go, puts the block in right place
@@ -1889,10 +1964,10 @@ class TwoMagnetBlock(OneMagnetBlock):
 
     def create_text(self):
         if self.text == 'and' or self.text == 'or':
-            self.text_coords = [self.first_inside_length + 22, self.coords[1]]
+            self.text_coords = [self.coords[0]+self.first_inside_length + 22, self.coords[1]]
             self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.text, font=self.myFont)
         else:
-            self.text_coords = [self.first_inside_length + 22, self.coords[1]+2]
+            self.text_coords = [self.coords[0]+self.first_inside_length + 22, self.coords[1]+2]
             self.text_id = self.canvas.create_text(self.text_coords, anchor=NW, text=self.text, font=self.myFontBold)
         self.default_items_on_block = self
         self.default_items_id.append(self.text_id)

@@ -492,11 +492,14 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                 magnet_block = self.create_two_magnet_block('is ', x, y)
                 magnet_block.move_to_magnet(self.movable_blocks)
             elif isinstance(tree.ops[i], ast.IsNot):
-                pass
+                magnet_block = self.create_two_magnet_block('is not ', x, y)
+                magnet_block.move_to_magnet(self.movable_blocks)
             elif isinstance(tree.ops[i], ast.In):
-                pass
+                magnet_block = self.create_two_magnet_block('in ', x, y)
+                magnet_block.move_to_magnet(self.movable_blocks)
             elif isinstance(tree.ops[i], ast.NotIn):
-                pass
+                magnet_block = self.create_two_magnet_block('not in ', x, y)
+                magnet_block.move_to_magnet(self.movable_blocks)
             x = magnet_block.inside_poly_coords[0]
             y = magnet_block.inside_poly_coords[1]
             left = self.create_types_from_code(tree.left, x, y)

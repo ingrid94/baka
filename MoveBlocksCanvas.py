@@ -1074,7 +1074,7 @@ class VariableBlock(CommandBlock):
         else:
             self.coords[2] = self.default_height
             self.coords[3] = self.default_width
-            self.resize_coords(movable_blocks, old_height)
+            # self.resize_coords(movable_blocks, old_height)
         self.change_poly_coords()
         del movable_blocks[self.obj_id]
         self.canvas.delete(self.obj_id)
@@ -1140,7 +1140,11 @@ class VariableBlock(CommandBlock):
         # changes CommandBlock size
         del movable_blocks[self.obj_id]
         self.canvas.delete(self.obj_id)
-        self.coords[3] = 110
+        if self.connected[2] is not None:
+            blo_width = self.connected[2].get_width()
+        else:
+            blo_width = self.inside_poly_coords[3]
+        self.coords[3] = 15 + self.text_len + self.text2_len + 40 + blo_width
         self.create_polygon()
         movable_blocks[self.obj_id] = self
         # changes variable block size

@@ -1952,9 +1952,12 @@ class TwoMagnetBlock(OneMagnetBlock):
         self.second_inside_length = self.get_inside_length(1.6)
         self.second_inside_height = self.text_height
 
-    def create_first_polygon(self):
         self.inside_poly_coords = [self.coords[0] + 10, self.coords[1] + 2, self.first_inside_height,
                                    self.first_inside_length]
+        self.second_poly_coords = [self.coords[0] + 10 + self.first_inside_length + 10 + self.text_len + 10,
+                                   self.coords[1] + 2, self.second_inside_height, self.second_inside_length]
+
+    def create_first_polygon(self):
         first_poly_coords = self.stableCanvas.inside_block_coords(self.inside_poly_coords[0], self.inside_poly_coords[1],
                                                                   self.inside_poly_coords[2], self.inside_poly_coords[3])
         self.first_poly_id = self.canvas.create_polygon(first_poly_coords, fill=self.inside_color, tag='first')
@@ -1974,11 +1977,8 @@ class TwoMagnetBlock(OneMagnetBlock):
         return self.text_id
 
     def create_second_polygon(self):
-        self.second_poly_coords = [self.coords[0] + 10 + self.first_inside_length + 10 + self.text_len + 10,
-                                   self.coords[1] + 2, self.second_inside_height, self.second_inside_length]
-        second_poly_coords = self.stableCanvas.inside_block_coords(
-            self.coords[0] + 10 + self.first_inside_length + 10 + self.text_len + 10,
-            self.coords[1] + 2, self.second_inside_height, self.second_inside_length)
+        second_poly_coords = self.stableCanvas.inside_block_coords(self.second_poly_coords[0], self.second_poly_coords[1],
+                                                                   self.second_poly_coords[2], self.second_poly_coords[3])
         self.second_poly_id = self.canvas.create_polygon(second_poly_coords, fill=self.inside_color, tag='second')
         self.default_items_on_block = self
         self.default_items_id.append(self.second_poly_id)
@@ -2058,25 +2058,28 @@ class TwoMagnetBlock(OneMagnetBlock):
             if magnet == 'first':
                 if self.connected[1] is not None:
                     if not isinstance(self.connected[1], (TypeBlock, StringBlock, ControlBlockLower)):
-                        return self.connected[1].find_open_inside_connection(closest_object, movable_blocks)
+                        find = self.connected[1].find_open_inside_connection(closest_object, movable_blocks)
+                        return find
                 else:
                     return self
             elif magnet == 'second':
                 if self.connected[2] is not None:
                     if not isinstance(self.connected[2], (TypeBlock, StringBlock, ControlBlockLower)):
-                        return self.connected[2].find_open_inside_connection(closest_object, movable_blocks)
+                        find = self.connected[2].find_open_inside_connection(closest_object, movable_blocks)
+                        return find
                 else:
                     return self
 
     def draw_line_insideblock(self, closest_object, movable_blocks):
-        magnet = self.get_magnet(closest_object)
+        open_block = self.find_open_inside_connection(closest_object, movable_blocks)
+        magnet = open_block.get_magnet(closest_object)
         if magnet is not None:
             if magnet == 'first':
                 # gets poly_coords
-                stable_coords = self.inside_poly_coords
+                stable_coords = open_block.inside_poly_coords
             elif magnet == 'second':
                 # gets poly_coords
-                stable_coords = self.second_poly_coords
+                stable_coords = open_block.second_poly_coords
             line_coords = self.stableCanvas.inside_block_coords(stable_coords[0], stable_coords[1],
                                                                 stable_coords[2], stable_coords[3])
             # draws "line" mark to the block
@@ -2103,6 +2106,7 @@ class TwoMagnetBlock(OneMagnetBlock):
             if self.connected[1] is not None:
                 blo_height = self.connected[1].get_height()
                 blo_width = self.connected[1].get_width()
+                self.inside_poly_coords[3] = blo_width
                 # when second magnet has connection
                 if self.connected[2] is not None:
                     blo_width2 = self.connected[2].get_width()
@@ -2118,6 +2122,7 @@ class TwoMagnetBlock(OneMagnetBlock):
                     self.coords[2] = blo_height
             # when disconnecting from first magnet
             else:
+                self.inside_poly_coords[3] = self.first_inside_length
                 # when second magnet has connection
                 if self.connected[2] is not None:
                     blo_width2 = self.connected[2].get_width()
@@ -2134,6 +2139,9 @@ class TwoMagnetBlock(OneMagnetBlock):
                     self.connected[0].redraw_base(movable_blocks)
                 else:
                     self.connected[0].change_base_coords(closest_object, movable_blocks)
+            self.canvas.delete(self.first_poly_id)
+            self.create_first_polygon()
+            movable_blocks[self.first_poly_id] = self
             # actually redrawing
             self.redraw_base(movable_blocks)
             delta = self.coords[3] - old_len
@@ -2154,6 +2162,7 @@ class TwoMagnetBlock(OneMagnetBlock):
                 self.coords[2] = self.connected[2].get_height()
                 blo_width = self.connected[2].get_width()
                 blo_height = self.connected[2].get_height()
+                self.second_poly_coords[3] = blo_width
                 # when first magnet is connected
                 if self.connected[1] is not None:
                     blo_width2 = self.connected[1].get_width()
@@ -2169,6 +2178,7 @@ class TwoMagnetBlock(OneMagnetBlock):
                     self.coords[2] = blo_height
             # disconnecting from second magnet
             else:
+                self.second_poly_coords[3] = self.second_inside_length
                 # when first magnet is connected
                 if self.connected[1] is not None:
                     blo_width = self.connected[1].get_width()
@@ -2179,6 +2189,9 @@ class TwoMagnetBlock(OneMagnetBlock):
                 else:
                     self.coords[3] = 10 + self.first_inside_length + 10 + self.text_len + self.second_inside_length + 15
                     self.coords[2] = self.block_height
+            self.canvas.delete(self.second_poly_id)
+            self.create_second_polygon()
+            movable_blocks[self.second_poly_id] = self
             # redrawing parents
             if self.connected[0] is not None:
                 if isinstance(self.connected[0], CommandBlock):
@@ -2198,9 +2211,3 @@ class TwoMagnetBlock(OneMagnetBlock):
 
     def delete_inside_poly(self, closest_object, movable_blocks):
         pass
-        # need inside_polygons to deter which magnet it's communicating with
-        # magnet = self.get_magnet(closest_object)
-        # if magnet == 'first':
-        #    self.canvas.itemconfig(self.first_poly_id, state=HIDDEN)
-        #elif magnet == 'second':
-        #    self.canvas.itemconfig(self.second_poly_id, state=HIDDEN)

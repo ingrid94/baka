@@ -443,6 +443,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                     stable_block = self.create_blocks_from_code(child, x, y)
 
     def inside_blocks(self, tree, x, y):
+        print(tree)
         if isinstance(tree, ast.Compare):
             for i in range(len(tree.ops)):
                 comp_block = self.create_compare_from_code(tree.ops[i], x, y)
@@ -471,6 +472,9 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                         last.move_to_magnet(self.movable_blocks)
         elif isinstance(tree, ast.BoolOp):
             self.create_boolop_from_code(tree, x, y)
+        elif isinstance(tree, (ast.Str, ast.Num, ast.Name, ast.NameConstant)):
+            type_block = self.create_types_from_code(tree, x, y)
+            type_block.move_to_magnet(self.movable_blocks)
 
     def create_types_from_code(self, tree, x, y):
         if isinstance(tree, ast.Name):
@@ -655,7 +659,7 @@ class Block:
     def check_magnets_during_move(self, movable_blocks):
         # moves magnets also checks other blocks and marks them
         closest_object = self.get_closest(movable_blocks)
-        if closest_object != [] and closest_object[0] in movable_blocks and movable_blocks[closest_object[0]] != "line":
+        if closest_object != [] and closest_object[0] in movable_blocks:
             if movable_blocks[closest_object[0]] != 'bin':
                 stable_instance = movable_blocks[closest_object[0]]
                 stable_coords = stable_instance.renew_magnets()
@@ -665,6 +669,9 @@ class Block:
                 line_id = self.canvas.create_line(line_x - 15, line_y - 5, line_x-10, line_y, line_x+5, line_y,
                                                   line_x + 10, line_y - 5, fill="green", width=3)
                 movable_blocks[line_id] = "line"
+            else:
+                line_id = self.canvas.create_rectangle(420, 0, 500, 75, outline="red", width=3)
+                movable_blocks[line_id] = 'line'
 
     # deletes "line" mark
     def line_delete(self, movable_blocks):
@@ -1506,11 +1513,15 @@ class InsideBlock:
         # moves magnets also checks other blocks and marks them
         closest_object = self.get_closest(movable_blocks)
         if closest_object != [] and movable_blocks[closest_object[0]] != "line":
-            if movable_blocks[closest_object[0]] != 'bin' and not isinstance(movable_blocks[closest_object[0]], (TypeBlock, StringBlock, ControlBlockLower)):
-                stable_instance = movable_blocks[closest_object[0]]
-                open_block = stable_instance.find_open_inside_connection(closest_object, movable_blocks)
-                if open_block is not None:
-                    open_block.draw_line_insideblock(closest_object, movable_blocks)
+            if not isinstance(movable_blocks[closest_object[0]], (TypeBlock, StringBlock, ControlBlockLower)):
+                if movable_blocks[closest_object[0]] != 'bin':
+                    stable_instance = movable_blocks[closest_object[0]]
+                    open_block = stable_instance.find_open_inside_connection(closest_object, movable_blocks)
+                    if open_block is not None:
+                        open_block.draw_line_insideblock(closest_object, movable_blocks)
+                else:
+                    line_id = self.canvas.create_rectangle(420, 0, 500, 75, outline="red", width=3)
+                    movable_blocks[line_id] = 'line'
 
     # deletes "line" mark
     def line_delete(self, movable_blocks):

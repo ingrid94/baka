@@ -372,7 +372,6 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
     def create_blocks_from_code(self, tree, x, y):
         if isinstance(tree, ast.Expr):
             expr_block = self.create_expr_block(x, y)
-            print(expr_block)
             for child in ast.iter_child_nodes(tree):
                 print_block = None
                 if isinstance(child, ast.Call):
@@ -380,17 +379,17 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                         if isinstance(child1, ast.Name):
                             call = child1.id
                             if call == 'print':
-                                #magnet = expr_block.get_inside_poly_coords('')
-                                x = expr_block.coords[0]
-                                y = expr_block.coords[1]
+                                magnet = expr_block.get_inside_poly_coords('')
+                                x = magnet[0]+10
+                                y = magnet[1]
                                 print_block = self.create_print_block(x, y)
-                                #print_block.move_to_magnet(self.movable_blocks)
+                                print_block.move_to_magnet(self.movable_blocks)
                     if child.args:
                         x = print_block.inside_poly_coords[0]
                         y = print_block.inside_poly_coords[1]
                         type_block = self.create_types_from_code(child.args[0], x, y)
-                        #if type_block is not None:
-                        #    type_block.move_to_magnet(self.movable_blocks)
+                        if type_block is not None:
+                            type_block.move_to_magnet(self.movable_blocks)
                     return expr_block
         elif isinstance(tree, ast.Assign):
             for child in ast.iter_child_nodes(tree):
@@ -406,7 +405,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         elif isinstance(tree, ast.While):
             self.create_while_block(x, y)
             for child in ast.iter_child_nodes(tree):
-                print(child)
+                print('while', child)
         elif isinstance(tree, ast.If):
             if_block = self.create_if_block(x, y)
             if tree.test:
@@ -418,9 +417,9 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             for child in ast.iter_child_nodes(tree):
                 if not isinstance(child, (ast.Compare, ast.BoolOp, ast.Str, ast.Num, ast.Name, ast.NameConstant)):
                     if isinstance(stable_block, ControlBlock):
-                        y = stable_block.coords[1] + stable_block.coords[2]+5
+                        y = stable_block.coords[1] + stable_block.coords[2]
                     else:
-                        y = stable_block.coords[1] + stable_block.coords[2]-10
+                        y = stable_block.coords[1] + stable_block.coords[2]
                     under_block = self.create_blocks_from_code(child, x, y)
                     under_block.move_to_magnet(self.movable_blocks)
                     stable_block = under_block
@@ -1377,7 +1376,7 @@ class ControlBlock(OneTextCommandBlock):
             blo_height = self.empty_block_height
         # if something is connecting or something is not directly disconnecting from ControlBlock
         else:
-            blo_height = self.connected[1].get_height()
+            blo_height = self.connected[1].get_height()+5
         self.coords[4] = blo_height
         self.poly_cords = self.stableCanvas.control_block_coords(self.coords[0], self.coords[1],
                                                                  self.coords[2], self.coords[3], self.coords[4])[0]
@@ -1542,7 +1541,6 @@ class InsideBlock:
             if movable_blocks[closest_object[0]] == 'bin':
                 self.use_bin(movable_blocks)
             else:
-                print(self, movable_blocks[closest_object[0]])
                 stable_instance = movable_blocks[closest_object[0]]
                 if not isinstance(stable_instance, (TypeBlock, StringBlock, ControlBlockLower)):
                     open_block = stable_instance.find_open_inside_connection(closest_object, movable_blocks)

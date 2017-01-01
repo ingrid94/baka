@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import ttk
 import tkinter.messagebox
 from tkinter.font import Font
 import re
@@ -16,12 +17,24 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         self.binding()
         self.stableCanvas = t1
         self.stableCanvas.bind(self.create_blocks)
+        self.canvas.pack()
         self.myFont = myFont
         self.myFontBold = myFontBold
         self.movable_blocks = {}
         self.bin_image = None
         self.bin_id = None
         self.text_height = Font.metrics(self.myFont, 'linespace')
+        self.horbar = ttk.Scrollbar(self.canvas, orient=HORIZONTAL)
+        self.vertbar = ttk.Scrollbar(self.canvas, orient=VERTICAL)
+        self.scroll()
+
+    def scroll(self):
+        self.horbar.pack(side=BOTTOM, fill=X)
+        self.horbar.config(command=self.canvas.xview)
+        self.vertbar.pack(side=RIGHT, fill=Y)
+        self.vertbar.config(command=self.canvas.yview)
+        self.canvas.config(xscrollcommand=self.horbar.set, yscrollcommand=self.vertbar.set, scrollregion=(0, 0, 2000, 2000))
+        self.canvas.pack(side=LEFT, expand=True, fill=BOTH)
 
     def create_bin(self):
         # delete icon: "https://icons8.com/web-app/362/Delete"

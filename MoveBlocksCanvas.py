@@ -26,7 +26,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         self.text_height = Font.metrics(self.myFont, 'linespace')
         self.horbar = ttk.Scrollbar(self.canvas, orient=HORIZONTAL)
         self.vertbar = ttk.Scrollbar(self.canvas, orient=VERTICAL)
-        self.scroll()
+        # self.scroll()
 
     def scroll(self):
         self.horbar.pack(side=BOTTOM, fill=X)
@@ -1566,6 +1566,9 @@ class InsideBlock:
                 self.use_bin(movable_blocks)
             else:
                 stable_instance = movable_blocks[closest_object[0]]
+                if isinstance(stable_instance, ControlBlockLower):
+                    if movable_blocks[closest_object[1]]:
+                        stable_instance = movable_blocks[closest_object[1]]
                 if not isinstance(stable_instance, (TypeBlock, StringBlock, ControlBlockLower)):
                     open_block = stable_instance.find_open_inside_connection(closest_object, movable_blocks)
                     if open_block is not None:

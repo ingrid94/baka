@@ -8,7 +8,6 @@ from MoveBlocksCanvas import MoveBlocksCanvas
 def main():
     root = Tk()
     root.geometry("+1+1")
-    Button(command=root.quit, text="Quit").pack()
     myFont = Font(family="Verdana", size=10)
     myFontBold = Font(family="Verdana", size=10, weight='bold')
     t1 = ChooseBlocksCanvas(root, myFont, myFontBold)

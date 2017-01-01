@@ -432,7 +432,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                     if isinstance(stable_block, ControlBlock):
                         y = stable_block.coords[1] + stable_block.coords[2]
                     else:
-                        y = stable_block.coords[1] + stable_block.coords[2]
+                        y = stable_block.coords[1] + stable_block.coords[2]-2
                     under_block = self.create_blocks_from_code(child, x, y)
                     under_block.move_to_magnet(self.movable_blocks)
                     stable_block = under_block
@@ -446,17 +446,28 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             return return_block
         else:
             stable_block = None
+            is_controlBlock = False
             for child in ast.iter_child_nodes(tree):
-                if stable_block is not None:
+                if is_controlBlock:
+                    coords = stable_block.connected[3].coords
+                    x = coords[0]
+                    y = coords[1]+10
+                    stable_block = self.create_blocks_from_code(child, x, y)
+                    stable_block.move_to_magnet(self.movable_blocks)
+                    is_controlBlock = False
+                elif stable_block is not None:
+                    if isinstance(child, (ast.If, ast.While)):
+                        is_controlBlock = True
                     x = stable_block.coords[0]
                     y += stable_block.coords[2]
                     stable_block = self.create_blocks_from_code(child, x, y)
                     stable_block.move_to_magnet(self.movable_blocks)
                 else:
+                    if isinstance(child, (ast.If, ast.While)):
+                        is_controlBlock = True
                     stable_block = self.create_blocks_from_code(child, x, y)
 
     def inside_blocks(self, tree, x, y):
-        print(tree)
         if isinstance(tree, ast.Compare):
             for i in range(len(tree.ops)):
                 comp_block = self.create_compare_from_code(tree.ops[i], x, y)
@@ -1567,7 +1578,7 @@ class InsideBlock:
             else:
                 stable_instance = movable_blocks[closest_object[0]]
                 if isinstance(stable_instance, ControlBlockLower):
-                    if movable_blocks[closest_object[1]]:
+                    if len(closest_object) > 1:
                         stable_instance = movable_blocks[closest_object[1]]
                 if not isinstance(stable_instance, (TypeBlock, StringBlock, ControlBlockLower)):
                     open_block = stable_instance.find_open_inside_connection(closest_object, movable_blocks)

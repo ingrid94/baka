@@ -416,27 +416,11 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                         type_block.move_to_magnet(self.movable_blocks)
                     return var_block
         elif isinstance(tree, ast.While):
-            self.create_while_block(x, y)
-            for child in ast.iter_child_nodes(tree):
-                print('while', child)
+            contrl_block = self.create_while_block(x, y)
+            return self.create_control_block(tree, x, y, contrl_block)
         elif isinstance(tree, ast.If):
-            if_block = self.create_if_block(x, y)
-            if tree.test:
-                inside_x = if_block.inside_poly_coords[0]
-                inside_y = if_block.inside_poly_coords[1]
-                self.inside_blocks(tree.test, inside_x, inside_y)
-            stable_block = if_block
-            x += 10
-            for child in ast.iter_child_nodes(tree):
-                if not isinstance(child, (ast.Compare, ast.BoolOp, ast.Str, ast.Num, ast.Name, ast.NameConstant)):
-                    if isinstance(stable_block, ControlBlock):
-                        y = stable_block.coords[1] + stable_block.coords[2]
-                    else:
-                        y = stable_block.coords[1] + stable_block.coords[2]-2
-                    under_block = self.create_blocks_from_code(child, x, y)
-                    under_block.move_to_magnet(self.movable_blocks)
-                    stable_block = under_block
-            return if_block
+            contrl_block = self.create_if_block(x, y)
+            return self.create_control_block(tree, x, y, contrl_block)
         elif isinstance(tree, ast.Return):
             return_block = self.create_return_block(x, y)
             for child in ast.iter_child_nodes(tree):
@@ -466,6 +450,24 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                     if isinstance(child, (ast.If, ast.While)):
                         is_controlBlock = True
                     stable_block = self.create_blocks_from_code(child, x, y)
+
+    def create_control_block(self, tree, x, y, contrl_block):
+        if tree.test:
+            inside_x = contrl_block.inside_poly_coords[0]
+            inside_y = contrl_block.inside_poly_coords[1]
+            self.inside_blocks(tree.test, inside_x, inside_y)
+        stable_block = contrl_block
+        x += 10
+        for child in ast.iter_child_nodes(tree):
+            if not isinstance(child, (ast.Compare, ast.BoolOp, ast.Str, ast.Num, ast.Name, ast.NameConstant)):
+                if isinstance(stable_block, ControlBlock):
+                    y = stable_block.coords[1] + stable_block.coords[2]
+                else:
+                    y = stable_block.coords[1] + stable_block.coords[2] - 2
+                under_block = self.create_blocks_from_code(child, x, y)
+                under_block.move_to_magnet(self.movable_blocks)
+                stable_block = under_block
+        return contrl_block
 
     def inside_blocks(self, tree, x, y):
         if isinstance(tree, ast.Compare):

@@ -459,7 +459,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         stable_block = contrl_block
         x += 10
         for child in ast.iter_child_nodes(tree):
-            if not isinstance(child, (ast.Compare, ast.BoolOp, ast.Str, ast.Num, ast.Name, ast.NameConstant)):
+            if not isinstance(child, (ast.Compare, ast.BoolOp, ast.Str, ast.Num, ast.Name, ast.NameConstant, ast.UnaryOp)):
                 if isinstance(stable_block, ControlBlock):
                     y = stable_block.coords[1] + stable_block.coords[2]
                 else:
@@ -498,6 +498,13 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                         last.move_to_magnet(self.movable_blocks)
         elif isinstance(tree, ast.BoolOp):
             self.create_boolop_from_code(tree, x, y)
+        elif isinstance(tree, ast.UnaryOp):
+            uni_block = self.create_unaryop_from_code(tree, x, y)
+            uni_block.move_to_magnet(self.movable_blocks)
+            if tree.operand:
+                x = uni_block.inside_poly_coords[0]
+                y = uni_block.inside_poly_coords[1]
+                self.inside_blocks(tree.operand, x, y)
         elif isinstance(tree, (ast.Str, ast.Num, ast.Name, ast.NameConstant)):
             type_block = self.create_types_from_code(tree, x, y)
             type_block.move_to_magnet(self.movable_blocks)
@@ -575,6 +582,11 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             return magnet_block
         elif isinstance(tree.op, ast.Or):
             magnet_block = self.create_two_magnet_block('or ', x, y)
+            return magnet_block
+
+    def create_unaryop_from_code(self, tree, x, y):
+        if isinstance(tree.op, ast.Not):
+            magnet_block = self.create_not_block(x, y)
             return magnet_block
 
     def to_code(self):

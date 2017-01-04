@@ -486,31 +486,22 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
             type_block.move_to_magnet(self.movable_blocks)
 
     def compare_order(self, tree, x, y):
+        ops = tree.ops
+        ops.reverse()
+        comps = tree.comparators
+        comps.reverse()
         for i in range(len(tree.ops)):
             comp_block = self.create_compare_from_code(tree.ops[i], x, y)
             comp_block.move_to_magnet(self.movable_blocks)
-            x = comp_block.inside_poly_coords[0]
-            y = comp_block.inside_poly_coords[1]
-            if i == 0:
-                if isinstance(tree.left, ast.Compare):
-                    self.inside_blocks(tree.left, x, y)
-                else:
-                    first = self.create_first_inside_connection(tree.left, x, y)
-                    first.move_to_magnet(self.movable_blocks)
-            elif isinstance(tree.comparators[i - 1], ast.Compare):
-                self.inside_blocks(tree.comparators[i - 1], x, y)
-            else:
-                if not isinstance(tree.comparators[i - 1], ast.Compare):
-                    first = self.create_first_inside_connection(tree.comparators[i - 1], x, y)
-                    first.move_to_magnet(self.movable_blocks)
             x = comp_block.second_poly_coords[0]
             y = comp_block.second_poly_coords[1]
-            if i == len(tree.ops) - 1:
-                if isinstance(tree.comparators[i], ast.Compare):
-                    self.inside_blocks(tree.comparators[i], x, y)
-                else:
-                    last = self.create_second_inside_connection(tree.comparators[i], x, y)
-                    last.move_to_magnet(self.movable_blocks)
+            self.inside_blocks(tree.comparators[i], x, y)
+            x = comp_block.inside_poly_coords[0]
+            y = comp_block.inside_poly_coords[1]
+            if i == len(tree.ops)-1:
+                x = comp_block.inside_poly_coords[0]
+                y = comp_block.inside_poly_coords[1]
+                self.inside_blocks(tree.left, x, y)
 
     def boolop_order(self, tree, x, y):
         boolop_block = self.create_boolop_from_code(tree, x, y)

@@ -379,8 +379,8 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         tree = ast.parse(code)
         x = 50
         y = 30
-        self.create_blocks_from_code(tree, x, y)
         print(ast.dump(tree))
+        self.create_blocks_from_code(tree, x, y)
 
     def create_blocks_from_code(self, tree, x, y):
         if isinstance(tree, ast.Expr):
@@ -497,7 +497,7 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
                         last = self.create_second_inside_connection(tree.comparators[i], x, y)
                         last.move_to_magnet(self.movable_blocks)
         elif isinstance(tree, ast.BoolOp):
-            self.create_boolop_from_code(tree, x, y)
+            self.boolop_order(tree, x, y)
         elif isinstance(tree, ast.UnaryOp):
             uni_block = self.create_unaryop_from_code(tree, x, y)
             uni_block.move_to_magnet(self.movable_blocks)
@@ -508,6 +508,29 @@ class MoveBlocksCanvas(ChooseBlocksCanvas):
         elif isinstance(tree, (ast.Str, ast.Num, ast.Name, ast.NameConstant)):
             type_block = self.create_types_from_code(tree, x, y)
             type_block.move_to_magnet(self.movable_blocks)
+
+    def boolop_order(self, tree, x, y):
+        boolop_block = self.create_boolop_from_code(tree, x, y)
+        boolop_block.move_to_magnet(self.movable_blocks)
+        rev = tree.values
+        rev.reverse()
+        for i in range(len(tree.values)):
+            if i == 0:
+                x = boolop_block.second_poly_coords[0]
+                y = boolop_block.second_poly_coords[1]
+                self.inside_blocks(tree.values[i], x, y)
+            elif isinstance(tree.values[i], ast.BoolOp) and len(tree.values) > 2:
+                x = boolop_block.inside_poly_coords[0]
+                y = boolop_block.inside_poly_coords[1]
+                boolop2_block = self.create_boolop_from_code(tree, x, y)
+                boolop2_block.move_to_magnet(self.movable_blocks)
+                x = boolop2_block.second_poly_coords[0]
+                y = boolop2_block.second_poly_coords[1]
+                self.inside_blocks(tree.values[i], x, y)
+            else:
+                x = boolop_block.inside_poly_coords[0]
+                y = boolop_block.inside_poly_coords[1]
+                self.inside_blocks(tree.values[i], x, y)
 
     def create_types_from_code(self, tree, x, y):
         if isinstance(tree, ast.Name):

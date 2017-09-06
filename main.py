@@ -5,7 +5,7 @@ from ChooseBlocksCanvas import ChooseBlocksCanvas
 from MoveBlocksCanvas import MoveBlocksCanvas
 
 
-def main():t
+def main():tt
     root = Tk()
     root.geometry("+1+1")
     myFont = Font(family="Verdana", size=10)
